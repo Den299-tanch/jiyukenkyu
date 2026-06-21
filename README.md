@@ -4,7 +4,8 @@ jiyukenkyu pt &amp; rel
 # 自由研究AIアシスタント
 
 ## 作業フォルダ
-AIapp/jiyukenkyu-app_ver2.1 が最新版
+AIapp/jiyukenkyu-app_ver2.1 が完成版（デプロイの問題のため）
+ver2.1以降は作成されているがプロトタイプ
 
 ## 本番URL
 フロント：https://jiyukenkyu.vercel.app
