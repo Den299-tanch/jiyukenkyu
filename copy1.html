@@ -1,0 +1,85 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>自由研究 試作</title>
+    </head>
+    <body>
+        <script type="text/javascript">
+            // 1. 会話履歴を配列で保持する（メモリ）
+const messages = [];
+
+// 2. API呼び出しの関数
+async function callClaude(userMessage) {
+  messages.push({ role: "user", content: userMessage });
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: `あなたは小学生の自由研究を手伝う先生です。
+答えを直接教えるのではなく、「なぜだと思う？」
+「試してみたらどうなるかな？」のように問いかけて、
+子ども自身が考えられるようにしてください。
+やさしい言葉を使ってください。`,
+      messages: messages   // ← 履歴ごと毎回送る
+    })
+  });
+
+  const data = await response.json();
+  const aiReply = data.content[0].text;
+
+  // 3. AIの返答も履歴に追加
+  messages.push({ role: "assistant", content: aiReply });
+  return aiReply;
+}
+        </script>
+    </body>
+</html>
+
+=======
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>自由研究 試作</title>
+    </head>
+    <body>
+        <script type="text/javascript">
+            // 1. 会話履歴を配列で保持する（メモリ）
+const messages = [];
+
+// 2. API呼び出しの関数
+async function callClaude(userMessage) {
+  messages.push({ role: "user", content: userMessage });
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: `あなたは小学生の自由研究を手伝う先生です。
+答えを直接教えるのではなく、「なぜだと思う？」
+「試してみたらどうなるかな？」のように問いかけて、
+子ども自身が考えられるようにしてください。
+やさしい言葉を使ってください。`,
+      messages: messages   // ← 履歴ごと毎回送る
+    })
+  });
+
+  const data = await response.json();
+  const aiReply = data.content[0].text;
+
+  // 3. AIの返答も履歴に追加
+  messages.push({ role: "assistant", content: aiReply });
+  return aiReply;
+}
+        </script>
+    </body>
+</html>
+
+>>>>>>> a7be5398674bd6f4a4e2318db162794522931a9d

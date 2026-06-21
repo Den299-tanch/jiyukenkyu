@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>自由研究AIアシスタント</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #222;
+    }
+
+    /* ── チャット画面 ── */
+    #chat-box {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    #messages {
+      padding: 16px;
+      min-height: 300px;
+      max-height: 400px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg { display: flex; flex-direction: column; max-width: 80%; }
+    .msg.user { align-self: flex-end; align-items: flex-end; }
+    .msg.ai   { align-self: flex-start; align-items: flex-start; }
+
+    .label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 3px;
+    }
+
+    .bubble {
+      padding: 9px 13px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .msg.user .bubble {
+      background: #534AB7;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.ai .bubble {
+      background: #f0f0f0;
+      color: #222;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg.ai .bubble.loading {
+      color: #aaa;
+      font-style: italic;
+    }
+
+    /* ── 入力欄 ── */
+    #input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid #eee;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #user-input:focus { border-color: #534AB7; }
+
+    #send-btn {
+      padding: 8px 16px;
+      background: #534AB7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #send-btn:hover   { background: #3C3489; }
+    #send-btn:disabled { background: #aaa; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <h1>🔬 自由研究AIアシスタント</h1>
+
+  <div id="chat-box">
+    <div id="messages">
+      <div class="msg ai">
+        <div class="label">AI</div>
+        <div class="bubble">こんにちは！自由研究の相談にのるよ。どんなことが気になってる？</div>
+      </div>
+    </div>
+    <div id="input-row">
+      <input type="text" id="user-input" placeholder="例: アリってなんで迷子にならないの？" />
+      <button id="send-btn">送信</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =======================================
+  // ① 会話履歴（これをまるごとAPIに毎回送る）
+  // =======================================
+  const history = [];
+
+  // =======================================
+  // ② AIのキャラ設定（systemプロンプト）
+  // =======================================
+  const SYSTEM = `あなたは小学生の自由研究を手伝う先生です。
+答えを直接教えるのではなく、「なぜだと思う？」「試してみたらどうなるかな？」
+のように問いかけて、子ども自身が考えられるようにしてください。
+やさしい言葉を使い、返答は3文以内にしてください。`;
+
+  // =======================================
+  // ③ APIを呼ぶ関数（ここがメイン）
+  // =======================================
+  async function callGemini(userText) {
+    history.push({ role: "user", parts: [{ text: userText }] });
+
+    const API_KEY = "";
+    const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${API_KEY}`;
+
+    const res = await fetch(URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      //JSONに変換　→　API独自の型
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM }] },
+        contents: history
+      })
+    });
+
+    const data = await res.json();
+    console.log("APIレスポンス:", JSON.stringify(data, null, 2));
+
+    if (!data.candidates) {
+      throw new Error(data.error?.message ?? JSON.stringify(data));
+    }
+
+    const reply = data.candidates[0].content.parts[0].text;
+
+    history.push({ role: "model", parts: [{ text: reply }] });
+    return reply;
+  }
+
+  // =======================================
+  // ④ 画面操作（バブルを追加する）
+  // =======================================
+  function addBubble(role, text, isLoading = false) {
+    const container = document.getElementById("messages");
+
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `msg ${role}`;
+
+    const label = document.createElement("div");
+    label.className = "label";
+    label.textContent = role === "user" ? "あなた" : "AI";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble" + (isLoading ? " loading" : "");
+    bubble.textContent = text;
+
+    msgDiv.appendChild(label);
+    msgDiv.appendChild(bubble);
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;  // 一番下までスクロール
+
+    return bubble;  // ローディング中のバブルを後で書き換えるために返す
+  }
+
+  // =======================================
+  // ⑤ 送信ボタンが押されたときの処理
+  // =======================================
+  async function handleSend() {
+    const input = document.getElementById("user-input");
+    const btn   = document.getElementById("send-btn");
+    const text  = input.value.trim();
+    if (!text) return;
+
+    // 入力欄をリセット・無効化
+    input.value = "";
+    input.disabled = true;
+    btn.disabled = true;
+
+    // ユーザーのバブルを表示
+    addBubble("user", text);
+
+    // ローディングバブルを表示
+    const loadingBubble = addBubble("ai", "考えています…", true);
+
+    try {
+      const reply = await callGemini(text);
+      loadingBubble.textContent = reply;
+      loadingBubble.classList.remove("loading");
+    } catch (err) {
+      loadingBubble.textContent = "エラー: " + err.message;
+      loadingBubble.classList.remove("loading");
+    }
+
+    // 入力欄を再度有効化
+    input.disabled = false;
+    btn.disabled = false;
+    input.focus();
+  }
+
+  // ボタンクリック・Enterキーで送信
+  document.getElementById("send-btn").addEventListener("click", handleSend);
+  document.getElementById("user-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") handleSend();
+  });
+</script>
+
+</body>
+</html>

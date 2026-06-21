@@ -1,0 +1,380 @@
+/* =========================================
+   自由研究AIアシスタント - 統合スタイル
+   ========================================= */
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ===== タイトル画面 ===== */
+.title-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  padding: 20px;
+}
+
+.title-content {
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 720px;
+}
+
+.title-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+.title-main {
+  font-size: 40px;
+  font-weight: bold;
+  color: white;
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.title-sub {
+  font-size: 18px;
+  color: #a0aec0;
+  margin: 0 0 40px;
+}
+
+.title-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.title-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 36px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 200px;
+  font-family: inherit;
+}
+
+.title-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+.dict-btn {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: white;
+}
+
+.chat-btn {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: white;
+}
+
+.btn-icon  { font-size: 40px; }
+.btn-label { font-size: 20px; font-weight: bold; }
+.btn-desc  { font-size: 13px; opacity: 0.85; }
+
+/* ===== カテゴリ選択画面 ===== */
+.category-screen {
+  padding: 24px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+
+.category-title {
+  text-align: center;
+  color: white;
+  font-size: 24px;
+  margin: 20px 0 32px;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.category-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  color: white;
+  font-family: inherit;
+}
+
+.category-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-3px);
+}
+
+.cat-icon  { font-size: 42px; }
+.cat-label { font-size: 16px; font-weight: bold; }
+
+/* ===== 戻るボタン（共通） ===== */
+.back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== チャット画面ヘッダー ===== */
+.screen-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.screen-header h2 {
+  color: white;
+  margin: 0;
+  font-size: 20px;
+}
+
+/* ===== チャット画面（ChatBox / MessageList / Message / InputForm） ===== */
+#chat-box {
+  max-width: 900px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+#messages {
+  padding: 20px;
+  min-height: 400px;
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 80%;
+}
+
+.msg.user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.msg.ai {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.label {
+  font-size: 11px;
+  color: #8a96a8;
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+
+.bubble {
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 15px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.msg.user .bubble {
+  background: linear-gradient(135deg, #6a5af9, #5044d6);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.ai .bubble {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e6ebf2;
+  border-bottom-left-radius: 4px;
+}
+
+.msg.ai .bubble.loading {
+  color: #8a96a8;
+  font-style: italic;
+}
+
+/* ===== 入力欄 ===== */
+#input-row {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+#user-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+  background: rgba(0, 0, 0, 0.25);
+  color: #e6ebf2;
+  font-family: inherit;
+}
+
+#user-input::placeholder {
+  color: #6a7588;
+}
+
+#user-input:focus {
+  border-color: #6a5af9;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+#user-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#send-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #6a5af9, #5044d6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+#send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(106, 90, 249, 0.4);
+}
+
+#send-btn:disabled {
+  background: rgba(255, 255, 255, 0.15);
+  color: #6a7588;
+  cursor: not-allowed;
+}
+
+/* ===== 辞書画面 ===== */
+.dict-screen {
+  padding: 24px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+
+.dict-title {
+  text-align: center;
+  color: white;
+  font-size: 24px;
+  margin: 20px 0 24px;
+}
+
+.dict-empty {
+  text-align: center;
+  color: #a0aec0;
+  margin-top: 40px;
+}
+
+.dict-list {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dict-item {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.dict-item.open {
+  background: rgba(79, 172, 254, 0.12);
+  border-color: rgba(79, 172, 254, 0.4);
+}
+
+.dict-item-head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: left;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.dict-item-head:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dict-keyword { flex: 1; }
+
+.dict-arrow {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-left: 12px;
+}
+
+.dict-desc {
+  padding: 0 22px 20px;
+  color: #d4dce6;
+  font-size: 15px;
+  line-height: 1.7;
+  animation: dictExpand 0.25s ease;
+}
+
+@keyframes dictExpand {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
