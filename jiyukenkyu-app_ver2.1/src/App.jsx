@@ -4,7 +4,7 @@ import TitleScreen from './components/TitleScreen';
 import CategorySelect from './components/CategorySelect';
 import ChatBox from './components/ChatBox';
 import DictScreen from './components/DictScreen'; 
-import { callClaude } from './services/claudeAPI';
+import { callClaude } from './services/Claudeapi';
 
 // 画面の種類
 // 'title'          → タイトル画面
