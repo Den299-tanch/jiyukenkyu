@@ -21,3 +21,4 @@ export async function callClaude(userText, history, mode) {
 
   return { reply, updatedHistory };
 }
+
