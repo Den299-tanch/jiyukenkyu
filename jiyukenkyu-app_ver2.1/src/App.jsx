@@ -53,7 +53,7 @@ export default function App() {
     if (text === DEV_CODE_ON) {
       setInput('');
       setDevMode(true);
-      setMessages(prev => [...prev, { role: 'ai', text: '開発者たまーーー！！！！！🎉🎉🎉' }]);
+      setMessages(prev => [...prev, { role: 'ai', text: '開発者！！！！！🎉face-orange-raised-eyebrow🎉face-orange-raised-eyebrow🎉face-orange-raised-eyebrow' }]);
       return;
     }
 
