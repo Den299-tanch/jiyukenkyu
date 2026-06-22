@@ -21,6 +21,11 @@ export default function App() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
+  const [devMode, setDevMode] = useState(false); // 隠し開発者モード
+
+  // 隠しコマンド（ふつうの入力ではまず打たない文字列にする）
+  const DEV_CODE_ON  = 'den44bug';
+  const DEV_CODE_OFF = 'den44bugoff';
 
   // カテゴリが選択されたらチャット画面に遷移
   function handleCategorySelect(selectedCategory) {
@@ -35,6 +40,22 @@ export default function App() {
   async function handleSend() {
     const text = input.trim();
     if (!text) return;
+    if (loading) return; // 連打防止
+
+    // ===== 隠しコマンド判定（APIには送らずローカルで処理）=====
+    // ※ off を先に判定しないと on にマッチしてしまうので注意
+    if (text === DEV_CODE_OFF) {
+      setInput('');
+      setDevMode(false);
+      setMessages(prev => [...prev, { role: 'ai', text: '……ふぅ。先生モードに戻りました。' }]);
+      return;
+    }
+    if (text === DEV_CODE_ON) {
+      setInput('');
+      setDevMode(true);
+      setMessages(prev => [...prev, { role: 'ai', text: '開発者たまーーー！！！！！🎉🎉🎉' }]);
+      return;
+    }
 
     setInput('');
     setLoading(true);
@@ -43,7 +64,7 @@ export default function App() {
     setMessages(prev => [...prev, { role: 'ai', text: '考えています…', isLoading: true }]);
 
     try {
-      const { reply, updatedHistory } = await callClaude(text, history, category?.mode);
+      const { reply, updatedHistory } = await callClaude(text, history, category?.mode, devMode);
       setHistory(updatedHistory);
 
       setMessages(prev => {
