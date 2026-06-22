@@ -47,7 +47,6 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { history, mode, specialMode } = req.body;
 
-    // devModeのときは開発者称えプロンプトを優先
     let systemPrompt;
     if (specialMode === 'dev') {
       systemPrompt = DEV_SYSTEM;

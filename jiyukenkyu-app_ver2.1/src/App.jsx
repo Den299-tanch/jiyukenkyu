@@ -21,9 +21,8 @@ export default function App() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
-  const [specialMode, setSpecialMode] = useState(null); // 隠し開発者モード
+  const [specialMode, setSpecialMode] = useState(null); 
 
-  // 隠しコマンド（ふつうの入力ではまず打たない文字列にする）
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
 
@@ -45,8 +44,6 @@ export default function App() {
     if (!text) return;
     if (loading) return; // 連打防止
 
-    // ===== 隠しコマンド判定（APIには送らずローカルで処理）=====
-    // ※ off を先に判定しないと on にマッチしてしまうので注意
     if (text === DEV_CODE_OFF) {
       setInput('');
       setSpecialMode(null);
