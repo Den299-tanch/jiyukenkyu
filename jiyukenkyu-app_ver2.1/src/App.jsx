@@ -49,13 +49,13 @@ export default function App() {
     // ※ off を先に判定しないと on にマッチしてしまうので注意
     if (text === DEV_CODE_OFF) {
       setInput('');
-      setDevMode(null);
+      setSpecialMode(null);
       setMessages(prev => [...prev, { role: 'ai', text: '帰還' }]);
       return;
     }
     if (text === DEV_CODE_ON) {
       setInput('');
-      setDevMode('dev');
+      setSpecialMode('dev');
       setMessages(prev => [...prev, { role: 'ai', text: '開発者！！！🫠🎉🫠🎉🫠🎉' }]);
       return;
     }
@@ -63,13 +63,13 @@ export default function App() {
 
      if (text === DEBU_CODE_OFF) {
       setInput('');
-      setDevMode(null);
+      setSpecialMode(null);
       setMessages(prev => [...prev, { role: 'ai', text: '帰還' }]);
       return;
     }
     if (text === DEBU_CODE_ON) {
       setInput('');
-      setDevMode('debu');
+      setSpecialMode('debu');
       setMessages(prev => [...prev, { role: 'ai', text: '🫃🫃🫃もう食べられないでぶー！！！🍔🍔🍔' }]);
       return;
     }
