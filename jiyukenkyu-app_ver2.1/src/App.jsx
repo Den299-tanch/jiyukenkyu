@@ -21,11 +21,14 @@ export default function App() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
-  const [devMode, setDevMode] = useState(false); // 隠し開発者モード
+  const [specialMode, setSpecialMode] = useState(null); // 隠し開発者モード
 
   // 隠しコマンド（ふつうの入力ではまず打たない文字列にする）
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
+
+  const DEBU_CODE_ON = 'den44gra';
+  const DEBU_CODE_OFF = 'den44graoff';
 
   // カテゴリが選択されたらチャット画面に遷移
   function handleCategorySelect(selectedCategory) {
@@ -46,14 +49,28 @@ export default function App() {
     // ※ off を先に判定しないと on にマッチしてしまうので注意
     if (text === DEV_CODE_OFF) {
       setInput('');
-      setDevMode(false);
-      setMessages(prev => [...prev, { role: 'ai', text: '……ふぅ。先生モードに戻りました。' }]);
+      setDevMode(null);
+      setMessages(prev => [...prev, { role: 'ai', text: '帰還' }]);
       return;
     }
     if (text === DEV_CODE_ON) {
       setInput('');
-      setDevMode(true);
-      setMessages(prev => [...prev, { role: 'ai', text: '開発者！！！！！🎉face-orange-raised-eyebrow🎉face-orange-raised-eyebrow🎉face-orange-raised-eyebrow' }]);
+      setDevMode('dev');
+      setMessages(prev => [...prev, { role: 'ai', text: '開発者！！！🫠🎉🫠🎉🫠🎉' }]);
+      return;
+    }
+
+
+     if (text === DEBU_CODE_OFF) {
+      setInput('');
+      setDevMode(null);
+      setMessages(prev => [...prev, { role: 'ai', text: '帰還' }]);
+      return;
+    }
+    if (text === DEBU_CODE_ON) {
+      setInput('');
+      setDevMode('debu');
+      setMessages(prev => [...prev, { role: 'ai', text: '🫃🫃🫃もう食べられないでぶー！！！🍔🍔🍔' }]);
       return;
     }
 
@@ -64,7 +81,7 @@ export default function App() {
     setMessages(prev => [...prev, { role: 'ai', text: '考えています…', isLoading: true }]);
 
     try {
-      const { reply, updatedHistory } = await callClaude(text, history, category?.mode, devMode);
+      const { reply, updatedHistory } = await callClaude(text, history, category?.mode, specialMode);
       setHistory(updatedHistory);
 
       setMessages(prev => {

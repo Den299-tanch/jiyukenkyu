@@ -1,12 +1,12 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
-export async function callClaude(userText, history, mode, devMode = false) {
+export async function callClaude(userText, history, mode, specialMode = null) {
   const newHistory = [...history, { role: 'user', content: userText }];
 
   const res = await fetch(`${BASE_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ history: newHistory, mode, devMode }),
+    body: JSON.stringify({ history: newHistory, mode, specialMode }),
   });
 
   const data = await res.json();
