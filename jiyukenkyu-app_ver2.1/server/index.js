@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import pg from 'pg';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,17 @@ app.use(cors());
 app.use(express.json());
 
 const API_KEY = process.env.CLAUDE_API_KEY;
+// PostgreSQL接続プール
+const { Pool } = pg;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // Renderの場合これが必要
+});
+
+// 起動時に接続確認
+pool.query('SELECT NOW()')
+  .then(() => console.log('DB connected: ✅ OK'))
+  .catch(err => console.error('DB connection error: ❌', err.message));
 
 // カテゴリごとのシステムプロンプト
 const PROMPTS = {
@@ -77,6 +89,21 @@ app.post('/api/chat', async (req, res) => {
     const data = await response.json();
     res.json(data);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// テーマ保存エンドポイント
+app.post('/api/save-theme', async (req, res) => {
+  try {
+    const { user_id, category, theme } = req.body;
+    const result = await pool.query(
+      'INSERT INTO themes (user_id, category, theme) VALUES ($1, $2, $3) RETURNING *',
+      [user_id || null, category, theme]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('Save theme error:', err);
     res.status(500).json({ error: err.message });
   }
 });
