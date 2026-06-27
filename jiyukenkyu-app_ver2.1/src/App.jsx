@@ -6,6 +6,7 @@ import ChatBox from './components/ChatBox';
 import DictScreen from './components/DictScreen'; 
 import { callClaude } from './services/Claudeapi';
 import SaveThemeArea from './components/SaveThemeArea';
+import UserIdScreen from './components/UserIdScreen';
 
 
 // 画面の種類
@@ -17,8 +18,10 @@ import SaveThemeArea from './components/SaveThemeArea';
 
 export default function App() {
   const [screen, setScreen] = useState('title');
-  const [category, setCategory] = useState(null); // 選択されたカテゴリ
 
+  const [userId, setUserId] = useState(sessionStorage.getItem('userId') || null);
+
+  const [category, setCategory] = useState(null); // 選択されたカテゴリ
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +30,7 @@ export default function App() {
 
   const [themeInput, setThemeInput] = useState('');
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [savedThemes, setSavedThemes] = useState([]);
 
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
@@ -113,7 +116,7 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: null,
+          user_id: userId,
           category: category?.id,
           theme,
         }),
@@ -121,8 +124,9 @@ export default function App() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      setSaved(true);
-      setMessages(prev => [...prev, { role: 'ai', text: `テーマ「${theme}」を保存したよ！🎉` }]);
+      setSavedThemes(prev => [...prev, theme]);
+      setThemeInput('');
+      setMessages(prev => [...prev, { role: 'ai', text: `テーマ「${theme}」を保存したよ！🎉 他にもあったら追加してね！` }]);
     } catch (err) {
       alert('保存に失敗しました: ' + err.message);
     }
@@ -131,6 +135,10 @@ export default function App() {
 
   return (
     <div className="app">
+      {!userId && (
+        <UserIdScreen onSubmit={(n) => setUserId(n)} />
+      )}
+
       {screen === 'title' && (
         <TitleScreen
           onDict={() => setScreen('dict-category')}
@@ -175,7 +183,7 @@ export default function App() {
             setThemeInput={setThemeInput}
             onSave={handleSaveTheme}
             saving={saving}
-            saved={saved}
+            savedThemes={savedThemes}
           />
         </>
       )}

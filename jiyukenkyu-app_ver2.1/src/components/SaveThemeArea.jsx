@@ -1,15 +1,19 @@
-export default function SaveThemeArea({ themeInput, setThemeInput, onSave, saving, saved }) {
-  if (saved) {
-    return (
-      <div className="save-theme-area saved">
-        <p className="save-theme-done">✅ テーマを保存しました！</p>
-      </div>
-    );
-  }
-
+export default function SaveThemeArea({ themeInput, setThemeInput, onSave, saving, savedThemes }) {
   return (
     <div className="save-theme-area">
-      <p className="save-theme-label">💡 テーマが決まったら保存しよう！</p>
+      {savedThemes.length > 0 && (
+        <div className="saved-themes-list">
+          <p className="saved-themes-title">📋 保存したテーマ</p>
+          {savedThemes.map((theme, i) => (
+            <div key={i} className="saved-theme-item">
+              <span className="saved-theme-num">{i + 1}.</span>
+              <span className="saved-theme-text">{theme}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p className="save-theme-label">💡 テーマが思いついたら保存しよう！</p>
       <div className="save-theme-row">
         <input
           type="text"
@@ -24,7 +28,7 @@ export default function SaveThemeArea({ themeInput, setThemeInput, onSave, savin
           onClick={onSave}
           disabled={saving || !themeInput.trim()}
         >
-          {saving ? '保存中…' : '📝 テーマを保存'}
+          {saving ? '保存中…' : '📝 保存'}
         </button>
       </div>
     </div>

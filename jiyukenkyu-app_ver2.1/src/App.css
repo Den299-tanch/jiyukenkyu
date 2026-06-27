@@ -468,3 +468,107 @@
 @media (max-width: 600px) {
   .save-theme-row { flex-direction: column; }
 }
+
+/* ===== ユーザー番号入力画面 ===== */
+.userid-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  padding: 20px;
+}
+
+.userid-content {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.userid-title {
+  font-size: 32px;
+  color: white;
+  margin: 0 0 12px;
+}
+
+.userid-sub {
+  font-size: 16px;
+  color: #a0aec0;
+  margin: 0 0 32px;
+}
+
+.userid-input {
+  display: block;
+  margin: 0 auto 20px;
+  padding: 16px;
+  width: 120px;
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  outline: none;
+  font-family: inherit;
+}
+
+.userid-input:focus {
+  border-color: #6a5af9;
+}
+
+.userid-btn {
+  padding: 14px 40px;
+  background: linear-gradient(135deg, #6a5af9, #5044d6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s;
+}
+
+.userid-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.userid-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== 保存済みテーマ一覧 ===== */
+.saved-themes-list {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.saved-themes-title {
+  color: #e6ebf2;
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0 0 10px;
+}
+
+.saved-theme-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.saved-theme-num {
+  color: #a0aec0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.saved-theme-text {
+  color: #e6ebf2;
+  font-size: 15px;
+}
