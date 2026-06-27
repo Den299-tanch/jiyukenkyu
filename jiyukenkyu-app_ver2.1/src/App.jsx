@@ -5,6 +5,8 @@ import CategorySelect from './components/CategorySelect';
 import ChatBox from './components/ChatBox';
 import DictScreen from './components/DictScreen'; 
 import { callClaude } from './services/Claudeapi';
+import SaveThemeArea from './components/SaveThemeArea';
+
 
 // 画面の種類
 // 'title'          → タイトル画面
@@ -22,6 +24,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [specialMode, setSpecialMode] = useState(null); 
+
+  const [themeInput, setThemeInput] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
@@ -97,6 +103,32 @@ export default function App() {
     setLoading(false);
   }
 
+  async function handleSaveTheme() {
+    const theme = themeInput.trim();
+    if (!theme) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/save-theme`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: null,
+          category: category?.id,
+          theme,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      setSaved(true);
+      setMessages(prev => [...prev, { role: 'ai', text: `テーマ「${theme}」を保存したよ！🎉` }]);
+    } catch (err) {
+      alert('保存に失敗しました: ' + err.message);
+    }
+    setSaving(false);
+  }
+
   return (
     <div className="app">
       {screen === 'title' && (
@@ -137,6 +169,13 @@ export default function App() {
             setInput={setInput}
             onSend={handleSend}
             loading={loading}
+          />
+          <SaveThemeArea
+            themeInput={themeInput}
+            setThemeInput={setThemeInput}
+            onSave={handleSaveTheme}
+            saving={saving}
+            saved={saved}
           />
         </>
       )}
