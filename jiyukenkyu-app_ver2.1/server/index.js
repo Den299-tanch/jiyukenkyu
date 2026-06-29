@@ -93,7 +93,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// テーマ保存エンドポイント
+// テーマ保存エンドポイント(サーバーへの窓口)
 app.post('/api/save-theme', async (req, res) => {
   try {
     const { user_id, category, theme } = req.body;
@@ -104,6 +104,21 @@ app.post('/api/save-theme', async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
     console.error('Save theme error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ユーザーごとのテーマ取得エンドポイント
+app.get('/api/themes/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      'SELECT id, category, theme, created_at FROM themes WHERE user_id = $1 ORDER BY created_at ASC',
+      [userId]
+    );
+    res.json({ success: true, themes: result.rows });
+  } catch (err) {
+    console.error('Get themes error:', err);
     res.status(500).json({ error: err.message });
   }
 });
