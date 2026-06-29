@@ -7,6 +7,7 @@ import DictScreen from './components/DictScreen';
 import { callClaude } from './services/Claudeapi';
 import SaveThemeArea from './components/SaveThemeArea';
 import UserIdScreen from './components/UserIdScreen';
+import ThemeListScreen from './components/ThemeListScreen';
 
 
 // 画面の種類
@@ -185,6 +186,14 @@ export default function App() {
             saving={saving}
             savedThemes={savedThemes}
           />
+          <div className="chat-next-row">
+            <button
+              className="next-btn"
+              onClick={() => setScreen('theme-list')}
+            >
+              テーマ一覧へ →
+            </button>
+          </div>
         </>
       )}
 
@@ -192,6 +201,14 @@ export default function App() {
         <DictScreen
           category={category}
           onBack={() => setScreen('dict-category')}
+        />
+      )}
+
+      {screen === 'theme-list' && (
+        <ThemeListScreen
+          userId={userId}
+          onBack={() => setScreen('chat')}
+          onNext={() => alert('仮説パートはこれから実装するよ！')}
         />
       )}
 

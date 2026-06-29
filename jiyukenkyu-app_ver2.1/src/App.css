@@ -572,3 +572,98 @@
   color: #e6ebf2;
   font-size: 15px;
 }
+
+/* ===== テーマ一覧画面 ===== */
+.theme-list-screen {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  padding-bottom: 100px;
+}
+
+.theme-list-content {
+  max-width: 800px;
+  margin: 24px auto;
+  padding: 0 24px;
+}
+
+.theme-list-msg {
+  text-align: center;
+  color: #a0aec0;
+  font-size: 16px;
+  margin-top: 40px;
+}
+
+.theme-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.theme-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+
+.theme-list-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.theme-list-cat {
+  color: #a0aec0;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.theme-list-text {
+  color: #e6ebf2;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.theme-list-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px;
+  background: rgba(15, 52, 96, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+}
+
+/* ===== チャット画面の次へボタン ===== */
+.chat-next-row {
+  max-width: 900px;
+  margin: 12px auto 24px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 24px;
+}
+
+.next-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #6a5af9, #5044d6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.next-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(106, 90, 249, 0.4);
+}
