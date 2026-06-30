@@ -16,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 const API_KEY = process.env.CLAUDE_API_KEY;
+
 // PostgreSQL接続プール
 const { Pool } = pg;
 const pool = new Pool({
