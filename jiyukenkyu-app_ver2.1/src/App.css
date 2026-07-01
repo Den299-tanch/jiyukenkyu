@@ -682,7 +682,7 @@
   border: 1px solid rgba(106, 90, 249, 0.4);
   border-radius: 12px;
   color: #b9adf0;
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   cursor: pointer;
 }
@@ -718,7 +718,7 @@
   padding: 16px;
   background: rgba(72, 187, 120, 0.15);
   border: 1px solid rgba(72, 187, 120, 0.5);
-  border-radius: 12px;Z
+  border-radius: 12px;
   color: #7fd9ac;
   font-size: 16px;
   font-family: inherit;
