@@ -8,6 +8,7 @@ import { callClaude } from './services/Claudeapi';
 import SaveThemeArea from './components/SaveThemeArea';
 import UserIdScreen from './components/UserIdScreen';
 import ThemeListScreen from './components/ThemeListScreen';
+import HypothesisScreen from './components/HypothesisScreen';
 
 
 // 画面の種類
@@ -32,6 +33,8 @@ export default function App() {
   const [themeInput, setThemeInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedThemes, setSavedThemes] = useState([]);
+
+  const [selectedTheme, setSelectedTheme] = useState(null);
 
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
@@ -208,7 +211,23 @@ export default function App() {
         <ThemeListScreen
           userId={userId}
           onBack={() => setScreen('chat')}
-          onNext={() => alert('仮説パートはこれから実装するよ！')}
+          onNext={(theme) => {
+            setSelectedTheme(theme);
+            setScreen('hypothesis');
+          }}
+        />
+      )}
+
+      {screen === 'hypothesis' && (
+        <HypothesisScreen
+          userId={userId}
+          theme={selectedTheme}
+          onBack={() => setScreen('theme-list')}
+          onNext={(savedHypothesis) => {
+            alert('仮説を保存したよ！次のパート(スケジュール作成)はこれから実装するよ！');
+            // 今はここで一旦タイトルに戻す。次のパートができたら screen を変える
+            setScreen('title');
+          }}
         />
       )}
 

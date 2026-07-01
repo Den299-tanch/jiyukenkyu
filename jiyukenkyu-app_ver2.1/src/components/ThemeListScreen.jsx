@@ -5,6 +5,7 @@ export default function ThemeListScreen({ userId, onBack, onNext }) {
   const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedTheme, setSelectedTheme] = useState(null); // ← 追加
 
   // 画面表示時に1回だけ実行
   useEffect(() => {
@@ -41,8 +42,14 @@ export default function ThemeListScreen({ userId, onBack, onNext }) {
           <ul className="theme-list">
             {themes.map((t) => {
               const cat = getCategoryById(t.category);
+              const isSelected = selectedTheme?.id === t.id; // ← 追加
               return (
-                <li key={t.id} className="theme-list-item">
+                <li
+                  key={t.id}
+                  className={`theme-list-item ${isSelected ? 'selected' : ''}`} // ← 追加
+                  onClick={() => setSelectedTheme(t)} // ← 追加
+                  style={{ cursor: 'pointer' }} // ← 追加
+                >
                   <span className="theme-list-cat">
                     {cat ? `${cat.icon} ${cat.label}` : t.category}
                   </span>
@@ -55,7 +62,11 @@ export default function ThemeListScreen({ userId, onBack, onNext }) {
       </div>
 
       <div className="theme-list-footer">
-        <button className="next-btn" onClick={onNext}>
+        <button
+          className="next-btn"
+          onClick={() => onNext(selectedTheme)}
+          disabled={!selectedTheme}
+        >
           仮説を考える →
         </button>
       </div>
