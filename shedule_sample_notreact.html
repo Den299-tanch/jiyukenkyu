@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ScheduleEditor プレビュー</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .container { max-width: 768px; margin: 0 auto; }
+
+  h1 { font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .theme { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: #334155;
+    cursor: pointer;
+  }
+  button:hover { background: #f1f5f9; }
+  button.edit-on { background: #059669; color: white; border-color: #059669; }
+  button.primary { background: #2563eb; color: white; border-color: #2563eb; }
+  button.primary:hover { background: #1d4ed8; }
+
+  .list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .card {
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card.junbi  { background: #eff6ff; }
+  .card.jikken { background: #fff7ed; }
+  .card.kiroku { background: #fffbeb; }
+  .card.matome { background: #ecfdf5; }
+  .card.yasumi { background: #f3f4f6; }
+
+  .card.junbi  .date, .card.junbi  .task { color: #1e3a8a; }
+  .card.jikken .date, .card.jikken .task { color: #7c2d12; }
+  .card.kiroku .date, .card.kiroku .task { color: #78350f; }
+  .card.matome .date, .card.matome .task { color: #064e3b; }
+  .card.yasumi .date, .card.yasumi .task { color: #374151; }
+
+  .date { width: 96px; font-size: 14px; font-weight: 500; flex-shrink: 0; }
+  .icon { font-size: 24px; flex-shrink: 0; }
+  .task { flex: 1; font-size: 14px; }
+  .label { font-size: 12px; flex-shrink: 0; }
+
+  .card.junbi  .label { color: #1e3a8a; }
+  .card.jikken .label { color: #7c2d12; }
+  .card.kiroku .label { color: #78350f; }
+  .card.matome .label { color: #064e3b; }
+  .card.yasumi .label { color: #374151; }
+
+  input.inline-edit, select.inline-edit {
+    font-family: inherit;
+    font-size: 13px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    width: 100%;
+  }
+  select.inline-edit { width: auto; font-size: 12px; }
+
+  .del-btn {
+    color: #ef4444;
+    background: none;
+    border: none;
+    font-size: 18px;
+    padding: 4px 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .del-btn:hover { background: none; opacity: 0.7; }
+
+  .add-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+    background: transparent;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .add-btn:hover { background: #f8fafc; }
+
+  details {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  summary { cursor: pointer; font-size: 14px; font-weight: 500; color: #334155; }
+  pre {
+    margin-top: 12px;
+    font-size: 12px;
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 12px;
+    border-radius: 8px;
+    overflow: auto;
+    max-height: 384px;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+
+  .saved-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .saved-box .saved-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e3a8a;
+    margin-bottom: 8px;
+  }
+  .saved-box .saved-note {
+    font-size: 12px;
+    color: #1d4ed8;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>なつやすみの じゆうけんきゅう よてい</h1>
+  <p class="theme">テーマ: アサガオは どうしてつるをまくのかな?</p>
+
+  <div class="btn-row">
+    <button id="editBtn">✏️ へんしゅうする</button>
+    <button id="resetBtn">↺ さいしょからやりなおす</button>
+    <button id="saveBtn" class="primary">💾 ほぞんする</button>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div id="addWrap" style="display:none; margin-bottom:24px;">
+    <button class="add-btn" id="addBtn">+ よていを ついかする</button>
+  </div>
+
+  <details>
+    <summary>🔍 げんざいのJSON(state の中身、リアルタイム)</summary>
+    <pre id="liveJson"></pre>
+  </details>
+
+  <div id="savedBox" class="saved-box" style="display:none;">
+    <div class="saved-label">💾 ほぞんボタンを押した時に DB に送られるJSON:</div>
+    <pre id="savedJson"></pre>
+    <p class="saved-note">
+      本物のアプリではこれを fetch('/api/save-schedule', ...) でサーバーに送って、
+      PostgreSQL の schedule_json カラムに保存する。
+    </p>
+  </div>
+</div>
+
+<script>
+// ===== 初期スケジュール =====
+const INITIAL_SCHEDULE = [
+  { id: 1,  date: "7/21(月)", task: "テーマをきめる",              type: "junbi" },
+  { id: 2,  date: "7/22(火)", task: "としょかんで本をかりる",        type: "junbi" },
+  { id: 3,  date: "7/23(水)", task: "かせつを考える",              type: "junbi" },
+  { id: 4,  date: "7/24(木)", task: "じっけんのざいりょうをかう",     type: "junbi" },
+  { id: 5,  date: "7/26(土)", task: "おやすみ",                   type: "yasumi" },
+  { id: 6,  date: "7/28(月)", task: "アサガオのたねをまく",          type: "jikken" },
+  { id: 7,  date: "7/29(火)", task: "まいにちの記ろくをはじめる",     type: "kiroku" },
+  { id: 8,  date: "8/4(月)",  task: "1しゅうかんめの しゃしんをとる", type: "kiroku" },
+  { id: 9,  date: "8/8(金)",  task: "つるがでてきたら記ろく",        type: "kiroku" },
+  { id: 10, date: "8/11(月)", task: "つるのまく方こうをしらべる",     type: "jikken" },
+  { id: 11, date: "8/15(金)", task: "2しゅうかん分のデータをまとめる",type: "matome" },
+  { id: 12, date: "8/19(火)", task: "こうさつを書く",              type: "matome" },
+  { id: 13, date: "8/23(土)", task: "まとめのげんこうを書く",        type: "matome" },
+  { id: 14, date: "8/27(水)", task: "きれいに せいしょする",         type: "matome" },
+  { id: 15, date: "8/30(土)", task: "かんせい!いんさつする",        type: "matome" },
+];
+
+const TYPE_STYLE = {
+  junbi:  { label: "じゅんび", icon: "🔧" },
+  jikken: { label: "じっけん", icon: "🧪" },
+  kiroku: { label: "きろく",   icon: "📸" },
+  matome: { label: "まとめ",   icon: "📝" },
+  yasumi: { label: "やすみ",   icon: "🍉" },
+};
+
+// ===== state =====
+let schedule = INITIAL_SCHEDULE.map(item => ({ ...item }));
+let editMode = false;
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function render() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  schedule.forEach(item => {
+    const style = TYPE_STYLE[item.type] || TYPE_STYLE.junbi;
+    const card = document.createElement("div");
+    card.className = "card " + item.type;
+
+    if (editMode) {
+      card.innerHTML = `
+        <div class="date">
+          <input class="inline-edit" data-id="${item.id}" data-field="date" value="${escapeHtml(item.date)}">
+        </div>
+        <div class="icon">${style.icon}</div>
+        <div class="task">
+          <input class="inline-edit" data-id="${item.id}" data-field="task" value="${escapeHtml(item.task)}">
+        </div>
+        <select class="inline-edit" data-id="${item.id}" data-field="type">
+          ${Object.entries(TYPE_STYLE).map(([k, v]) =>
+            `<option value="${k}"${k === item.type ? " selected" : ""}>${v.label}</option>`
+          ).join("")}
+        </select>
+        <button class="del-btn" data-id="${item.id}" aria-label="この行を削除">✕</button>
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="date">${escapeHtml(item.date)}</div>
+        <div class="icon">${style.icon}</div>
+        <div class="task">${escapeHtml(item.task)}</div>
+        <div class="label">${style.label}</div>
+      `;
+    }
+    list.appendChild(card);
+  });
+
+  document.getElementById("addWrap").style.display = editMode ? "block" : "none";
+  document.getElementById("liveJson").textContent = JSON.stringify(schedule, null, 2);
+
+  // 入力イベントを再バインド
+  list.querySelectorAll(".inline-edit").forEach(el => {
+    el.addEventListener("input", e => {
+      const id = Number(e.target.dataset.id);
+      const field = e.target.dataset.field;
+      const value = e.target.value;
+      schedule = schedule.map(i => (i.id === id ? { ...i, [field]: value } : i));
+      if (field === "type") {
+        render(); // 色を変えるため再描画
+      } else {
+        document.getElementById("liveJson").textContent = JSON.stringify(schedule, null, 2);
+      }
+    });
+  });
+  list.querySelectorAll(".del-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      const id = Number(e.currentTarget.dataset.id);
+      schedule = schedule.filter(i => i.id !== id);
+      render();
+    });
+  });
+}
+
+// ===== ボタン =====
+document.getElementById("editBtn").addEventListener("click", () => {
+  editMode = !editMode;
+  const btn = document.getElementById("editBtn");
+  btn.textContent = editMode ? "✓ へんしゅうおわり" : "✏️ へんしゅうする";
+  btn.classList.toggle("edit-on", editMode);
+  render();
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm("ほんとうに さいしょから やりなおす?")) {
+    schedule = INITIAL_SCHEDULE.map(item => ({ ...item }));
+    document.getElementById("savedBox").style.display = "none";
+    render();
+  }
+});
+
+document.getElementById("saveBtn").addEventListener("click", () => {
+  const json = JSON.stringify(schedule, null, 2);
+  document.getElementById("savedJson").textContent = json;
+  document.getElementById("savedBox").style.display = "block";
+});
+
+document.getElementById("addBtn").addEventListener("click", () => {
+  const newId = Math.max(...schedule.map(s => s.id), 0) + 1;
+  schedule = [...schedule, { id: newId, date: "?/??", task: "あたらしいよてい", type: "junbi" }];
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
