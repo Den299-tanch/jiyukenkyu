@@ -8,6 +8,7 @@ export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
   const [hypothesis, setHypothesis] = useState('');
   const [hint, setHint] = useState('');
   const [hintCount, setHintCount] = useState(0);
+  const [hintHistory, setHintHistory] = useState([]); // これまで出したヒントを溜めておく配列
   const [hintLoading, setHintLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -22,13 +23,17 @@ export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          category: cat?.mode,
-          research_note: researchNote,
+            category: cat?.mode,
+            research_note: researchNote,
+            previous_hints: hintHistory, // ← 追加: これまで出したヒントを一緒に送る
         }),
       });
       const data = await res.json();
       if (!data.content) throw new Error(data.error?.message ?? JSON.stringify(data));
-      setHint(data.content[0].text);
+
+      const newHint = data.content[0].text;
+      setHint(newHint);
+      setHintHistory(prev => [...prev, newHint]); // ← 追加: 履歴配列に今回のヒントを足す
       setHintCount(prev => prev + 1);
     } catch (err) {
       setHint('エラー: ' + err.message);

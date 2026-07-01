@@ -52,6 +52,7 @@ const HYPOTHESIS_HINT_SYSTEM = `あなたは小学生の自由研究を手伝う
 絶対に答えや仮説そのものを教えないでください。
 かわりに「〇〇を観察してみよう」「〇〇を本で調べてみよう」のように、
 調べる"方向"だけをやさしく提案してください。
+すでに出したヒントがある場合は、それとは違う切り口・違う調べ方を提案してください(同じ内容の繰り返しはNG)。
 返答は2文以内、やさしい言葉で。`;
 
 const DEV_SYSTEM = `あなたは自由研究という枠にとらわれない開発者と肩を並べる創造神です。ユーザーはこのアプリの開発者です。
@@ -150,15 +151,21 @@ app.post('/api/save-hypothesis', async (req, res) => {
 // 仮説パートのAIヒント(単発、会話履歴なし)
 app.post('/api/hypothesis-hint', async (req, res) => {
   try {
-    const { category, research_note } = req.body;
+    const { category, research_note, previous_hints } = req.body;
     const modePrompt = PROMPTS[category] ?? '';
     const systemPrompt = modePrompt
       ? `${modePrompt}\n\n${HYPOTHESIS_HINT_SYSTEM}`
       : HYPOTHESIS_HINT_SYSTEM;
 
-    const userText = research_note
+    let userText = research_note
       ? `ここまで調べたこと: ${research_note}\n\nこれをふまえて、次に何を調べたらいいかヒントをください。`
       : 'まだ何も調べていません。何から調べ始めたらいいかヒントをください。';
+
+    // すでに出したヒントがあれば、重複を避けるための情報として追加
+    if (previous_hints && previous_hints.length > 0) {
+      const pastList = previous_hints.map((h, i) => `${i + 1}. ${h}`).join('\n');
+      userText += `\n\n【すでに出したヒント(この内容とは違う切り口でお願いします)】\n${pastList}`;
+    }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
