@@ -674,54 +674,9 @@
   border-color: rgba(72, 187, 120, 0.6);
 }
 
-.hypothesis-content {
-  max-width: 900px;
-  margin: 12px auto 24px;
-  padding: 0 24px;
-}
-
-.hypothesis-badge {
-  display: inline-block;
-  padding: 8px 16px;
-  background: rgba(72, 187, 120, 0.15);
-  border: 1px solid rgba(72, 187, 120, 0.4);
-  border-radius: 20px;
-  color: #7fd9ac;
-  font-size: 13px;
-  margin: 0 0 20px;
-}
-
-.hypothesis-label {
-  display: block;
-  color: #a0aec0;
-  font-size: 14px;
-  font-weight: bold;
-  margin: 0 0 8px;
-}
-
-.hypothesis-textarea {
-  width: 100%;
-  padding: 14px 16px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  color: #e6ebf2;
-  font-size: 15px;
-  font-family: inherit;
-  resize: vertical;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.hypothesis-textarea:focus {
-  border-color: #48bb78;
-  background: rgba(0, 0, 0, 0.4);
-}
-
 .hint-btn {
   width: 100%;
-  padding: 14px 16px;
+  padding: 16px 16px;
   margin-bottom: 12px;
   background: rgba(106, 90, 249, 0.15);
   border: 1px solid rgba(106, 90, 249, 0.4);
@@ -739,7 +694,7 @@
 
 .hint-count {
   color: #7c72a8;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .hint-result {
@@ -749,11 +704,88 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   color: #d4dce6;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.6;
 }
 
 .hypothesis-footer-row {
   display: flex;
   justify-content: flex-end;
+}
+
+.add-list-btn {
+  width: 100%;
+  padding: 16px;
+  background: rgba(72, 187, 120, 0.15);
+  border: 1px solid rgba(72, 187, 120, 0.5);
+  border-radius: 12px;Z
+  color: #7fd9ac;
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.add-list-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.saved-list-title {
+  color: #e6ebf2;
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+
+.saved-hypothesis-card {
+  position: relative;
+  padding: 14px 16px 14px 20px;
+  margin-bottom: 12px;
+  background: #1a2440;
+  border: 1px solid #2d3a55;
+  border-radius: 10px;
+}
+
+.saved-hypothesis-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #48bb78;
+  border-radius: 10px 0 0 10px;
+}
+
+.saved-hypothesis-note {
+  color: #8a94a8;
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+
+.saved-hypothesis-text {
+  color: #e6ebf2;
+  font-size: 17px;
+  margin: 0;
+}
+
+.hypothesis-next-row {
+  margin-top: 24px;
+}
+
+.hypothesis-next-btn {
+  width: 100%;
+  padding: 16px;
+  background: none;
+  border: 1px solid #6a5af9;
+  border-radius: 12px;
+  color: #b9adf0;
+  font-size: 17px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.hypothesis-next-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
