@@ -1,13 +1,16 @@
 // カテゴリの定義
-// mode="dict"  → 辞書機能用
-// mode="chat"  → テーマ決定用
-// どちらも同じカテゴリ一覧を使う
+// mode="dict"  → 辞書機能用（DICT_CATEGORIES）
+// mode="chat"  → テーマ決定用（CATEGORIES）
+// 辞書とテーマ決定でカテゴリ一覧は別々に管理している
 import { CATEGORIES } from '../data/categories';
+import { DICT_CATEGORIES } from '../data/dictCategories';
 
 export default function CategorySelect({ mode, onSelect, onBack }) {
   const title = mode === 'dict'
     ? '📖 どのカテゴリを調べますか？'
     : '💡 どのカテゴリに興味がありますか？';
+
+  const categories = mode === 'dict' ? DICT_CATEGORIES : CATEGORIES;
 
   return (
     <div className="category-screen">
@@ -16,7 +19,7 @@ export default function CategorySelect({ mode, onSelect, onBack }) {
       <h2 className="category-title">{title}</h2>
 
       <div className="category-grid">
-        {CATEGORIES.map(cat => (
+        {categories.map(cat => (
           <button
             key={cat.id}
             className="category-btn"

@@ -14,7 +14,10 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(106, 90, 249, 0.07), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(72, 187, 120, 0.08), transparent 40%),
+    #fffdf8;
   padding: 20px;
 }
 
@@ -36,16 +39,17 @@
 }
 
 .title-main {
-  font-size: 40px;
-  font-weight: bold;
-  color: white;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: #1b3358;
   margin: 0 0 12px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .title-sub {
   font-size: 18px;
-  color: #a0aec0;
+  color: #5b6b85;
   margin: 0 0 40px;
 }
 
@@ -65,41 +69,76 @@
   border: none;
   border-radius: 20px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.15s, box-shadow 0.15s;
   min-width: 200px;
   font-family: inherit;
 }
 
 .title-btn:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+}
+
+.title-btn:active {
+  transform: translateY(2px);
 }
 
 .dict-btn {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  background: linear-gradient(135deg, #4facfe, #0072ff);
   color: white;
+  box-shadow: 0 6px 0 #0058c9;
+}
+
+.dict-btn:hover {
+  box-shadow: 0 9px 0 #0058c9;
+}
+
+.dict-btn:active {
+  box-shadow: 0 3px 0 #0058c9;
 }
 
 .chat-btn {
   background: linear-gradient(135deg, #f093fb, #f5576c);
   color: white;
+  box-shadow: 0 6px 0 #c23d55;
 }
 
-.btn-icon  { font-size: 40px; }
-.btn-label { font-size: 20px; font-weight: bold; }
-.btn-desc  { font-size: 13px; opacity: 0.85; }
+.chat-btn:hover {
+  box-shadow: 0 9px 0 #c23d55;
+}
+
+.chat-btn:active {
+  box-shadow: 0 3px 0 #c23d55;
+}
+
+.btn-icon {
+  font-size: 36px;
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+}
+.btn-label { font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif; font-size: 18px; font-weight: 400; }
+.btn-desc  { font-size: 13px; opacity: 0.9; }
 
 /* ===== カテゴリ選択画面 ===== */
 .category-screen {
   padding: 24px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(106, 90, 249, 0.06), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(72, 187, 120, 0.08), transparent 40%),
+    #fffdf8;
 }
 
 .category-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
   text-align: center;
-  color: white;
-  font-size: 24px;
+  color: #1b3358;
+  font-size: 20px;
+  font-weight: 400;
   margin: 20px 0 32px;
 }
 
@@ -117,28 +156,45 @@
   align-items: center;
   gap: 10px;
   padding: 28px 16px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
   border-radius: 16px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
-  color: white;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.15s, border-color 0.2s;
+  color: #1b3358;
   font-family: inherit;
+  box-shadow: 0 3px 0 #e4dfc9;
 }
 
 .category-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-3px);
+  background: #fdf8ec;
+  border-color: #f0d9a0;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #e8ceab;
 }
 
-.cat-icon  { font-size: 42px; }
+.category-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #e4dfc9;
+}
+
+.cat-icon {
+  font-size: 34px;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fdf3df;
+}
 .cat-label { font-size: 16px; font-weight: bold; }
 
 /* ===== 戻るボタン（共通） ===== */
 .back-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: #f5efdb;
+  border: 2px solid #e4dfc9;
+  color: #1b3358;
   padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
@@ -148,7 +204,7 @@
 }
 
 .back-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #f0e8cf;
 }
 
 /* ===== チャット画面ヘッダー ===== */
@@ -157,27 +213,30 @@
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #fffdf8;
+  border-bottom: 2px dashed #e4dfc9;
   max-width: 900px;
   margin: 0 auto;
 }
 
 .screen-header h2 {
-  color: white;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  color: #1b3358;
   margin: 0;
-  font-size: 20px;
+  font-size: 17px;
+  font-weight: 400;
 }
 
 /* ===== チャット画面（ChatBox / MessageList / Message / InputForm） ===== */
 #chat-box {
   max-width: 900px;
   margin: 0 auto;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
   border-radius: 16px;
   overflow: hidden;
   margin-top: 16px;
+  box-shadow: 0 3px 0 #e4dfc9;
 }
 
 #messages {
@@ -208,7 +267,7 @@
 
 .label {
   font-size: 11px;
-  color: #8a96a8;
+  color: #5b6b85;
   margin-bottom: 4px;
   padding: 0 4px;
 }
@@ -228,13 +287,14 @@
 }
 
 .msg.ai .bubble {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e6ebf2;
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  color: #1b3358;
   border-bottom-left-radius: 4px;
 }
 
 .msg.ai .bubble.loading {
-  color: #8a96a8;
+  color: #5b6b85;
   font-style: italic;
 }
 
@@ -243,29 +303,29 @@
   display: flex;
   gap: 10px;
   padding: 16px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  border-top: 2px dashed #e4dfc9;
+  background: #fdfaf2;
 }
 
 #user-input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 2px solid #e4dfc9;
   border-radius: 10px;
   font-size: 15px;
   outline: none;
-  background: rgba(0, 0, 0, 0.25);
-  color: #e6ebf2;
+  background: #ffffff;
+  color: #1b3358;
   font-family: inherit;
 }
 
 #user-input::placeholder {
-  color: #6a7588;
+  color: #a89f88;
 }
 
 #user-input:focus {
   border-color: #6a5af9;
-  background: rgba(0, 0, 0, 0.4);
+  background: #f5f3ff;
 }
 
 #user-input:disabled {
@@ -280,20 +340,27 @@
   border: none;
   border-radius: 10px;
   font-size: 15px;
-  font-weight: bold;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.1s, box-shadow 0.2s;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 4px 0 #4636a8;
 }
 
 #send-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(106, 90, 249, 0.4);
+  box-shadow: 0 5px 0 #4636a8;
+}
+
+#send-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #4636a8;
 }
 
 #send-btn:disabled {
-  background: rgba(255, 255, 255, 0.15);
-  color: #6a7588;
+  background: #ece6d4;
+  color: #a89f88;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -301,19 +368,24 @@
 .dict-screen {
   padding: 24px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(79, 172, 254, 0.06), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(72, 187, 120, 0.07), transparent 40%),
+    #fffdf8;
 }
 
 .dict-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
   text-align: center;
-  color: white;
-  font-size: 24px;
+  color: #1b3358;
+  font-size: 20px;
+  font-weight: 400;
   margin: 20px 0 24px;
 }
 
 .dict-empty {
   text-align: center;
-  color: #a0aec0;
+  color: #5b6b85;
   margin-top: 40px;
 }
 
@@ -326,16 +398,18 @@
 }
 
 .dict-item {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
   border-radius: 12px;
   overflow: hidden;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 0 #e4dfc9;
 }
 
 .dict-item.open {
-  background: rgba(79, 172, 254, 0.12);
-  border-color: rgba(79, 172, 254, 0.4);
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 3px 0 rgba(59, 130, 246, 0.25);
 }
 
 .dict-item-head {
@@ -347,8 +421,8 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: white;
-  font-size: 18px;
+  color: #1b3358;
+  font-size: 17px;
   font-weight: bold;
   text-align: left;
   transition: background 0.15s;
@@ -356,20 +430,21 @@
 }
 
 .dict-item-head:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #fdf8ec;
 }
 
 .dict-keyword { flex: 1; }
 
 .dict-arrow {
   font-size: 12px;
-  opacity: 0.7;
+  color: #0072ff;
+  opacity: 0.8;
   margin-left: 12px;
 }
 
 .dict-desc {
   padding: 0 22px 20px;
-  color: #d4dce6;
+  color: #1b3358;
   font-size: 15px;
   line-height: 1.7;
   animation: dictExpand 0.25s ease;
@@ -385,19 +460,19 @@
   max-width: 900px;
   margin: 12px auto 24px;
   padding: 20px 24px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px dashed rgba(255, 255, 255, 0.25);
+  background: #fdfaf2;
+  border: 2px dashed #e4dfc9;
   border-radius: 16px;
 }
 
 .save-theme-area.saved {
   border-style: solid;
-  border-color: rgba(72, 187, 120, 0.5);
-  background: rgba(72, 187, 120, 0.1);
+  border-color: rgba(56, 161, 105, 0.5);
+  background: rgba(56, 161, 105, 0.08);
 }
 
 .save-theme-label {
-  color: #e6ebf2;
+  color: #1b3358;
   font-size: 15px;
   font-weight: bold;
   margin: 0 0 12px;
@@ -412,20 +487,20 @@
 .save-theme-input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 2px solid #e4dfc9;
   border-radius: 10px;
   font-size: 15px;
   outline: none;
-  background: rgba(0, 0, 0, 0.25);
-  color: #e6ebf2;
+  background: #ffffff;
+  color: #1b3358;
   font-family: inherit;
 }
 
-.save-theme-input::placeholder { color: #6a7588; }
+.save-theme-input::placeholder { color: #a89f88; }
 
 .save-theme-input:focus {
-  border-color: #48bb78;
-  background: rgba(0, 0, 0, 0.4);
+  border-color: #38a169;
+  background: #f0faf4;
 }
 
 .save-theme-input:disabled {
@@ -440,28 +515,36 @@
   border: none;
   border-radius: 10px;
   font-size: 15px;
-  font-weight: bold;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   cursor: pointer;
-  font-family: inherit;
   white-space: nowrap;
-  transition: transform 0.1s, box-shadow 0.2s;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 4px 0 #2f7d54;
 }
 
 .save-theme-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+  box-shadow: 0 5px 0 #2f7d54;
+}
+
+.save-theme-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #2f7d54;
 }
 
 .save-theme-btn:disabled {
-  background: rgba(255, 255, 255, 0.15);
-  color: #6a7588;
+  background: #ece6d4;
+  color: #a89f88;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
 .save-theme-done {
-  color: #68d391;
-  font-size: 16px;
-  font-weight: bold;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  color: #15803d;
+  font-size: 15px;
+  font-weight: 400;
   text-align: center;
   margin: 0;
 }
@@ -476,7 +559,10 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(106, 90, 249, 0.07), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(72, 187, 120, 0.08), transparent 40%),
+    #fffdf8;
   padding: 20px;
 }
 
@@ -486,14 +572,16 @@
 }
 
 .userid-title {
-  font-size: 32px;
-  color: white;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: #1b3358;
   margin: 0 0 12px;
 }
 
 .userid-sub {
   font-size: 16px;
-  color: #a0aec0;
+  color: #5b6b85;
   margin: 0 0 32px;
 }
 
@@ -505,10 +593,10 @@
   text-align: center;
   font-size: 28px;
   font-weight: bold;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid #e4dfc9;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  color: white;
+  background: #ffffff;
+  color: #1b3358;
   outline: none;
   font-family: inherit;
 }
@@ -523,15 +611,21 @@
   color: white;
   border: none;
   border-radius: 12px;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 17px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.2s;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 0 #4636a8;
 }
 
 .userid-btn:hover:not(:disabled) {
   transform: translateY(-2px);
+}
+
+.userid-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #4636a8;
 }
 
 .userid-btn:disabled {
@@ -543,13 +637,14 @@
 .saved-themes-list {
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px dashed #e4dfc9;
 }
 
 .saved-themes-title {
-  color: #e6ebf2;
-  font-size: 14px;
-  font-weight: bold;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  color: #1b3358;
+  font-size: 13px;
+  font-weight: 400;
   margin: 0 0 10px;
 }
 
@@ -559,25 +654,28 @@
   gap: 8px;
   padding: 10px 14px;
   margin-bottom: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background: #faf5e6;
   border-radius: 10px;
 }
 
 .saved-theme-num {
-  color: #a0aec0;
+  color: #5b6b85;
   font-size: 14px;
   font-weight: bold;
 }
 
 .saved-theme-text {
-  color: #e6ebf2;
+  color: #1b3358;
   font-size: 15px;
 }
 
 /* ===== テーマ一覧画面 ===== */
 .theme-list-screen {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(106, 90, 249, 0.06), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(72, 187, 120, 0.08), transparent 40%),
+    #fffdf8;
   padding-bottom: 100px;
 }
 
@@ -589,7 +687,7 @@
 
 .theme-list-msg {
   text-align: center;
-  color: #a0aec0;
+  color: #5b6b85;
   font-size: 16px;
   margin-top: 40px;
 }
@@ -608,24 +706,31 @@
   flex-direction: column;
   gap: 6px;
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
   border-radius: 12px;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 0 #e4dfc9;
 }
 
 .theme-list-item:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: #fdf8ec;
+  box-shadow: 0 4px 0 #e8ceab;
 }
 
 .theme-list-cat {
-  color: #a0aec0;
-  font-size: 13px;
+  display: inline-block;
+  align-self: flex-start;
+  color: #7a5c00;
+  background: #fdf3df;
+  font-size: 11px;
   font-weight: bold;
+  padding: 2px 10px;
+  border-radius: 10px;
 }
 
 .theme-list-text {
-  color: #e6ebf2;
+  color: #1b3358;
   font-size: 17px;
   line-height: 1.5;
 }
@@ -636,8 +741,8 @@
   left: 0;
   right: 0;
   padding: 16px 24px;
-  background: rgba(15, 52, 96, 0.95);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: #fffdf8;
+  border-top: 2px dashed #e4dfc9;
   display: flex;
   justify-content: center;
 }
@@ -658,32 +763,40 @@
   border: none;
   border-radius: 12px;
   font-size: 16px;
-  font-weight: bold;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.1s, box-shadow 0.2s;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 4px 0 #4636a8;
 }
 
 .next-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(106, 90, 249, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #4636a8;
+}
+
+.next-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #4636a8;
 }
 
 .theme-list-item.selected {
-  background: rgba(72, 187, 120, 0.18);
-  border-color: rgba(72, 187, 120, 0.6);
+  background: rgba(72, 187, 120, 0.1);
+  border-color: rgba(72, 187, 120, 0.5);
+  box-shadow: 0 3px 0 rgba(72, 187, 120, 0.3);
 }
 
 .hint-btn {
   width: 100%;
   padding: 16px 16px;
   margin-bottom: 12px;
-  background: rgba(106, 90, 249, 0.15);
-  border: 1px solid rgba(106, 90, 249, 0.4);
+  background: rgba(106, 90, 249, 0.06);
+  border: 2px dashed rgba(106, 90, 249, 0.4);
   border-radius: 12px;
-  color: #b9adf0;
+  color: #5b3ec4;
   font-size: 16px;
-  font-family: inherit;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   cursor: pointer;
 }
 
@@ -693,17 +806,17 @@
 }
 
 .hint-count {
-  color: #7c72a8;
+  color: #6b5b95;
   font-size: 14px;
 }
 
 .hint-result {
   padding: 14px 16px;
   margin-bottom: 20px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(106, 90, 249, 0.05);
+  border: 2px solid #e4dfc9;
   border-radius: 10px;
-  color: #d4dce6;
+  color: #1b3358;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -716,12 +829,13 @@
 .add-list-btn {
   width: 100%;
   padding: 16px;
-  background: rgba(72, 187, 120, 0.15);
-  border: 1px solid rgba(72, 187, 120, 0.5);
+  background: transparent;
+  border: 2px dashed rgba(72, 187, 120, 0.5);
   border-radius: 12px;
-  color: #7fd9ac;
+  color: #15803d;
   font-size: 16px;
-  font-family: inherit;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   cursor: pointer;
   margin-bottom: 24px;
 }
@@ -732,8 +846,10 @@
 }
 
 .saved-list-title {
-  color: #e6ebf2;
-  font-size: 17px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  color: #1b3358;
+  font-size: 15px;
+  font-weight: 400;
   margin: 0 0 12px;
 }
 
@@ -741,9 +857,10 @@
   position: relative;
   padding: 14px 16px 14px 20px;
   margin-bottom: 12px;
-  background: #1a2440;
-  border: 1px solid #2d3a55;
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
   border-radius: 10px;
+  box-shadow: 0 3px 0 #e4dfc9;
 }
 
 .saved-hypothesis-card::before {
@@ -758,13 +875,13 @@
 }
 
 .saved-hypothesis-note {
-  color: #8a94a8;
+  color: #5b6b85;
   font-size: 13px;
   margin: 0 0 6px;
 }
 
 .saved-hypothesis-text {
-  color: #e6ebf2;
+  color: #1b3358;
   font-size: 17px;
   margin: 0;
 }
@@ -777,11 +894,12 @@
   width: 100%;
   padding: 16px;
   background: none;
-  border: 1px solid #6a5af9;
+  border: 2px solid #6a5af9;
   border-radius: 12px;
-  color: #b9adf0;
-  font-size: 17px;
-  font-family: inherit;
+  color: #5b3ec4;
+  font-size: 16px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   cursor: pointer;
 }
 
@@ -800,17 +918,19 @@
 .hypothesis-badge {
   display: inline-block;
   padding: 8px 16px;
-  background: rgba(72, 187, 120, 0.15);
+  background: rgba(72, 187, 120, 0.1);
   border: 1px solid rgba(72, 187, 120, 0.4);
   border-radius: 20px;
-  color: #7fd9ac;
-  font-size: 15px;
+  color: #15803d;
+  font-size: 14px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   margin: 0 0 20px;
 }
 
 .hypothesis-label {
   display: block;
-  color: #a0aec0;
+  color: #5b6b85;
   font-size: 16px;
   font-weight: bold;
   margin: 0 0 8px;
@@ -820,10 +940,10 @@
   width: 100%;
   padding: 16px 18px;
   margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 2px solid #e4dfc9;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  color: #e6ebf2;
+  background: #ffffff;
+  color: #1b3358;
   font-size: 17px;
   font-family: inherit;
   resize: vertical;
@@ -832,7 +952,6 @@
 }
 
 .hypothesis-textarea:focus {
-  border-color: #48bb78;
-  background: rgba(0, 0, 0, 0.4);
+  border-color: #38a169;
+  background: #f0faf4;
 }
-

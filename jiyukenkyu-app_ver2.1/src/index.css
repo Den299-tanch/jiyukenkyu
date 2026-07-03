@@ -63,9 +63,9 @@ html, body, #root {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Yu Gothic', sans-serif;
-  background: #1a1a2e;
-  color: #e6ebf2;
+  font-family: 'Zen Maru Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  background: #fffdf8;
+  color: #1b3358;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
