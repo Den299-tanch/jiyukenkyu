@@ -106,7 +106,7 @@ export default function ResearchMethodScreen({
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      onNext(data.data);
+      onNext({ researchMethod: data.data, hypothesis: selectedHypothesis });
     } catch (err) {
       alert("保存に失敗しました: " + err.message);
     }

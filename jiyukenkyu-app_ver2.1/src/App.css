@@ -1166,3 +1166,332 @@
   color: #1b3358;
   margin: 0;
 }
+
+/* ===== スケジュールパート ===== */
+.schedule-content {
+  max-width: 900px;
+  margin: 12px auto 24px;
+  padding: 0 24px;
+}
+
+.sch-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  border-bottom: 2px dashed #e4dfc9;
+}
+
+.sch-tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 4px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  border-radius: 12px 12px 0 0;
+  background: #efebda;
+  color: #5b6b85;
+  cursor: pointer;
+  border: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.sch-tab.active {
+  background: #fffdf8;
+  color: #d84f4f;
+  border: 2px solid #e4dfc9;
+  border-bottom-color: #fffdf8;
+}
+
+.sch-intro-banner {
+  background: rgba(106, 90, 249, 0.06);
+  border: 2px dashed rgba(106, 90, 249, 0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #5b3ec4;
+  margin: 0 0 16px;
+}
+
+.sch-headline {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #1b3358;
+  margin: 0 0 16px;
+}
+
+.sch-date-card {
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.sch-date-label {
+  font-size: 13px;
+  font-weight: bold;
+  color: #1b3358;
+  margin-bottom: 8px;
+}
+
+.sch-date-input {
+  width: 100%;
+  border: none;
+  border-bottom: 2.5px solid #e4dfc9;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  color: #1b3358;
+  padding: 6px 2px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.sch-date-input:focus {
+  border-bottom-color: #38a169;
+}
+
+.sch-blank-table {
+  background: #ffffff;
+  border: 2.5px dashed #e4dfc9;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.sch-blank-th {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: #5b6b85;
+  font-weight: 700;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4dfc9;
+  margin-bottom: 8px;
+}
+
+.sch-ghost-row {
+  padding: 8px 0;
+  color: #c9c2ac;
+  font-size: 12px;
+  border-bottom: 1px dashed #efebda;
+}
+
+.sch-ghost-row:last-child {
+  border-bottom: none;
+}
+
+.sch-draft-error {
+  font-size: 13px;
+  color: #b23b3b;
+  background: rgba(178, 59, 59, 0.08);
+  border: 1px solid rgba(178, 59, 59, 0.3);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+}
+
+.sch-ai-btn {
+  margin-bottom: 10px;
+}
+
+.sch-secondary-btn {
+  width: 100%;
+  background: #ffffff;
+  color: #1b3358;
+  border: 2.5px dashed #e4dfc9;
+  padding: 14px;
+  border-radius: 16px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.sch-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sch-end-chip {
+  font-size: 12px;
+  background: #ffc93c;
+  color: #5c4200;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+.sch-progress-note {
+  font-size: 13px;
+  color: #5b6b85;
+  font-weight: 700;
+}
+
+.sch-task-card {
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.sch-task-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sch-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2.5px solid #e4dfc9;
+  background: #fff;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+}
+
+.sch-checkbox.checked {
+  background: #48bb78;
+  border-color: #48bb78;
+}
+
+.sch-checkbox.checked::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sch-date-field {
+  width: 90px;
+  border: none;
+  border-bottom: 2px solid #e4dfc9;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5b6b85;
+  padding: 4px 2px;
+  outline: none;
+}
+
+.sch-date-field:focus {
+  border-bottom-color: #38a169;
+}
+
+.sch-type-select {
+  border: none;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 5px 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.sch-del-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #c9c2ac;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.sch-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-bottom: 7px;
+}
+
+.sch-task-text {
+  width: 100%;
+  border: none;
+  border-top: 1.5px dashed #e4dfc9;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #1b3358;
+  padding: 8px 2px 0;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.sch-task-text.done {
+  color: #b9b2a0;
+  text-decoration: line-through;
+  text-decoration-color: #d8d2bc;
+}
+
+.sch-add-row-btn {
+  width: 100%;
+  border: 2.5px dashed #e4dfc9;
+  background: transparent;
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 12.5px;
+  color: #5b6b85;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.sch-retry-btn {
+  width: 100%;
+  background: #ffffff;
+  border: 2px solid #6a5af9;
+  color: #5b3ec4;
+  padding: 14px;
+  border-radius: 16px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.sch-retry-btn:disabled,
+.sch-secondary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sch-save-btn {
+  width: 100%;
+}
+
+/* タスクの9しゅるい色分け(バッジ・セレクト共通) */
+.t-jikken   { background: #ffefef; color: #b23b3b; }
+.t-kuraberu { background: #fff3e0; color: #a15c00; }
+.t-shiraberu{ background: #e8f7f5; color: #146b63; }
+.t-kansatsu { background: #eff7e9; color: #4c7a25; }
+.t-junbi    { background: #e9f3fc; color: #2b5d8a; }
+.t-kiroku   { background: #ecebfc; color: #4038a0; }
+.t-yasumi   { background: #f1efe7; color: #7a7562; }
+.t-matome   { background: #f6eefb; color: #7a3fa0; }
+.t-other    { background: #fbf3e4; color: #8a6a2c; }

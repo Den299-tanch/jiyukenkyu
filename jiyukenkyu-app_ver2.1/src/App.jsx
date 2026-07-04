@@ -10,6 +10,7 @@ import UserIdScreen from './components/UserIdScreen';
 import ThemeListScreen from './components/ThemeListScreen';
 import HypothesisScreen from './components/HypothesisScreen';
 import ResearchMethodScreen from './components/ResearchMethodScreen';
+import ScheduleScreen from './components/ScheduleScreen';
 
 
 // 画面の種類
@@ -37,6 +38,7 @@ export default function App() {
 
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [savedHypotheses, setSavedHypotheses] = useState([]);
+  const [scheduleContext, setScheduleContext] = useState(null); // { researchMethod, hypothesis }
 
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
@@ -239,8 +241,22 @@ export default function App() {
           theme={selectedTheme}
           savedHypotheses={savedHypotheses}
           onBack={() => setScreen('hypothesis')}
-          onNext={(savedResearchMethod) => {
-            alert('研究方法を保存したよ！次のパート(スケジュール作成)はこれから実装するよ！');
+          onNext={(context) => {
+            setScheduleContext(context);
+            setScreen('schedule');
+          }}
+        />
+      )}
+
+      {screen === 'schedule' && (
+        <ScheduleScreen
+          userId={userId}
+          theme={selectedTheme}
+          hypothesis={scheduleContext?.hypothesis}
+          researchMethod={scheduleContext?.researchMethod}
+          onBack={() => setScreen('research-method')}
+          onNext={(savedSchedule) => {
+            alert('スケジュールを保存したよ！次のパートはこれから実装するよ！');
             // 今はここで一旦タイトルに戻す。次のパートができたら screen を変える
             setScreen('title');
           }}

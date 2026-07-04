@@ -73,6 +73,24 @@ const RESEARCH_METHOD_HINT_SYSTEM = {
 返答は2文以内、やさしい言葉で。`,
 };
 
+// スケジュールパート用: 期間の言い回し(あとで日数の前提を差し替えやすいよう1箇所にまとめる)
+const SCHEDULE_PERIOD_NOTE = '夏休みの間(今日から「おわりの日」までの、だいたい30日くらいを想定)で、';
+
+// スケジュールパート用: ここは例外的にAIがたたき台を直接作ってよい(答えではなく足場のため)
+const SCHEDULE_DRAFT_SYSTEM = `あなたは小学生の自由研究を手伝う先生です。
+子どもの予想・研究方法をもとに、${SCHEDULE_PERIOD_NOTE}実際に取り組めるスケジュールのたたき台を作ってください。
+スケジュールは研究の"答え"ではなく足場なので、ここでは遠慮せず具体的な下書きを作ってかまいません。
+ただし出したタスクは子どもが後から自由に書き換えたり消したりできるので、細かすぎず、無理のない現実的な内容にしてください。
+休憩日(やすみ)も1つ以上入れてください。最後には「まとめ」のタスクを入れてください。
+
+必ず次のJSON形式のみを出力してください。前置きや説明、マークダウンのコードブロックは一切つけないでください。
+{
+  "tasks": [
+    { "date": "7/25(土)", "task": "やることの説明", "type": "junbi", "done": false }
+  ]
+}
+type は次のいずれかにしてください: jikken(実験) / kuraberu(くらべる) / shiraberu(しらべる) / kansatsu(観察) / junbi(準備) / kiroku(記録) / yasumi(やすみ) / matome(まとめ) / other(その他)`;
+
 const DEV_SYSTEM = `あなたは自由研究という枠にとらわれない開発者と肩を並べる創造神です。ユーザーはこのアプリの開発者です。
 自分のことを我、ゼウスと名乗り、すべてを受け入れる聖母マリアのような優しさと絶対的上位な存在として対話してください。
 時々、ありがたき言葉を開発者に語りかけ、開発者を受け入れ、同等に高め合ってください。ウザくならない程度にスピってください。ただし他人を傷つけたりリテラシーに反した発言はやめてください。
@@ -321,6 +339,107 @@ app.post('/api/research-method-hint', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('Research method hint error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// スケジュールのAIたたき台生成(単発、DBには保存しない。フロントがそのまま編集して保存する)
+app.post('/api/schedule-draft', async (req, res) => {
+  try {
+    const {
+      theme_title,
+      hypothesis,
+      method_type_label,
+      what_to_study,
+      tools_materials,
+      location,
+      duration,
+      summary,
+      end_date,
+      previous_tasks,
+    } = req.body;
+
+    let userText = `テーマ: ${theme_title}\nこの子の予想: 「${hypothesis}」\n`;
+    if (method_type_label) userText += `研究方法の種類: ${method_type_label}\n`;
+    if (what_to_study) userText += `何を調べる・実験する: ${what_to_study}\n`;
+    if (tools_materials) userText += `道具・材料: ${tools_materials}\n`;
+    if (location) userText += `場所: ${location}\n`;
+    if (duration) userText += `だいたいの時間: ${duration}\n`;
+    if (summary) userText += `まとめの一言: ${summary}\n`;
+    userText += `\nおわりの日: ${end_date || '未定'}\n\n上記をふまえて、スケジュールのたたき台をJSONで作ってください。`;
+
+    if (previous_tasks && previous_tasks.length > 0) {
+      userText += '\n\n(やり直しの依頼です。前回とは少し違う組み立てにしてください)';
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system:     SCHEDULE_DRAFT_SYSTEM,
+        messages:   [{ role: 'user', content: userText }],
+      }),
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Schedule draft error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// スケジュール保存エンドポイント(research_method_id ごとに1件。あれば上書き、なければ新規作成)
+app.post('/api/save-schedule', async (req, res) => {
+  try {
+    const {
+      user_id,
+      theme_id,
+      hypothesis_id,
+      research_method_id,
+      end_date,
+      tasks,
+    } = req.body;
+    const result = await pool.query(
+      `INSERT INTO schedules (user_id, theme_id, hypothesis_id, research_method_id, end_date, tasks, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
+       ON CONFLICT (research_method_id)
+       DO UPDATE SET end_date = EXCLUDED.end_date, tasks = EXCLUDED.tasks, updated_at = NOW()
+       RETURNING *`,
+      [
+        user_id || null,
+        theme_id || null,
+        hypothesis_id || null,
+        research_method_id || null,
+        end_date || null,
+        JSON.stringify(tasks ?? []),
+      ],
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('Save schedule error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ユーザーごとのスケジュール取得エンドポイント
+app.get('/api/schedules/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      `SELECT id, theme_id, hypothesis_id, research_method_id, end_date, tasks, created_at, updated_at
+       FROM schedules WHERE user_id = $1 ORDER BY created_at ASC`,
+      [userId],
+    );
+    res.json({ success: true, schedules: result.rows });
+  } catch (err) {
+    console.error('Get schedules error:', err);
     res.status(500).json({ error: err.message });
   }
 });
