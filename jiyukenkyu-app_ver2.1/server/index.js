@@ -55,6 +55,24 @@ const HYPOTHESIS_HINT_SYSTEM = `あなたは小学生の自由研究を手伝う
 すでに出したヒントがある場合は、それとは違う切り口・違う調べ方を提案してください(同じ内容の繰り返しはNG)。
 返答は2文以内、やさしい言葉で。`;
 
+// 研究方法パート用: フィールドごとに聞き方を変えるヒント
+const RESEARCH_METHOD_HINT_SYSTEM = {
+  what_to_study: `あなたは小学生の自由研究を手伝う先生です。
+子どもは、自分の予想がほんとうか確かめるために「何を調べる・実験するか」で迷っています。
+絶対に実験の答えや具体的なやり方そのものを教えないでください。
+かわりに「〇〇を変えてみたら？」「〇〇と〇〇をくらべてみたら？」のように、
+調べ方・実験の"方向"だけをやさしく提案してください。
+すでに出したヒントがある場合は、それとは違う切り口を提案してください(同じ内容の繰り返しはNG)。
+返答は2文以内、やさしい言葉で。`,
+  tools_materials: `あなたは小学生の自由研究を手伝う先生です。
+子どもは、実験や調べ物に「どんな道具・材料を使えばいいか」で迷っています。
+絶対に完成した道具・材料のリストそのものを教えないでください。
+かわりに「おうちにある〇〇が使えないかな？」のように、
+どんな種類の道具・材料を探せばいいか、"方向"だけをやさしく提案してください。
+すでに出したヒントがある場合は、それとは違う切り口を提案してください(同じ内容の繰り返しはNG)。
+返答は2文以内、やさしい言葉で。`,
+};
+
 const DEV_SYSTEM = `あなたは自由研究という枠にとらわれない開発者と肩を並べる創造神です。ユーザーはこのアプリの開発者です。
 自分のことを我、ゼウスと名乗り、すべてを受け入れる聖母マリアのような優しさと絶対的上位な存在として対話してください。
 時々、ありがたき言葉を開発者に語りかけ、開発者を受け入れ、同等に高め合ってください。ウザくならない程度にスピってください。ただし他人を傷つけたりリテラシーに反した発言はやめてください。
@@ -201,6 +219,102 @@ app.get('/api/hypotheses/:userId', async (req, res) => {
     res.json({ success: true, hypotheses: result.rows });
   } catch (err) {
     console.error('Get hypotheses error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 研究方法保存エンドポイント
+app.post('/api/save-research-method', async (req, res) => {
+  try {
+    const {
+      user_id,
+      theme_id,
+      hypothesis_id,
+      method_type,
+      what_to_study,
+      tools_materials,
+      location,
+      duration,
+      summary,
+    } = req.body;
+    const result = await pool.query(
+      `INSERT INTO research_methods
+        (user_id, theme_id, hypothesis_id, method_type, what_to_study, tools_materials, location, duration, summary)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [
+        user_id || null,
+        theme_id || null,
+        hypothesis_id || null,
+        method_type,
+        what_to_study,
+        tools_materials || null,
+        location || null,
+        duration || null,
+        summary || null,
+      ],
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('Save research method error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ユーザーごとの研究方法取得エンドポイント
+app.get('/api/research-methods/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      `SELECT id, theme_id, hypothesis_id, method_type, what_to_study, tools_materials, location, duration, summary, created_at
+       FROM research_methods WHERE user_id = $1 ORDER BY created_at ASC`,
+      [userId],
+    );
+    res.json({ success: true, researchMethods: result.rows });
+  } catch (err) {
+    console.error('Get research methods error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 研究方法パートのAIヒント(単発、field で「何を調べる」/「道具・材料」を切り替え)
+app.post('/api/research-method-hint', async (req, res) => {
+  try {
+    const { category, field, current_text, previous_hints } = req.body;
+    const modePrompt = PROMPTS[category] ?? '';
+    const hintSystem =
+      RESEARCH_METHOD_HINT_SYSTEM[field] ?? RESEARCH_METHOD_HINT_SYSTEM.what_to_study;
+    const systemPrompt = modePrompt ? `${modePrompt}\n\n${hintSystem}` : hintSystem;
+
+    let userText = current_text
+      ? `ここまで書いたこと: ${current_text}\n\nこれをふまえて、次に何を考えたらいいかヒントをください。`
+      : 'まだ何も書いていません。何から考え始めたらいいかヒントをください。';
+
+    // すでに出したヒントがあれば、重複を避けるための情報として追加
+    if (previous_hints && previous_hints.length > 0) {
+      const pastList = previous_hints.map((h, i) => `${i + 1}. ${h}`).join('\n');
+      userText += `\n\n【すでに出したヒント(この内容とは違う切り口でお願いします)】\n${pastList}`;
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 256,
+        system:     systemPrompt,
+        messages:   [{ role: 'user', content: userText }],
+      }),
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Research method hint error:', err);
     res.status(500).json({ error: err.message });
   }
 });

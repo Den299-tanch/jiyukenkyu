@@ -955,3 +955,214 @@
   border-color: #38a169;
   background: #f0faf4;
 }
+
+/* ===== 研究方法パート ===== */
+.research-method-content {
+  max-width: 900px;
+  margin: 12px auto 24px;
+  padding: 0 24px;
+}
+
+.rm-intro-banner {
+  background: rgba(106, 90, 249, 0.06);
+  border: 2px dashed rgba(106, 90, 249, 0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #5b3ec4;
+  margin: 0 0 20px;
+}
+
+.rm-headline {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.6;
+  color: #1b3358;
+  margin: 0 0 20px;
+}
+
+.rm-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.rm-type-card {
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  border-radius: 14px;
+  padding: 14px 12px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.rm-type-card.selected {
+  border-color: #48bb78;
+  background: rgba(72, 187, 120, 0.06);
+  box-shadow: 0 3px 0 rgba(72, 187, 120, 0.3);
+}
+
+.rm-type-emoji {
+  font-size: 22px;
+}
+
+.rm-type-name {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  color: #1b3358;
+  margin: 4px 0 4px;
+}
+
+.rm-type-desc {
+  font-size: 12px;
+  color: #5b6b85;
+  line-height: 1.5;
+}
+
+.rm-type-example {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #5b3ec4;
+  background: rgba(106, 90, 249, 0.1);
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.rm-next-row {
+  display: flex;
+  justify-content: center;
+}
+
+.rm-field-card {
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  border-radius: 12px;
+  padding: 16px 16px 18px;
+  margin-bottom: 16px;
+}
+
+.rm-quote-card {
+  background: rgba(72, 187, 120, 0.06);
+  border: 2px dashed #48bb78;
+}
+
+.rm-quote-text {
+  font-size: 15px;
+  font-weight: bold;
+  color: #15803d;
+  line-height: 1.6;
+  margin: 6px 0 0;
+}
+
+.rm-quote-question {
+  font-size: 14px;
+  color: #1b3358;
+  line-height: 1.6;
+  margin: 8px 0 0;
+}
+
+.rm-field-label {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: bold;
+  color: #1b3358;
+  margin: 0 0 10px;
+}
+
+.rm-field-num {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-size: 12px;
+  color: #fff;
+  background: #1b3358;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.rm-badge-optional {
+  font-size: 11px;
+  font-weight: 700;
+  color: #15803d;
+  background: rgba(72, 187, 120, 0.12);
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+.rm-textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e4dfc9;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1b3358;
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.rm-textarea:focus {
+  border-color: #38a169;
+  background: #f0faf4;
+}
+
+.rm-hint-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.rm-hint-row .hint-btn {
+  width: auto;
+  margin-bottom: 0;
+}
+
+.rm-final-card {
+  background: linear-gradient(135deg, #fff7de, #ffefc4);
+  border: 2px solid #f0d9a0;
+}
+
+.rm-sub {
+  font-size: 13px;
+  color: #5b6b85;
+  margin: -4px 0 10px;
+}
+
+.rm-submit-btn {
+  width: 100%;
+}
+
+.rm-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rm-hypothesis-card {
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #e4dfc9;
+}
+
+.rm-hypothesis-text {
+  font-size: 16px;
+  color: #1b3358;
+  margin: 0;
+}

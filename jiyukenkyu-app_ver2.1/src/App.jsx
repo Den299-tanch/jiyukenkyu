@@ -9,6 +9,7 @@ import SaveThemeArea from './components/SaveThemeArea';
 import UserIdScreen from './components/UserIdScreen';
 import ThemeListScreen from './components/ThemeListScreen';
 import HypothesisScreen from './components/HypothesisScreen';
+import ResearchMethodScreen from './components/ResearchMethodScreen';
 
 
 // 画面の種類
@@ -28,13 +29,14 @@ export default function App() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
-  const [specialMode, setSpecialMode] = useState(null); 
+  const [specialMode, setSpecialMode] = useState(null);
 
   const [themeInput, setThemeInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedThemes, setSavedThemes] = useState([]);
 
   const [selectedTheme, setSelectedTheme] = useState(null);
+  const [savedHypotheses, setSavedHypotheses] = useState([]);
 
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
@@ -224,7 +226,20 @@ export default function App() {
           theme={selectedTheme}
           onBack={() => setScreen('theme-list')}
           onNext={(savedHypothesis) => {
-            alert('仮説を保存したよ！次のパート(スケジュール作成)はこれから実装するよ！');
+            setSavedHypotheses(savedHypothesis);
+            setScreen('research-method');
+          }}
+        />
+      )}
+
+      {screen === 'research-method' && (
+        <ResearchMethodScreen
+          userId={userId}
+          theme={selectedTheme}
+          savedHypotheses={savedHypotheses}
+          onBack={() => setScreen('hypothesis')}
+          onNext={(savedResearchMethod) => {
+            alert('研究方法を保存したよ！次のパート(スケジュール作成)はこれから実装するよ！');
             // 今はここで一旦タイトルに戻す。次のパートができたら screen を変える
             setScreen('title');
           }}
