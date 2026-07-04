@@ -212,6 +212,7 @@ export default function App() {
       {screen === 'theme-list' && (
         <ThemeListScreen
           userId={userId}
+          currentThemeId={selectedTheme?.id}
           onBack={() => setScreen('chat')}
           onNext={(theme) => {
             setSelectedTheme(theme);

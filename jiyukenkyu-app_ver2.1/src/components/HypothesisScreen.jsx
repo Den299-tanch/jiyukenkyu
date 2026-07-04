@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getCategoryById } from "../data/categories";
 
 const HINT_LIMIT = 3;
@@ -15,6 +15,25 @@ export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
 
   const cat = getCategoryById(theme?.category);
   const hintsLeft = HINT_LIMIT - hintCount;
+
+  // 戻るボタンなどで再度この画面に来たとき、すでに保存済みの仮説を読み込んで
+  // 「次のステップへ進む」が押せない状態にならないようにする
+  useEffect(() => {
+    if (!userId || !theme?.id) return;
+    async function fetchExisting() {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL ?? ""}/api/hypotheses/${userId}`,
+        );
+        const data = await res.json();
+        if (!data.success) return;
+        setSavedList(data.hypotheses.filter((h) => h.theme_id === theme.id));
+      } catch {
+        // 読み込みに失敗しても、新しく仮説を追加すること自体はできるので黙って無視
+      }
+    }
+    fetchExisting();
+  }, [userId, theme?.id]);
 
   async function handleHint() {
     if (hintsLeft <= 0 || hintLoading) return;

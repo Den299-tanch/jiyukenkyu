@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getCategoryById } from '../data/categories';
 
-export default function ThemeListScreen({ userId, onBack, onNext }) {
+export default function ThemeListScreen({ userId, currentThemeId, onBack, onNext }) {
   const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,13 +15,18 @@ export default function ThemeListScreen({ userId, onBack, onNext }) {
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
         setThemes(data.themes);
+        // 戻るボタンで再度この画面に来たとき、前回選んでいたテーマの選択状態を復元する
+        if (currentThemeId) {
+          const matched = data.themes.find((t) => t.id === currentThemeId);
+          if (matched) setSelectedTheme(matched);
+        }
       } catch (err) {
         setError(err.message);
       }
       setLoading(false);
     }
     fetchThemes();
-  }, [userId]);
+  }, [userId, currentThemeId]);
 
   return (
     <div className="theme-list-screen">
