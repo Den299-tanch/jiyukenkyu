@@ -280,13 +280,19 @@ app.get('/api/research-methods/:userId', async (req, res) => {
 // 研究方法パートのAIヒント(単発、field で「何を調べる」/「道具・材料」を切り替え)
 app.post('/api/research-method-hint', async (req, res) => {
   try {
-    const { category, field, current_text, previous_hints } = req.body;
+    const { category, field, theme_title, hypothesis, current_text, previous_hints } = req.body;
     const modePrompt = PROMPTS[category] ?? '';
     const hintSystem =
       RESEARCH_METHOD_HINT_SYSTEM[field] ?? RESEARCH_METHOD_HINT_SYSTEM.what_to_study;
     const systemPrompt = modePrompt ? `${modePrompt}\n\n${hintSystem}` : hintSystem;
 
-    let userText = current_text
+    // テーマ・仮説を伝えることで、その子の研究に沿った方向づけにする(答えそのものは渡さない)
+    let userText = '';
+    if (theme_title) userText += `テーマ: ${theme_title}\n`;
+    if (hypothesis) userText += `この子の予想: 「${hypothesis}」\n`;
+    if (userText) userText += '\n';
+
+    userText += current_text
       ? `ここまで書いたこと: ${current_text}\n\nこれをふまえて、次に何を考えたらいいかヒントをください。`
       : 'まだ何も書いていません。何から考え始めたらいいかヒントをください。';
 

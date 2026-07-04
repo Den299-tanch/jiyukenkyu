@@ -50,6 +50,8 @@ export default function ResearchMethodScreen({
           body: JSON.stringify({
             category: cat?.mode,
             field,
+            theme_title: theme?.theme,
+            hypothesis: selectedHypothesis?.hypothesis,
             current_text: currentText,
             previous_hints: history,
           }),
