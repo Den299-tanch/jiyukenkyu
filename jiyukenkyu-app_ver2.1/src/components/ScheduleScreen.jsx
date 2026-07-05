@@ -24,6 +24,9 @@ export default function ScheduleScreen({
   const [draftCount, setDraftCount] = useState(0);
   const [confirmingRetry, setConfirmingRetry] = useState(null); // null | false(初回) | true(やり直し)
   const [saving, setSaving] = useState(false);
+  const [savingOnly, setSavingOnly] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [restoredNotice, setRestoredNotice] = useState(false);
 
   const draftsLeft = DRAFT_LIMIT - draftCount;
 
@@ -44,6 +47,7 @@ export default function ScheduleScreen({
           setEndDate(existing.end_date ?? "");
           setTasks(existing.tasks ?? []);
           setTab("plan");
+          setRestoredNotice(true);
         }
       } catch {
         // 読み込みに失敗しても、これから新しく作ること自体はできるので黙って無視
@@ -51,6 +55,12 @@ export default function ScheduleScreen({
     }
     fetchExisting();
   }, [userId, hypothesis?.id]);
+
+  useEffect(() => {
+    if (!saveMessage) return;
+    const timer = setTimeout(() => setSaveMessage(""), 3000);
+    return () => clearTimeout(timer);
+  }, [saveMessage]);
 
   function openDraftConfirm(isRetry) {
     if (draftsLeft <= 0 || draftLoading) return;
@@ -143,31 +153,48 @@ export default function ScheduleScreen({
     ]);
   }
 
+  async function saveScheduleToServer() {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL ?? ""}/api/save-schedule`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          theme_id: theme?.id,
+          hypothesis_id: hypothesis?.id,
+          end_date: endDate,
+          tasks,
+        }),
+      },
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    return data;
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/save-schedule`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            theme_id: theme?.id,
-            hypothesis_id: hypothesis?.id,
-            end_date: endDate,
-            tasks,
-          }),
-        },
-      );
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
-
+      const data = await saveScheduleToServer();
       onNext(data.data);
     } catch (err) {
       alert("保存に失敗しました: " + err.message);
     }
     setSaving(false);
+  }
+
+  async function handleSaveOnly() {
+    setSavingOnly(true);
+    setSaveMessage("");
+    try {
+      await saveScheduleToServer();
+      setRestoredNotice(false);
+      setSaveMessage("✅ ここまでのスケジュールをほぞんしたよ!");
+    } catch (err) {
+      alert("保存に失敗しました: " + err.message);
+    }
+    setSavingOnly(false);
   }
 
   const doneCount = tasks.filter((t) => t.done).length;
@@ -246,6 +273,19 @@ export default function ScheduleScreen({
 
         {tab === "plan" && (
           <>
+            {restoredNotice && (
+              <div className="sch-restore-banner">
+                📥 前回ほぞんしたスケジュールを読み込んだよ
+                <button
+                  className="sch-restore-close"
+                  onClick={() => setRestoredNotice(false)}
+                  aria-label="閉じる"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             <div className="sch-summary-row">
               <span className="sch-end-chip">
                 〜 {endDate || "おわりの日未定"} まで
@@ -319,10 +359,20 @@ export default function ScheduleScreen({
                 : `🔁 AIにもう一度たたき台をつくってもらう (残り${Math.max(draftsLeft, 0)}/${DRAFT_LIMIT}回)`}
             </button>
 
+            {saveMessage && <p className="sch-save-message">{saveMessage}</p>}
+
+            <button
+              className="sch-save-only-btn"
+              onClick={handleSaveOnly}
+              disabled={saving || savingOnly}
+            >
+              {savingOnly ? "ほぞん中…" : "💾 ここまでをほぞんする"}
+            </button>
+
             <button
               className="next-btn sch-save-btn"
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || savingOnly}
             >
               {saving ? "保存中…" : "ほぞんして つぎへ →"}
             </button>
