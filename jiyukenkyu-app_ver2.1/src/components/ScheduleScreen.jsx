@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { getMethodTypeById } from "../data/methodTypes";
 import { TASK_TYPES, getTaskTypeById } from "../data/taskTypes";
 
+const DRAFT_LIMIT = 3;
+
 function makeTaskId() {
   return `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -19,7 +21,11 @@ export default function ScheduleScreen({
   const [tasks, setTasks] = useState([]);
   const [draftLoading, setDraftLoading] = useState(false);
   const [draftError, setDraftError] = useState("");
+  const [draftCount, setDraftCount] = useState(0);
+  const [confirmingRetry, setConfirmingRetry] = useState(null); // null | false(初回) | true(やり直し)
   const [saving, setSaving] = useState(false);
+
+  const draftsLeft = DRAFT_LIMIT - draftCount;
 
   // 戻るボタンなどで再度この画面に来たとき、すでに保存済みのスケジュールを読み込んで復元する
   useEffect(() => {
@@ -45,6 +51,17 @@ export default function ScheduleScreen({
     }
     fetchExisting();
   }, [userId, hypothesis?.id]);
+
+  function openDraftConfirm(isRetry) {
+    if (draftsLeft <= 0 || draftLoading) return;
+    setConfirmingRetry(isRetry);
+  }
+
+  function handleConfirmDraft() {
+    const isRetry = confirmingRetry;
+    setConfirmingRetry(null);
+    requestDraft(isRetry);
+  }
 
   async function requestDraft(isRetry) {
     setDraftLoading(true);
@@ -86,6 +103,7 @@ export default function ScheduleScreen({
       }));
       setTasks(withIds);
       setTab("plan");
+      setDraftCount((prev) => prev + 1);
     } catch (err) {
       setDraftError(
         "たたき台づくりに失敗したよ: " + err.message + "（もう一度試してみてね）",
@@ -213,12 +231,12 @@ export default function ScheduleScreen({
 
             <button
               className="next-btn sch-ai-btn"
-              onClick={() => requestDraft(false)}
-              disabled={draftLoading || !endDate.trim()}
+              onClick={() => openDraftConfirm(false)}
+              disabled={draftLoading || !endDate.trim() || draftsLeft <= 0}
             >
               {draftLoading
                 ? "たたき台を考え中…"
-                : "🤖 AIにたたき台をつくってもらう"}
+                : `🤖 AIにたたき台をつくってもらう (残り${Math.max(draftsLeft, 0)}/${DRAFT_LIMIT}回)`}
             </button>
             <button className="sch-secondary-btn" onClick={handleWriteMyself}>
               ✏️ 自分で書く(空の行を追加)
@@ -293,10 +311,12 @@ export default function ScheduleScreen({
 
             <button
               className="sch-retry-btn"
-              onClick={() => requestDraft(true)}
-              disabled={draftLoading || !endDate.trim()}
+              onClick={() => openDraftConfirm(true)}
+              disabled={draftLoading || !endDate.trim() || draftsLeft <= 0}
             >
-              {draftLoading ? "考え中…" : "🔁 AIにもう一度たたき台をつくってもらう"}
+              {draftLoading
+                ? "考え中…"
+                : `🔁 AIにもう一度たたき台をつくってもらう (残り${Math.max(draftsLeft, 0)}/${DRAFT_LIMIT}回)`}
             </button>
 
             <button
@@ -309,6 +329,31 @@ export default function ScheduleScreen({
           </>
         )}
       </div>
+
+      {confirmingRetry !== null && (
+        <div className="sch-modal-backdrop">
+          <div className="sch-modal-card">
+            <div className="sch-modal-emoji">🌱</div>
+            <p className="sch-modal-text">
+              まずは自分で、日づけややることを考えてみよう!
+              <br />
+              どうしても思いつかないときだけ、AIにおねがいしてね。
+            </p>
+            <button
+              className="sch-modal-think-btn"
+              onClick={() => setConfirmingRetry(null)}
+            >
+              自分で考えてみる
+            </button>
+            <button
+              className="sch-modal-confirm-btn"
+              onClick={handleConfirmDraft}
+            >
+              それでもAIにおねがいする
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

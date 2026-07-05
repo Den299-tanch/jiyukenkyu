@@ -1566,3 +1566,64 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ===== スケジュールパート: AI確認ポップアップ ===== */
+.sch-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 51, 88, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+
+.sch-modal-card {
+  background: #fffdf8;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(27, 51, 88, 0.3);
+}
+
+.sch-modal-emoji {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.sch-modal-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #1b3358;
+  margin: 0 0 20px;
+}
+
+.sch-modal-think-btn {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: #48bb78;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #379a5f;
+}
+
+.sch-modal-confirm-btn {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: 2px dashed #e4dfc9;
+  color: #5b6b85;
+  border-radius: 14px;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+}
