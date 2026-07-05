@@ -443,4 +443,234 @@ app.get('/api/schedules/:userId', async (req, res) => {
   }
 });
 
+// ===== STEP5 記録パート =====
+
+// 記録保存エンドポイント(1件ずつ追加。きろく/しらべたことの両方をこの1つで扱う)
+app.post('/api/save-record', async (req, res) => {
+  try {
+    const {
+      user_id,
+      theme_id,
+      hypothesis_id,
+      record_type,   // 'kiroku'(きろく) / 'shirabe'(しらべたこと)
+      viewpoints,    // 選んだ視点チップidの配列 例: ["jikan","ookisa"]
+      body,          // 気づいたこと(自由記述)
+      why_note,      // なぜ?欄
+      num1_label, num1_value, num1_unit,   // 数字1(にんい)
+      num2_label, num2_value, num2_unit,   // 数字2(散布図用ペア・にんい)
+    } = req.body;
+    const result = await pool.query(
+      `INSERT INTO records
+        (user_id, theme_id, hypothesis_id, record_type, viewpoints, body, why_note,
+         num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       RETURNING *`,
+      [
+        user_id || null,
+        theme_id || null,
+        hypothesis_id || null,
+        record_type,
+        JSON.stringify(viewpoints ?? []),
+        body || null,
+        why_note || null,
+        num1_label || null,
+        num1_value ?? null,
+        num1_unit || null,
+        num2_label || null,
+        num2_value ?? null,
+        num2_unit || null,
+      ],
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('Save record error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ユーザーごとの記録取得エンドポイント(数字の列も返す。数字機能はS4で使用)
+app.get('/api/records/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      `SELECT id, theme_id, hypothesis_id, record_type, viewpoints, body, why_note,
+              num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit, created_at
+       FROM records WHERE user_id = $1 ORDER BY created_at ASC`,
+      [userId],
+    );
+    res.json({ success: true, records: result.rows });
+  } catch (err) {
+    console.error('Get records error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== STEP5 グラフの安全網(層1.5=自動 / 層2=任意) =====
+// 軽量モデル。もし account でこの id が使えなければ 'claude-sonnet-4-6' に変えてOK。
+const GRAPH_SAFETY_MODEL = 'claude-haiku-4-5-20251001';
+
+// 層1.5(自動): 「もっともらしいのに実は変」を1つだけそっと知らせる。
+// 問題がないときは「OK」だけ返させ、実質なにも出さない(表示もコストも軽い)。
+const GRAPH_CHECK_SYSTEM = `あなたは小学生の自由研究を手伝う先生です。
+子どもが作ったグラフの「数字の組み合わせ」を見て、"もっともらしいけれど実はおかしいかもしれない点"が
+ないかを確認する役です。とくに次に注意してください:
+- ケタ違い(たとえば片方が分・片方が秒など、桁が大きく違う数字がまざっている)
+- 出どころや種類がちがう数字を、1つのグラフに混ぜている
+- 単位がバラバラなのに、1つの量として比べている
+問題がなさそうなときは、説明や前置きを一切書かず「OK」とだけ返してください。
+気になる点があるときだけ、答えや正解は言わず、気づきをうながす一言(1〜2文・やさしい言葉)を返してください。`;
+
+// 層2(任意): 押した子だけに「問いかけ」を1つ返す。答えは出さない
+const GRAPH_ASK_SYSTEM = `あなたは小学生の自由研究を手伝う先生です。
+子どもが自分のグラフについて考えを深められるよう、"問いかけ"を1つだけ返します。
+絶対に答え・結論・正解は言わないでください。
+グラフから読み取れそうなこと、次にたしかめるとよさそうなことを、
+「〜はどうなっているかな?」「〜だとしたら、なぜだろう?」のように問いのかたちで返してください。
+返答は1〜2文、やさしい言葉で。`;
+
+// グラフの中身を説明する文章を組み立てる(層1.5・層2で共通)
+function buildGraphUserText({ theme_title, hypothesis, graph_type_label, title, numbers }) {
+  let text = '';
+  if (theme_title) text += `テーマ: ${theme_title}\n`;
+  if (hypothesis) text += `この子の予想: 「${hypothesis}」\n`;
+  if (graph_type_label) text += `グラフの種類: ${graph_type_label}\n`;
+  if (title) text += `グラフのタイトル: ${title}\n`;
+  text += '\n使っている数字:\n';
+  (numbers ?? []).forEach((n) => {
+    const unit = n.unit ? ` ${n.unit}` : '';
+    const date = n.date ? ` (${n.date})` : '';
+    text += `- ${n.label || '数字'}: ${n.value}${unit}${date}\n`;
+  });
+  return text;
+}
+
+// 層1.5: グラフを開いたとき自動で1回、注意点がないか確認する
+app.post('/api/graph-check', async (req, res) => {
+  try {
+    const userText = buildGraphUserText(req.body);
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model:      GRAPH_SAFETY_MODEL,
+        max_tokens: 256,
+        system:     GRAPH_CHECK_SYSTEM,
+        messages:   [{ role: 'user', content: userText }],
+      }),
+    });
+    const data = await response.json();
+    // AIの返事を解釈。空 or 「OK」だけなら注意なし。それ以外は注意メッセージ扱い。
+    const text = (data.content?.[0]?.text ?? '').trim();
+    const isOk = text === '' || /^ok[\s!.。、]*$/i.test(text);
+    const warn = !isOk;
+    const message = warn ? text : '';
+    res.json({ success: true, warn, message });
+  } catch (err) {
+    console.error('Graph check error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 層2: 「このグラフについて聞いてみる」を押した子だけ、問いかけを1つ返す
+app.post('/api/graph-ask', async (req, res) => {
+  try {
+    const userText = buildGraphUserText(req.body);
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model:      GRAPH_SAFETY_MODEL,
+        max_tokens: 256,
+        system:     GRAPH_ASK_SYSTEM,
+        messages:   [{ role: 'user', content: userText }],
+      }),
+    });
+    const data = await response.json();
+    if (!data.content) throw new Error(data.error?.message ?? JSON.stringify(data));
+    res.json({ success: true, question: data.content[0].text });
+  } catch (err) {
+    console.error('Graph ask error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ラベル/単位オートコンプリート用: その子が過去に入力したラベルと単位の一覧
+// (AIは使わない。表記ゆれを防いで同じラベルをそろえるための「入力履歴の表示」)
+app.get('/api/record-labels/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      `SELECT label, unit FROM (
+         SELECT num1_label AS label, num1_unit AS unit, created_at
+           FROM records
+          WHERE user_id = $1 AND num1_label IS NOT NULL AND num1_label <> ''
+         UNION ALL
+         SELECT num2_label AS label, num2_unit AS unit, created_at
+           FROM records
+          WHERE user_id = $1 AND num2_label IS NOT NULL AND num2_label <> ''
+       ) t
+       ORDER BY created_at DESC`,
+      [userId],
+    );
+    // ラベルごとに1件へ集約(いちばん最近使った単位を代表にする)
+    const seen = new Map();
+    for (const row of result.rows) {
+      if (!seen.has(row.label)) seen.set(row.label, row.unit ?? '');
+    }
+    const labels = Array.from(seen, ([label, unit]) => ({ label, unit }));
+    res.json({ success: true, labels });
+  } catch (err) {
+    console.error('Get record labels error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== STEP5 グラフの保存 =====
+
+// グラフ保存エンドポイント(材料一式は graph_data の JSON 1列にまとめて保存)
+app.post('/api/save-graph', async (req, res) => {
+  try {
+    const { user_id, theme_id, hypothesis_id, graph_data } = req.body;
+    const result = await pool.query(
+      `INSERT INTO graphs (user_id, theme_id, hypothesis_id, graph_data)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [
+        user_id || null,
+        theme_id || null,
+        hypothesis_id || null,
+        JSON.stringify(graph_data ?? {}),
+      ],
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('Save graph error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ユーザーごとの保存グラフ取得エンドポイント
+app.get('/api/graphs/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      `SELECT id, theme_id, hypothesis_id, graph_data, created_at
+       FROM graphs WHERE user_id = $1 ORDER BY created_at ASC`,
+      [userId],
+    );
+    res.json({ success: true, graphs: result.rows });
+  } catch (err) {
+    console.error('Get graphs error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(3001, () => console.log('Server running on http://localhost:3001'));

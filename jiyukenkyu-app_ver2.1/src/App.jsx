@@ -11,6 +11,7 @@ import ThemeListScreen from './components/ThemeListScreen';
 import HypothesisScreen from './components/HypothesisScreen';
 import ResearchMethodScreen from './components/ResearchMethodScreen';
 import ScheduleScreen from './components/ScheduleScreen';
+import RecordScreen from './components/RecordScreen';
 
 
 // 画面の種類
@@ -256,10 +257,18 @@ export default function App() {
           researchMethods={scheduleContext?.researchMethods}
           onBack={() => setScreen('research-method')}
           onNext={(savedSchedule) => {
-            alert('スケジュールを保存したよ！次のパートはこれから実装するよ！');
-            // 今はここで一旦タイトルに戻す。次のパートができたら screen を変える
-            setScreen('title');
+            // スケジュール保存後は STEP5(記録パート)へ
+            setScreen('record');
           }}
+        />
+      )}
+
+      {screen === 'record' && (
+        <RecordScreen
+          userId={userId}
+          theme={selectedTheme}
+          hypothesis={scheduleContext?.hypothesis}
+          onBack={() => setScreen('schedule')}
         />
       )}
 
