@@ -1495,3 +1495,74 @@
 .t-yasumi   { background: #f1efe7; color: #7a7562; }
 .t-matome   { background: #f6eefb; color: #7a3fa0; }
 .t-other    { background: #fbf3e4; color: #8a6a2c; }
+
+/* ===== 研究方法パート: 追加済みリスト ===== */
+.rm-saved-list {
+  margin-top: 20px;
+}
+
+.rm-saved-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  color: #1b3358;
+  font-size: 15px;
+  font-weight: 400;
+  margin: 0 0 12px;
+}
+
+.rm-saved-card {
+  position: relative;
+  padding: 12px 14px 12px 18px;
+  margin-bottom: 10px;
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  border-radius: 10px;
+  box-shadow: 0 3px 0 #e4dfc9;
+}
+
+.rm-saved-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #48bb78;
+  border-radius: 10px 0 0 10px;
+}
+
+.rm-saved-type {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5b3ec4;
+  background: rgba(106, 90, 249, 0.1);
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.rm-saved-text {
+  font-size: 14px;
+  color: #1b3358;
+  margin: 8px 0 0;
+}
+
+.rm-final-next-row {
+  margin-top: 20px;
+}
+
+.rm-final-next-btn {
+  width: 100%;
+  padding: 16px;
+  background: none;
+  border: 2px solid #6a5af9;
+  border-radius: 12px;
+  color: #5b3ec4;
+  font-size: 16px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.rm-final-next-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

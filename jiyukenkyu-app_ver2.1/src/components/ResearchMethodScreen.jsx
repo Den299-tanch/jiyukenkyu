@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getCategoryById } from "../data/categories";
-import { METHOD_TYPES } from "../data/methodTypes";
+import { METHOD_TYPES, getMethodTypeById } from "../data/methodTypes";
 
 const HINT_LIMIT = 3;
 
@@ -34,10 +34,33 @@ export default function ResearchMethodScreen({
   const [toolsHintCount, setToolsHintCount] = useState(0);
   const [toolsHintLoading, setToolsHintLoading] = useState(false);
 
+  const [savedList, setSavedList] = useState([]); // この仮説で追加した研究方法の一覧
   const [saving, setSaving] = useState(false);
 
   const whatHintsLeft = HINT_LIMIT - whatHintCount;
   const toolsHintsLeft = HINT_LIMIT - toolsHintCount;
+
+  // 戻るボタンなどで再度この画面に来たとき、すでに保存済みの研究方法を読み込んで復元する
+  useEffect(() => {
+    if (!userId || !selectedHypothesis?.id) return;
+    async function fetchExisting() {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL ?? ""}/api/research-methods/${userId}`,
+        );
+        const data = await res.json();
+        if (!data.success) return;
+        setSavedList(
+          data.researchMethods.filter(
+            (r) => r.hypothesis_id === selectedHypothesis.id,
+          ),
+        );
+      } catch {
+        // 読み込みに失敗しても、新しく追加すること自体はできるので黙って無視
+      }
+    }
+    fetchExisting();
+  }, [userId, selectedHypothesis?.id]);
 
   async function fetchHint(field, currentText, history, setHistory, setCount, setLoading) {
     setLoading(true);
@@ -80,7 +103,7 @@ export default function ResearchMethodScreen({
     setStep("details");
   }
 
-  async function handleSave() {
+  async function handleAddToList() {
     if (!whatToStudy.trim() || !summary.trim() || saving) return;
 
     setSaving(true);
@@ -106,11 +129,28 @@ export default function ResearchMethodScreen({
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      onNext({ researchMethod: data.data, hypothesis: selectedHypothesis });
+      setSavedList((prev) => [...prev, data.data]);
+
+      // 次の1件を続けて追加できるように入力欄・ヒント関連をリセット
+      setMethodType(null);
+      setWhatToStudy("");
+      setToolsMaterials("");
+      setLocation("");
+      setDuration("");
+      setSummary("");
+      setWhatHintHistory([]);
+      setWhatHintCount(0);
+      setToolsHintHistory([]);
+      setToolsHintCount(0);
+      setStep("type");
     } catch (err) {
       alert("保存に失敗しました: " + err.message);
     }
     setSaving(false);
+  }
+
+  function handleNext() {
+    onNext({ researchMethods: savedList, hypothesis: selectedHypothesis });
   }
 
   return (
@@ -175,6 +215,35 @@ export default function ResearchMethodScreen({
                 disabled={!methodType}
               >
                 つぎへ →
+              </button>
+            </div>
+
+            {savedList.length > 0 && (
+              <div className="rm-saved-list">
+                <h3 className="rm-saved-title">
+                  📋 追加した研究方法 ({savedList.length}件)
+                </h3>
+                {savedList.map((item) => {
+                  const info = getMethodTypeById(item.method_type);
+                  return (
+                    <div key={item.id} className="rm-saved-card">
+                      <span className="rm-saved-type">
+                        {info?.icon} {info?.label}
+                      </span>
+                      <p className="rm-saved-text">{item.what_to_study}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="rm-final-next-row">
+              <button
+                className="rm-final-next-btn"
+                onClick={handleNext}
+                disabled={savedList.length === 0}
+              >
+                次のステップへ進む →
               </button>
             </div>
           </>
@@ -312,10 +381,10 @@ export default function ResearchMethodScreen({
 
             <button
               className="next-btn rm-submit-btn"
-              onClick={handleSave}
+              onClick={handleAddToList}
               disabled={saving || !whatToStudy.trim() || !summary.trim()}
             >
-              {saving ? "保存中…" : "つぎへ すすむ →"}
+              {saving ? "追加中…" : "＋ この研究方法をリストに追加"}
             </button>
           </>
         )}

@@ -82,6 +82,7 @@ const SCHEDULE_DRAFT_SYSTEM = `あなたは小学生の自由研究を手伝う�
 スケジュールは研究の"答え"ではなく足場なので、ここでは遠慮せず具体的な下書きを作ってかまいません。
 ただし出したタスクは子どもが後から自由に書き換えたり消したりできるので、細かすぎず、無理のない現実的な内容にしてください。
 休憩日(やすみ)も1つ以上入れてください。最後には「まとめ」のタスクを入れてください。
+タスクは10〜15個程度、"task"の文章は1文(40文字程度まで)の短さにおさめてください。
 
 必ず次のJSON形式のみを出力してください。前置きや説明、マークダウンのコードブロックは一切つけないでください。
 {
@@ -349,24 +350,24 @@ app.post('/api/schedule-draft', async (req, res) => {
     const {
       theme_title,
       hypothesis,
-      method_type_label,
-      what_to_study,
-      tools_materials,
-      location,
-      duration,
-      summary,
+      research_methods,
       end_date,
       previous_tasks,
     } = req.body;
 
-    let userText = `テーマ: ${theme_title}\nこの子の予想: 「${hypothesis}」\n`;
-    if (method_type_label) userText += `研究方法の種類: ${method_type_label}\n`;
-    if (what_to_study) userText += `何を調べる・実験する: ${what_to_study}\n`;
-    if (tools_materials) userText += `道具・材料: ${tools_materials}\n`;
-    if (location) userText += `場所: ${location}\n`;
-    if (duration) userText += `だいたいの時間: ${duration}\n`;
-    if (summary) userText += `まとめの一言: ${summary}\n`;
-    userText += `\nおわりの日: ${end_date || '未定'}\n\n上記をふまえて、スケジュールのたたき台をJSONで作ってください。`;
+    let userText = `テーマ: ${theme_title}\nこの子の予想: 「${hypothesis}」\n\n`;
+    (research_methods ?? []).forEach((rm, i) => {
+      userText += `【研究方法${i + 1}】`;
+      if (rm.method_type_label) userText += ` ${rm.method_type_label}\n`;
+      else userText += '\n';
+      if (rm.what_to_study) userText += `何を調べる・実験する: ${rm.what_to_study}\n`;
+      if (rm.tools_materials) userText += `道具・材料: ${rm.tools_materials}\n`;
+      if (rm.location) userText += `場所: ${rm.location}\n`;
+      if (rm.duration) userText += `だいたいの時間: ${rm.duration}\n`;
+      if (rm.summary) userText += `まとめの一言: ${rm.summary}\n`;
+      userText += '\n';
+    });
+    userText += `おわりの日: ${end_date || '未定'}\n\n上記の研究方法すべてをふまえて、1つのスケジュールのたたき台をJSONで作ってください。`;
 
     if (previous_tasks && previous_tasks.length > 0) {
       userText += '\n\n(やり直しの依頼です。前回とは少し違う組み立てにしてください)';
@@ -381,7 +382,7 @@ app.post('/api/schedule-draft', async (req, res) => {
       },
       body: JSON.stringify({
         model:      'claude-sonnet-4-6',
-        max_tokens: 1024,
+        max_tokens: 4096,
         system:     SCHEDULE_DRAFT_SYSTEM,
         messages:   [{ role: 'user', content: userText }],
       }),
@@ -395,28 +396,26 @@ app.post('/api/schedule-draft', async (req, res) => {
   }
 });
 
-// スケジュール保存エンドポイント(research_method_id ごとに1件。あれば上書き、なければ新規作成)
+// スケジュール保存エンドポイント(hypothesis_id ごとに1件。あれば上書き、なければ新規作成)
 app.post('/api/save-schedule', async (req, res) => {
   try {
     const {
       user_id,
       theme_id,
       hypothesis_id,
-      research_method_id,
       end_date,
       tasks,
     } = req.body;
     const result = await pool.query(
-      `INSERT INTO schedules (user_id, theme_id, hypothesis_id, research_method_id, end_date, tasks, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())
-       ON CONFLICT (research_method_id)
+      `INSERT INTO schedules (user_id, theme_id, hypothesis_id, end_date, tasks, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (hypothesis_id)
        DO UPDATE SET end_date = EXCLUDED.end_date, tasks = EXCLUDED.tasks, updated_at = NOW()
        RETURNING *`,
       [
         user_id || null,
         theme_id || null,
         hypothesis_id || null,
-        research_method_id || null,
         end_date || null,
         JSON.stringify(tasks ?? []),
       ],
@@ -433,7 +432,7 @@ app.get('/api/schedules/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await pool.query(
-      `SELECT id, theme_id, hypothesis_id, research_method_id, end_date, tasks, created_at, updated_at
+      `SELECT id, theme_id, hypothesis_id, end_date, tasks, created_at, updated_at
        FROM schedules WHERE user_id = $1 ORDER BY created_at ASC`,
       [userId],
     );

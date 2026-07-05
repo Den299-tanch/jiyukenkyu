@@ -38,7 +38,7 @@ export default function App() {
 
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [savedHypotheses, setSavedHypotheses] = useState([]);
-  const [scheduleContext, setScheduleContext] = useState(null); // { researchMethod, hypothesis }
+  const [scheduleContext, setScheduleContext] = useState(null); // { researchMethods, hypothesis }
 
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
@@ -253,7 +253,7 @@ export default function App() {
           userId={userId}
           theme={selectedTheme}
           hypothesis={scheduleContext?.hypothesis}
-          researchMethod={scheduleContext?.researchMethod}
+          researchMethods={scheduleContext?.researchMethods}
           onBack={() => setScreen('research-method')}
           onNext={(savedSchedule) => {
             alert('スケジュールを保存したよ！次のパートはこれから実装するよ！');

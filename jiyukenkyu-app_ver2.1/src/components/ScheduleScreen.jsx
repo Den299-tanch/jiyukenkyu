@@ -10,7 +10,7 @@ export default function ScheduleScreen({
   userId,
   theme,
   hypothesis,
-  researchMethod,
+  researchMethods,
   onBack,
   onNext,
 }) {
@@ -21,11 +21,9 @@ export default function ScheduleScreen({
   const [draftError, setDraftError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const methodTypeLabel = getMethodTypeById(researchMethod?.method_type)?.label;
-
   // 戻るボタンなどで再度この画面に来たとき、すでに保存済みのスケジュールを読み込んで復元する
   useEffect(() => {
-    if (!userId || !researchMethod?.id) return;
+    if (!userId || !hypothesis?.id) return;
     async function fetchExisting() {
       try {
         const res = await fetch(
@@ -34,7 +32,7 @@ export default function ScheduleScreen({
         const data = await res.json();
         if (!data.success) return;
         const existing = data.schedules.find(
-          (s) => s.research_method_id === researchMethod.id,
+          (s) => s.hypothesis_id === hypothesis.id,
         );
         if (existing) {
           setEndDate(existing.end_date ?? "");
@@ -46,7 +44,7 @@ export default function ScheduleScreen({
       }
     }
     fetchExisting();
-  }, [userId, researchMethod?.id]);
+  }, [userId, hypothesis?.id]);
 
   async function requestDraft(isRetry) {
     setDraftLoading(true);
@@ -60,13 +58,15 @@ export default function ScheduleScreen({
           body: JSON.stringify({
             theme_title: theme?.theme,
             hypothesis: hypothesis?.hypothesis,
-            method_type_label: methodTypeLabel,
-            what_to_study: researchMethod?.what_to_study,
-            tools_materials: researchMethod?.tools_materials,
-            location: researchMethod?.location,
-            duration: researchMethod?.duration,
-            summary: researchMethod?.summary,
             end_date: endDate,
+            research_methods: (researchMethods ?? []).map((rm) => ({
+              method_type_label: getMethodTypeById(rm.method_type)?.label,
+              what_to_study: rm.what_to_study,
+              tools_materials: rm.tools_materials,
+              location: rm.location,
+              duration: rm.duration,
+              summary: rm.summary,
+            })),
             previous_tasks: isRetry ? tasks : undefined,
           }),
         },
@@ -137,7 +137,6 @@ export default function ScheduleScreen({
             user_id: userId,
             theme_id: theme?.id,
             hypothesis_id: hypothesis?.id,
-            research_method_id: researchMethod?.id,
             end_date: endDate,
             tasks,
           }),
