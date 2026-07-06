@@ -673,4 +673,100 @@ app.get('/api/graphs/:userId', async (req, res) => {
   }
 });
 
+// ===== STEP6 考察パート =====
+
+// 考察保存エンドポイント(1仮説につき1件。あれば上書き、なければ新規作成)
+app.post('/api/save-consideration', async (req, res) => {
+  try {
+    const {
+      user_id,
+      theme_id,
+      hypothesis_id,
+      q1,   // ぜんぶ見返して、一番の発見は?
+      q2,   // さいしょの予想と比べてどうだった?
+    } = req.body;
+    const result = await pool.query(
+      `INSERT INTO considerations (user_id, theme_id, hypothesis_id, q1, q2, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (hypothesis_id)
+       DO UPDATE SET q1 = EXCLUDED.q1, q2 = EXCLUDED.q2, updated_at = NOW()
+       RETURNING *`,
+      [
+        user_id || null,
+        theme_id || null,
+        hypothesis_id || null,
+        q1 || null,
+        q2 || null,
+      ],
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('Save consideration error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ユーザーごとの考察取得エンドポイント
+app.get('/api/considerations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      `SELECT id, theme_id, hypothesis_id, q1, q2, created_at, updated_at
+       FROM considerations WHERE user_id = $1 ORDER BY created_at ASC`,
+      [userId],
+    );
+    res.json({ success: true, considerations: result.rows });
+  } catch (err) {
+    console.error('Get considerations error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 考察パート用: 内容は変えず、言葉づかいだけを整える(Q1・Q2まとめて1回で処理)
+const CONSIDERATION_POLISH_SYSTEM = `あなたは小学生が書いた自由研究の文章を「言葉づかいだけ」整える役目です。
+
+絶対に守ること:
+- 内容・意味・伝えたいことを1つも変えない、足さない、消さない
+- 誤字脱字・句読点・助詞の乱れなど「日本語としての整え」だけを行う
+- 小学生本人が書いたことが伝わる、やさしい言葉のまま整える(大人っぽい難しい言葉に置き換えない)
+- 元の文章より大幅に長くしたり短くしたりしない
+- 説明や前置き、コメントは一切書かない。整えた文章だけを返す
+- 空欄や意味の読み取れない文章は、無理に埋めたり推測で補完したりせず、そのまま(または最小限の整え)で返す
+
+入力として「Q1の答え」「Q2の答え」の2つを受け取り、それぞれを整えて
+{"q1": "整えたQ1", "q2": "整えたQ2"}
+の形のJSONだけを返してください。`;
+
+app.post('/api/consideration-polish', async (req, res) => {
+  try {
+    const { q1, q2 } = req.body;
+    const userText = `Q1の答え: ${q1 || '(未記入)'}\nQ2の答え: ${q2 || '(未記入)'}`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system:     CONSIDERATION_POLISH_SYSTEM,
+        messages:   [{ role: 'user', content: userText }],
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.content) throw new Error(data.error?.message ?? JSON.stringify(data));
+
+    const raw = data.content[0].text.trim();
+    const parsed = JSON.parse(raw);
+    res.json({ success: true, q1: parsed.q1 ?? '', q2: parsed.q2 ?? '' });
+  } catch (err) {
+    console.error('Consideration polish error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(3001, () => console.log('Server running on http://localhost:3001'));

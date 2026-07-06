@@ -14,7 +14,7 @@ import {
   getMeasuredNumber,
 } from "../data/recordNumbers";
 
-export default function RecordScreen({ userId, theme, hypothesis, onBack }) {
+export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext }) {
   const [view, setView] = useState("list"); // 'list' | 'input' | 'saved' | 'graph' | 'graphview'
   const [records, setRecords] = useState([]);
   const [graphs, setGraphs] = useState([]);
@@ -216,6 +216,12 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack }) {
             <span className="rec-add-emoji">🧪</span>＋ きろくを追加
           </button>
         </div>
+
+        {onNext && (
+          <button className="next-btn rec-to-consideration-btn" onClick={onNext}>
+            かんがえたことをまとめる →
+          </button>
+        )}
       </div>
     </div>
   );

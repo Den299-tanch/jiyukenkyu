@@ -12,6 +12,7 @@ import HypothesisScreen from './components/HypothesisScreen';
 import ResearchMethodScreen from './components/ResearchMethodScreen';
 import ScheduleScreen from './components/ScheduleScreen';
 import RecordScreen from './components/RecordScreen';
+import ConsiderationScreen from './components/ConsiderationScreen';
 
 
 // 画面の種類
@@ -269,6 +270,16 @@ export default function App() {
           theme={selectedTheme}
           hypothesis={scheduleContext?.hypothesis}
           onBack={() => setScreen('schedule')}
+          onNext={() => setScreen('consideration')}
+        />
+      )}
+
+      {screen === 'consideration' && (
+        <ConsiderationScreen
+          userId={userId}
+          theme={selectedTheme}
+          hypothesis={scheduleContext?.hypothesis}
+          onBack={() => setScreen('record')}
         />
       )}
 
