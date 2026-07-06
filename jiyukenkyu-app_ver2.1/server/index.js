@@ -508,6 +508,25 @@ app.get('/api/records/:userId', async (req, res) => {
   }
 });
 
+// 記録の削除エンドポイント(本人の記録だけ消せるよう user_id も照合する)
+app.delete('/api/records/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.query;
+    const result = await pool.query(
+      'DELETE FROM records WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId || null],
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'record not found' });
+    }
+    res.json({ success: true, id: result.rows[0].id });
+  } catch (err) {
+    console.error('Delete record error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ===== STEP5 グラフの安全網(層1.5=自動 / 層2=任意) =====
 // 軽量モデル。もし account でこの id が使えなければ 'claude-sonnet-4-6' に変えてOK。
 const GRAPH_SAFETY_MODEL = 'claude-haiku-4-5-20251001';
@@ -693,6 +712,25 @@ app.get('/api/graphs/:userId', async (req, res) => {
     res.json({ success: true, graphs: result.rows });
   } catch (err) {
     console.error('Get graphs error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// グラフの削除エンドポイント(本人のグラフだけ消せるよう user_id も照合する)
+app.delete('/api/graphs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.query;
+    const result = await pool.query(
+      'DELETE FROM graphs WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId || null],
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'graph not found' });
+    }
+    res.json({ success: true, id: result.rows[0].id });
+  } catch (err) {
+    console.error('Delete graph error:', err);
     res.status(500).json({ error: err.message });
   }
 });

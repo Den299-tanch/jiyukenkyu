@@ -1681,6 +1681,73 @@
   cursor: pointer;
 }
 
+/* ===== 汎用の削除確認モーダル ===== */
+.cf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 51, 88, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 200;
+}
+
+.cf-modal-card {
+  background: #fffdf8;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(27, 51, 88, 0.3);
+}
+
+.cf-modal-emoji {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.cf-modal-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #1b3358;
+  margin: 0 0 20px;
+  white-space: pre-line;
+}
+
+.cf-modal-danger-btn {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: #f5576c;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #c23a4d;
+}
+
+.cf-modal-danger-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cf-modal-cancel-btn {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: 2px dashed #e4dfc9;
+  color: #5b6b85;
+  border-radius: 14px;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 /* ===== 記録パート(STEP5) ===== */
 .record-screen {
   min-height: 100vh;
@@ -1782,18 +1849,6 @@
 }
 .rt-kiroku  { background: #e8f7f5; color: #146b63; }
 .rt-shirabe { background: #f1edfc; color: #5a44b0; }
-.rt-graph   { background: #fff7e0; color: #7a5c00; }
-
-/* 保存グラフのカード(3つ目の種類・タップで再表示) */
-.rec-card-graph {
-  border-color: #ffc93c;
-  cursor: pointer;
-}
-.rec-card-graph:hover { background: #fffdf5; }
-.rec-graph-cardtext {
-  font-size: 13px;
-  margin: 0;
-}
 
 /* 保存グラフ再表示のタイトル */
 .graph-saved-title {
@@ -1866,6 +1921,18 @@
   border-radius: 0 8px 8px 0;
 }
 .rec-card-why b { font-weight: 700; }
+
+/* 記録カードの削除ボタン */
+.rec-card-delete-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  padding: 2px 4px;
+  cursor: pointer;
+  opacity: 0.55;
+  line-height: 1;
+}
+.rec-card-delete-btn:hover { opacity: 1; }
 
 /* 追加ボタン(しらべたこと優先の並び) */
 .rec-add-row {
@@ -2119,6 +2186,131 @@
   margin: 4px 0 12px;
 }
 .rec-graph-cta:hover { background: #fff1cc; }
+
+/* 一覧から「保存したグラフ一覧」へ移動するCTA(グラフ作成CTAとは別デザインで区別) */
+.rec-graphlist-cta {
+  width: 100%;
+  border: 2px solid #8a6fe0;
+  background: #f1edfc;
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 14px;
+  color: #5a44b0;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+  margin: 4px 0 10px;
+}
+.rec-graphlist-cta:hover { background: #e7e0fb; }
+
+/* ===== グラフ一覧(グリッドギャラリー) ===== */
+.glist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.glist-card {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 #e4dfc9;
+  overflow: hidden;
+}
+
+.glist-card-body {
+  cursor: pointer;
+  padding: 13px 15px 6px;
+}
+
+.glist-card-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-size: 14px;
+  color: #1b3358;
+  margin-bottom: 4px;
+  padding-right: 26px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.glist-card-sub {
+  font-size: 11.5px;
+  color: #5b6b85;
+  margin-bottom: 4px;
+}
+
+.glist-card-chart {
+  pointer-events: none;
+}
+
+.glist-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  background: #fffdf8;
+  border: 1.5px solid #e4dfc9;
+  border-radius: 10px;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.glist-delete-btn:hover { opacity: 1; }
+
+/* グラフ詳細オーバーレイ(グリッドから1枚を大きく見る) */
+.glist-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 51, 88, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 150;
+}
+
+.glist-detail-card {
+  background: #fffdf8;
+  border-radius: 20px;
+  padding: 20px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(27, 51, 88, 0.3);
+}
+
+.glist-detail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.glist-detail-delete {
+  flex-shrink: 0;
+  background: none;
+  border: 1.5px solid #f5576c;
+  color: #c23a4d;
+  border-radius: 10px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.glist-detail-delete:hover { background: #fff0f1; }
+
+@media (max-width: 640px) {
+  .glist-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 .graph-note {
   font-size: 12.5px;

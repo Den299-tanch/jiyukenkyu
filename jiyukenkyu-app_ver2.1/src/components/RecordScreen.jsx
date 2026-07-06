@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import RecordInputScreen from "./RecordInputScreen";
 import RecordSavedScreen from "./RecordSavedScreen";
 import GraphFlowScreen from "./GraphFlowScreen";
-import GraphView from "./GraphView";
+import GraphListScreen from "./GraphListScreen";
+import ConfirmModal from "./ConfirmModal";
 import { getViewpointLabel } from "../data/recordViewpoints";
-import { getGraphTypeById } from "../data/graphTypes";
 import {
   GRAPH_MIN_COUNT,
   getRecordNumbers,
@@ -15,13 +15,14 @@ import {
 } from "../data/recordNumbers";
 
 export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext }) {
-  const [view, setView] = useState("list"); // 'list' | 'input' | 'saved' | 'graph' | 'graphview'
+  const [view, setView] = useState("list"); // 'list' | 'input' | 'saved' | 'graph' | 'graphlist'
   const [records, setRecords] = useState([]);
   const [graphs, setGraphs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialType, setInitialType] = useState("kiroku");
   const [lastSaved, setLastSaved] = useState(null);
-  const [selectedGraph, setSelectedGraph] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null); // 削除確認中の記録
+  const [deleting, setDeleting] = useState(false);
 
   // 画面に来たとき、この仮説の記録と保存グラフを読み込む
   useEffect(() => {
@@ -77,9 +78,27 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
     setView("list");
   }
 
-  function openGraph(graph) {
-    setSelectedGraph(graph);
-    setView("graphview");
+  function handleGraphDeleted(id) {
+    setGraphs((prev) => prev.filter((g) => g.id !== id));
+  }
+
+  async function handleConfirmDeleteRecord() {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    try {
+      const base = import.meta.env.VITE_API_URL ?? "";
+      const res = await fetch(
+        `${base}/api/records/${deleteTarget.id}?userId=${userId}`,
+        { method: "DELETE" },
+      );
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      setRecords((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      alert("記録の削除に失敗しました: " + err.message);
+    }
+    setDeleting(false);
   }
 
   if (view === "input") {
@@ -125,38 +144,14 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
     );
   }
 
-  if (view === "graphview" && selectedGraph) {
-    const gd = selectedGraph.graph_data || {};
+  if (view === "graphlist") {
     return (
-      <div className="record-screen">
-        <div className="screen-header">
-          <button className="back-btn" onClick={() => setView("list")}>
-            ← 戻る
-          </button>
-          <h2>📊 保存したグラフ</h2>
-        </div>
-        <div className="record-content">
-          <div className="graph-card">
-            <div className="graph-saved-title">
-              {gd.title || getGraphTypeById(gd.graphType).label}
-            </div>
-            <div className="graph-sub">
-              えらんだグラフ: {getGraphTypeById(gd.graphType).label}
-            </div>
-            <GraphView
-              type={gd.graphType}
-              entries={gd.entries || []}
-              xAxisLabel={gd.xAxisLabel ?? undefined}
-            />
-          </div>
-          <button
-            className="next-btn rec-save-btn"
-            onClick={() => setView("list")}
-          >
-            いちらんに もどる
-          </button>
-        </div>
-      </div>
+      <GraphListScreen
+        userId={userId}
+        graphs={graphs}
+        onBack={() => setView("list")}
+        onDeleted={handleGraphDeleted}
+      />
     );
   }
 
@@ -183,7 +178,7 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
 
         {loading ? (
           <p className="rec-empty">読み込み中…</p>
-        ) : records.length === 0 && graphs.length === 0 ? (
+        ) : records.length === 0 ? (
           <div className="rec-empty-card">
             <p className="rec-empty-emoji">🌱</p>
             <p className="rec-empty-text">
@@ -193,17 +188,21 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
             </p>
           </div>
         ) : (
-          mergeItems(records, graphs).map((item) =>
-            item.kind === "record" ? (
-              <RecordCard key={item.id} record={item.data} />
-            ) : (
-              <GraphCard
-                key={item.id}
-                graph={item.data}
-                onOpen={() => openGraph(item.data)}
+          [...records]
+            .sort((a, b) => new Date(a.observed_at) - new Date(b.observed_at))
+            .map((r) => (
+              <RecordCard
+                key={r.id}
+                record={r}
+                onDelete={() => setDeleteTarget(r)}
               />
-            ),
-          )
+            ))
+        )}
+
+        {graphs.length > 0 && (
+          <button className="rec-graphlist-cta" onClick={() => setView("graphlist")}>
+            📊 保存したグラフ一覧を見る({graphs.length})
+          </button>
         )}
 
         {hasGraphableData(records) && (
@@ -227,12 +226,21 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
           </button>
         )}
       </div>
+
+      {deleteTarget && (
+        <ConfirmModal
+          message={"この記録を消すよ。\nもとにはもどせないけど、いいかな?"}
+          confirming={deleting}
+          onConfirm={handleConfirmDeleteRecord}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 }
 
 // 記録カード1枚
-function RecordCard({ record }) {
+function RecordCard({ record, onDelete }) {
   const isKiroku = record.record_type === "kiroku";
   const viewpoints = Array.isArray(record.viewpoints) ? record.viewpoints : [];
   const numbers = getRecordNumbers(record).filter((n) => n.value !== null);
@@ -247,6 +255,13 @@ function RecordCard({ record }) {
         </span>
         {showMark && <span className="rec-num-mark">📊</span>}
         <span className="rec-card-date">{formatDate(record.observed_at)}</span>
+        <button
+          className="rec-card-delete-btn"
+          onClick={onDelete}
+          aria-label="この記録を消す"
+        >
+          🗑️
+        </button>
       </div>
       {viewpoints.length > 0 && (
         <div className="rec-card-chips">
@@ -278,43 +293,6 @@ function RecordCard({ record }) {
       )}
     </div>
   );
-}
-
-// 保存グラフのカード(きろく・しらべたことと並ぶ3つ目の種類)
-function GraphCard({ graph, onOpen }) {
-  const gd = graph.graph_data || {};
-  const label = getGraphTypeById(gd.graphType).label;
-  return (
-    <div className="rec-card rec-card-graph" onClick={onOpen}>
-      <div className="rec-card-top">
-        <span className="rec-type-badge rt-graph">📊 グラフ</span>
-        <span className="rec-card-date">{formatDate(graph.created_at)}</span>
-      </div>
-      <p className="rec-card-text rec-graph-cardtext">
-        {gd.title || label}・{label} ▶ タップで見る
-      </p>
-    </div>
-  );
-}
-
-// 記録とグラフを1つのリストにまとめ、日づけ順(古い→新しい)に並べる
-function mergeItems(records, graphs) {
-  const items = [
-    ...records.map((r) => ({
-      kind: "record",
-      id: "r" + r.id,
-      ts: r.observed_at,
-      data: r,
-    })),
-    ...graphs.map((g) => ({
-      kind: "graph",
-      id: "g" + g.id,
-      ts: g.created_at,
-      data: g,
-    })),
-  ];
-  items.sort((a, b) => new Date(a.ts) - new Date(b.ts));
-  return items;
 }
 
 // ISO日時 → 「7/25(土)」形式
