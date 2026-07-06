@@ -33,7 +33,7 @@ export function collectNumberEntries(records) {
         label: n.label || "数字",
         value: n.value,
         unit: n.unit || "",
-        date: r.created_at,
+        date: r.observed_at,
       });
     });
   });

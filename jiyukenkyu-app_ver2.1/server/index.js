@@ -458,12 +458,13 @@ app.post('/api/save-record', async (req, res) => {
       why_note,      // なぜ?欄
       num1_label, num1_value, num1_unit,   // 数字1(にんい)
       num2_label, num2_value, num2_unit,   // 数字2(散布図用ペア・にんい)
+      observed_at,   // 観察/調査日(未指定ならDBのDEFAULT=nowを使う)
     } = req.body;
     const result = await pool.query(
       `INSERT INTO records
         (user_id, theme_id, hypothesis_id, record_type, viewpoints, body, why_note,
-         num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit, observed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE($14, now()))
        RETURNING *`,
       [
         user_id || null,
@@ -479,6 +480,7 @@ app.post('/api/save-record', async (req, res) => {
         num2_label || null,
         num2_value ?? null,
         num2_unit || null,
+        observed_at || null,
       ],
     );
     res.json({ success: true, data: result.rows[0] });
@@ -494,8 +496,9 @@ app.get('/api/records/:userId', async (req, res) => {
     const { userId } = req.params;
     const result = await pool.query(
       `SELECT id, theme_id, hypothesis_id, record_type, viewpoints, body, why_note,
-              num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit, created_at
-       FROM records WHERE user_id = $1 ORDER BY created_at ASC`,
+              num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit,
+              observed_at, created_at
+       FROM records WHERE user_id = $1 ORDER BY observed_at ASC`,
       [userId],
     );
     res.json({ success: true, records: result.rows });

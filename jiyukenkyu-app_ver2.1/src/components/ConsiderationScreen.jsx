@@ -76,7 +76,7 @@ export default function ConsiderationScreen({ userId, theme, hypothesis, onBack 
   const whyList = records
     .filter((r) => r.why_note)
     .slice()
-    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    .sort((a, b) => new Date(a.observed_at) - new Date(b.observed_at));
 
   async function handlePolish() {
     setPolishLoading(true);
@@ -202,7 +202,7 @@ export default function ConsiderationScreen({ userId, theme, hypothesis, onBack 
                   <span
                     className={`rec-type-badge ${r.record_type === "kiroku" ? "rt-kiroku" : "rt-shirabe"}`}
                   >
-                    {r.record_type === "kiroku" ? "🧪" : "🔍"} {formatDate(r.created_at)}
+                    {r.record_type === "kiroku" ? "🧪" : "🔍"} {formatDate(r.observed_at)}
                   </span>
                   <span className="cons-why-text">
                     <b>{r.record_type === "kiroku" ? "なんでだと思う?" : "予想と同じ?ちがった?"}</b>{" "}

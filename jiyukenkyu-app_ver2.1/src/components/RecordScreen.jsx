@@ -242,7 +242,7 @@ function RecordCard({ record }) {
           {isKiroku ? "🧪 きろく" : "🔍 しらべたこと"}
         </span>
         {showMark && <span className="rec-num-mark">📊</span>}
-        <span className="rec-card-date">{formatDate(record.created_at)}</span>
+        <span className="rec-card-date">{formatDate(record.observed_at)}</span>
       </div>
       {viewpoints.length > 0 && (
         <div className="rec-card-chips">
@@ -299,7 +299,7 @@ function mergeItems(records, graphs) {
     ...records.map((r) => ({
       kind: "record",
       id: "r" + r.id,
-      ts: r.created_at,
+      ts: r.observed_at,
       data: r,
     })),
     ...graphs.map((g) => ({
