@@ -25,17 +25,29 @@ export function layer1Checks(entries, type, { isRelationship = false } = {}) {
     );
   }
 
-  // 単位不一致(1変数のくらべる系グラフのときだけ。関係グラフでは対象外)
+  // ラベル混在・単位不一致(1変数のくらべる系グラフのときだけ。関係グラフでは対象外)
   if (SINGLE_VAR_TYPES.includes(type) && !isRelationship) {
-    const units = [
-      ...new Set(
-        entries.map((e) => (e.unit || "").trim()).filter((u) => u !== ""),
-      ),
+    // ちがう種類の数字(ラベル)が混ざっていないか。単位の有無に関わらずチェックする
+    // (単位を書いていない数字どうしだと、単位チェックだけではすり抜けてしまうため)。
+    const labels = [
+      ...new Set(entries.map((e) => (e.label || "").trim()).filter((l) => l !== "")),
     ];
-    if (units.length >= 2) {
+    if (labels.length >= 2) {
       warnings.push(
-        `たんいがちがうもの(${units.join(" と ")})が混ざっているよ。同じたんいのものをくらべると分かりやすいよ。`,
+        `ちがう種類の数字(${labels.join(" と ")})が混ざっているよ。同じ種類の数字だけをくらべると分かりやすいよ。`,
       );
+    } else {
+      // ラベルが同じでも、単位の書き方だけがバラバラなケースを拾う
+      const units = [
+        ...new Set(
+          entries.map((e) => (e.unit || "").trim()).filter((u) => u !== ""),
+        ),
+      ];
+      if (units.length >= 2) {
+        warnings.push(
+          `たんいがちがうもの(${units.join(" と ")})が混ざっているよ。同じたんいのものをくらべると分かりやすいよ。`,
+        );
+      }
     }
   }
 

@@ -87,6 +87,23 @@ export function buildPairedSeriesData(entries, xLabel, yLabel) {
     }));
 }
 
+// グラフ選択画面で「これが良さそう」を軽くおすすめするためのヒューリスティック。
+// 強制ではなく目安なので、シンプルな基準にしている:
+// ・ラベルが2種類 → 2つの数字の関係を見るのに向いた散布図
+// ・ラベルが1種類で、日づけが3日以上ばらけている → 時間の変化を見る折れ線
+// ・それ以外 → シンプルな比較の棒グラフ
+export function recommendGraphType(entries) {
+  const labels = [...new Set(entries.map((e) => e.label))];
+  if (labels.length === 2) return "scatter";
+  if (labels.length === 1) {
+    const dates = new Set(
+      entries.map((e) => shortDate(e.date)).filter((d) => d !== ""),
+    );
+    if (dates.size >= 3) return "line";
+  }
+  return "bar";
+}
+
 // 円・帯用: 値の大きさ(絶対値)で割合を出す。単位が違っても機械的に%換算される。
 export function buildShareData(entries) {
   return entries.map((e) => ({

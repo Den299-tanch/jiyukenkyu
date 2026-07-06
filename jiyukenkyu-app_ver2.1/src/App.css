@@ -2206,6 +2206,14 @@
   border-color: #ff6b6b;
   color: #fff;
 }
+.graph-reco-badge {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ff9800;
+  margin-top: 2px;
+}
+.graph-type-chip.selected .graph-reco-badge { color: #fff; }
 .graph-type-desc {
   font-size: 12.5px;
   color: #5b6b85;

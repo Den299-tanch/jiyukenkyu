@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import GraphView from "./GraphView";
 import { GRAPH_TYPES, getGraphTypeById } from "../data/graphTypes";
-import { collectNumberEntries, shortDate, pairByRecord } from "../data/graphBuild";
+import { collectNumberEntries, shortDate, pairByRecord, recommendGraphType } from "../data/graphBuild";
 import { layer1Checks } from "../data/graphSafety";
 
 const ASK_LIMIT = 3; // 層2(任意で聞く)の回数上限(コスト対策)
@@ -56,6 +56,7 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
     : selectedLabels[0];
 
   const layer1 = layer1Checks(selectedEntries, graphType, { isRelationship: canPickAxis });
+  const recommendedType = recommendGraphType(selectedEntries);
 
   // AIに渡すグラフの中身(層1.5・層2で共通)
   function graphPayload() {
@@ -292,6 +293,9 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
                   onClick={() => setGraphType(g.id)}
                 >
                   {g.icon} {g.label}
+                  {recommendedType === g.id && (
+                    <span className="graph-reco-badge">⭐ おすすめ</span>
+                  )}
                 </button>
               ))}
             </div>
