@@ -9,6 +9,13 @@ function toNum(str) {
   return isNaN(n) ? null : n;
 }
 
+// 今日の日付を YYYY-MM-DD で(date inputの初期値用)
+function todayStr() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 export default function RecordInputScreen({
   userId,
   theme,
@@ -18,6 +25,7 @@ export default function RecordInputScreen({
   onSaved,
 }) {
   const [recordType, setRecordType] = useState(initialType ?? "kiroku");
+  const [observedAt, setObservedAt] = useState(todayStr());
   const [viewpoints, setViewpoints] = useState([]);
   const [body, setBody] = useState("");
   const [whyNote, setWhyNote] = useState("");
@@ -99,6 +107,7 @@ export default function RecordInputScreen({
             viewpoints,
             body: body.trim(),
             why_note: whyNote.trim(),
+            observed_at: observedAt,
             num1_label: num1Label.trim() || null,
             num1_value: toNum(num1Value),
             num1_unit: num1Unit.trim() || null,
@@ -197,6 +206,16 @@ export default function RecordInputScreen({
             🔍 しらべたこと
           </button>
         </div>
+
+        <p className="rec-field-label">
+          {isKiroku ? "いつ観察した?" : "いつ調べた?"}
+        </p>
+        <input
+          type="date"
+          className="rec-date-input"
+          value={observedAt}
+          onChange={(e) => setObservedAt(e.target.value)}
+        />
 
         <p className="rec-field-label">
           {isKiroku ? "きになったところをタップ" : "どうやって調べた?"}

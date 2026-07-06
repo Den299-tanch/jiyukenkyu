@@ -1957,6 +1957,19 @@
 .rec-why-textarea { border-color: #f0d98c; background: #fffdf5; }
 .rec-why-textarea:focus { border-color: #ffc93c; background: #fffdf5; }
 
+.rec-date-input {
+  padding: 12px 16px;
+  border: 2px solid #e4dfc9;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1b3358;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+.rec-date-input:focus { border-color: #2ec4b6; background: #f0fbfa; }
+
 /* ===== 数字欄＋オートコンプリート ===== */
 .rec-num-field {
   border: 2px dashed #ffc93c;
