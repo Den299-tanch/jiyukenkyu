@@ -7,12 +7,16 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "migrate:up": "node-pg-migrate up",
+    "migrate:create": "node-pg-migrate create --migration-file-language sql",
+    "migrate:up:local": "node --env-file=server/.env node_modules/node-pg-migrate/bin/node-pg-migrate up"
   },
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "node-pg-migrate": "^8.0.4",
     "pg": "^8.22.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
