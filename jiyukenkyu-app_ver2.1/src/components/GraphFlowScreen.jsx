@@ -33,6 +33,7 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
   );
   const [graphType, setGraphType] = useState("bar");
   const [title, setTitle] = useState("");
+  const [titleTouched, setTitleTouched] = useState(false); // 手入力されたら自動生成をやめる
   const [xAxisLabel, setXAxisLabel] = useState(null); // 棒・折れ線でヨコ軸に使うラベル
 
   // 安全網の状態
@@ -43,10 +44,9 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
   const lastCheckSig = useRef(null);
 
   const selectedEntries = entries.filter((e) => selectedKeys.includes(e.key));
-  const layer1 = layer1Checks(selectedEntries, graphType);
   const askLeft = ASK_LIMIT - questions.length;
 
-  // 選んだ数字の中にあるラベルの種類。ちょうど2種類のときだけヨコ軸を選べる。
+  // 選んだ数字の中にあるラベルの種類。ちょうど2種類のときだけヨコ軸を選べる(=関係グラフ)。
   const selectedLabels = [...new Set(selectedEntries.map((e) => e.label))];
   const canPickAxis =
     (graphType === "bar" || graphType === "line") && selectedLabels.length === 2;
@@ -55,13 +55,29 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
     ? xAxisLabel
     : selectedLabels[0];
 
+  const layer1 = layer1Checks(selectedEntries, graphType, { isRelationship: canPickAxis });
+
   // AIに渡すグラフの中身(層1.5・層2で共通)
   function graphPayload() {
+    // 関係グラフ(散布図、または2数字をヨコ軸で見ている棒・折れ線)かどうかをAIに伝える。
+    // これが無いと「単位がちがう数字を混ぜている」と誤解されてしまうため。
+    const isRelationship = graphType === "scatter" || canPickAxis;
     return {
       theme_title: theme?.theme,
       hypothesis: hypothesis?.hypothesis,
       graph_type_label: getGraphTypeById(graphType).label,
       title,
+      is_relationship: isRelationship,
+      x_axis_label: isRelationship
+        ? graphType === "scatter"
+          ? selectedLabels[0]
+          : effectiveXLabel
+        : null,
+      y_axis_label: isRelationship
+        ? graphType === "scatter"
+          ? selectedLabels[1]
+          : selectedLabels.find((l) => l !== effectiveXLabel)
+        : null,
       numbers: selectedEntries.map((e) => ({
         label: e.label,
         value: e.value,
@@ -170,9 +186,9 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
     );
   }
 
-  // タイトルの初期値(選んだラベルからつくる)
+  // タイトルの初期値(選んだラベルからつくる)。手入力されるまでは選び直すたびに作り直す。
   function goToShow() {
-    if (!title.trim()) {
+    if (!titleTouched) {
       const labels = [...new Set(selectedEntries.map((e) => e.label))];
       setTitle(labels.join(" と ") + " のグラフ");
     }
@@ -286,7 +302,10 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
               <input
                 className="graph-title-input"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setTitleTouched(true);
+                }}
                 placeholder="グラフのタイトル"
               />
               <div className="graph-sub">

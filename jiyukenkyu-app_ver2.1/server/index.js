@@ -520,6 +520,12 @@ const GRAPH_CHECK_SYSTEM = `あなたは小学生の自由研究を手伝う先�
 - ケタ違い(たとえば片方が分・片方が秒など、桁が大きく違う数字がまざっている)
 - 出どころや種類がちがう数字を、1つのグラフに混ぜている
 - 単位がバラバラなのに、1つの量として比べている
+
+ただし「これは関係グラフです(ヨコ軸/タテ軸が指定されている)」と伝えられたときは、
+2つのちがう種類の数字・ちがう単位・ちがう桁を比べるのがそのグラフの目的なので、
+単位や種類がちがうこと自体は絶対に指摘しないでください。その場合でも、
+ケタ違いで片方の変化がグラフ上でほぼ見えなくなっていそうなときなどは指摘してかまいません。
+
 問題がなさそうなときは、説明や前置きを一切書かず「OK」とだけ返してください。
 気になる点があるときだけ、答えや正解は言わず、気づきをうながす一言(1〜2文・やさしい言葉)を返してください。`;
 
@@ -532,12 +538,18 @@ const GRAPH_ASK_SYSTEM = `あなたは小学生の自由研究を手伝う先生
 返答は1〜2文、やさしい言葉で。`;
 
 // グラフの中身を説明する文章を組み立てる(層1.5・層2で共通)
-function buildGraphUserText({ theme_title, hypothesis, graph_type_label, title, numbers }) {
+function buildGraphUserText({
+  theme_title, hypothesis, graph_type_label, title, numbers,
+  is_relationship, x_axis_label, y_axis_label,
+}) {
   let text = '';
   if (theme_title) text += `テーマ: ${theme_title}\n`;
   if (hypothesis) text += `この子の予想: 「${hypothesis}」\n`;
   if (graph_type_label) text += `グラフの種類: ${graph_type_label}\n`;
   if (title) text += `グラフのタイトル: ${title}\n`;
+  if (is_relationship) {
+    text += `これは関係グラフです。ヨコ軸=${x_axis_label ?? '?'} / タテ軸=${y_axis_label ?? '?'}\n`;
+  }
   text += '\n使っている数字:\n';
   (numbers ?? []).forEach((n) => {
     const unit = n.unit ? ` ${n.unit}` : '';

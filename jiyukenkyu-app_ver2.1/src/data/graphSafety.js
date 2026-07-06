@@ -3,7 +3,9 @@
 // 「くらべる系」の1変数グラフでは単位がそろっているのが望ましい。
 const SINGLE_VAR_TYPES = ["bar", "line", "histogram", "pie", "band"];
 
-export function layer1Checks(entries, type) {
+// isRelationship: 棒・折れ線で2つの数字の「関係」を見ているとき(ヨコ軸に数字を選んだとき)。
+// このときは単位がちがって当然なので、単位不一致チェックの対象からはずす。
+export function layer1Checks(entries, type, { isRelationship = false } = {}) {
   const warnings = [];
   if (!entries || entries.length === 0) return warnings;
 
@@ -23,8 +25,8 @@ export function layer1Checks(entries, type) {
     );
   }
 
-  // 単位不一致(1変数のくらべる系グラフのときだけ)
-  if (SINGLE_VAR_TYPES.includes(type)) {
+  // 単位不一致(1変数のくらべる系グラフのときだけ。関係グラフでは対象外)
+  if (SINGLE_VAR_TYPES.includes(type) && !isRelationship) {
     const units = [
       ...new Set(
         entries.map((e) => (e.unit || "").trim()).filter((u) => u !== ""),
