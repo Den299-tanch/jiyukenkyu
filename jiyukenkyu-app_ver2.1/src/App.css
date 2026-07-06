@@ -2244,6 +2244,36 @@
   color: #5b6b85;
   margin-bottom: 12px;
 }
+
+/* ヨコ軸えらび(棒・折れ線でラベルが2種類のときだけ出る) */
+.graph-axis-pick {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.graph-axis-pick-lbl {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1b3358;
+}
+.graph-axis-chip {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 2px solid #e4dfc9;
+  background: #fff;
+  color: #5b6b85;
+  cursor: pointer;
+  font-family: inherit;
+}
+.graph-axis-chip.on {
+  background: #2ec4b6;
+  border-color: #2ec4b6;
+  color: #fff;
+}
 .graph-empty {
   text-align: center;
   color: #5b6b85;

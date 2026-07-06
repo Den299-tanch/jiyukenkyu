@@ -33,6 +33,7 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
   );
   const [graphType, setGraphType] = useState("bar");
   const [title, setTitle] = useState("");
+  const [xAxisLabel, setXAxisLabel] = useState(null); // 棒・折れ線でヨコ軸に使うラベル
 
   // 安全網の状態
   const [check15, setCheck15] = useState({ loading: false, warn: false, message: "" });
@@ -44,6 +45,15 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
   const selectedEntries = entries.filter((e) => selectedKeys.includes(e.key));
   const layer1 = layer1Checks(selectedEntries, graphType);
   const askLeft = ASK_LIMIT - questions.length;
+
+  // 選んだ数字の中にあるラベルの種類。ちょうど2種類のときだけヨコ軸を選べる。
+  const selectedLabels = [...new Set(selectedEntries.map((e) => e.label))];
+  const canPickAxis =
+    (graphType === "bar" || graphType === "line") && selectedLabels.length === 2;
+  // 実際に使うヨコ軸ラベル(未選択や範囲外なら先頭のラベルにフォールバック)
+  const effectiveXLabel = selectedLabels.includes(xAxisLabel)
+    ? xAxisLabel
+    : selectedLabels[0];
 
   // AIに渡すグラフの中身(層1.5・層2で共通)
   function graphPayload() {
@@ -116,6 +126,7 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
               title: title.trim() || getGraphTypeById(graphType).label,
               graphType,
               entries: selectedEntries,
+              xAxisLabel: canPickAxis ? effectiveXLabel : null,
             },
           }),
         },
@@ -281,7 +292,25 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
               <div className="graph-sub">
                 えらんだグラフ: {getGraphTypeById(graphType).label}
               </div>
-              <GraphView type={graphType} entries={selectedEntries} />
+              {canPickAxis && (
+                <div className="graph-axis-pick">
+                  <span className="graph-axis-pick-lbl">ヨコ軸:</span>
+                  {selectedLabels.map((lbl) => (
+                    <button
+                      key={lbl}
+                      className={`graph-axis-chip ${effectiveXLabel === lbl ? "on" : ""}`}
+                      onClick={() => setXAxisLabel(lbl)}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <GraphView
+                type={graphType}
+                entries={selectedEntries}
+                xAxisLabel={canPickAxis ? effectiveXLabel : undefined}
+              />
             </div>
 
             {/* 3層の安全網(レイヤー名は子ども画面には出さない) */}

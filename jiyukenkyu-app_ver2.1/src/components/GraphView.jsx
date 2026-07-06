@@ -19,25 +19,46 @@ import {
 import {
   GRAPH_COLORS,
   buildSeriesData,
+  buildPairedSeriesData,
   buildShareData,
   buildHistogramData,
   buildScatterData,
 } from "../data/graphBuild";
 
+// 棒・折れ線のヨコ軸データを決める。
+// xAxisLabel が指定されていて、選んだ数字がちょうど2ラベルなら「ペア」でヨコ軸を作る。
+// それ以外(1ラベル・軸未指定・ペアが作れない)は今までどおり日づけ(observed_at)軸。
+function seriesForAxis(entries, xAxisLabel) {
+  const labels = [...new Set(entries.map((e) => e.label))];
+  if (xAxisLabel && labels.length === 2) {
+    const yLabel = labels.find((l) => l !== xAxisLabel);
+    const paired = buildPairedSeriesData(entries, xAxisLabel, yLabel);
+    if (paired.length > 0) return { data: paired, axisLabel: xAxisLabel };
+  }
+  return { data: buildSeriesData(entries), axisLabel: null };
+}
+
 // 選んだ数字(entries)を、えらんだ種類(type)で必ず描く。
 // 理想形でないデータでも代用ルールで機械的に描画する。
-export default function GraphView({ type, entries }) {
+// xAxisLabel: 棒・折れ線でヨコ軸に使うラベル(なければ日づけ軸)
+export default function GraphView({ type, entries, xAxisLabel }) {
   if (!entries || entries.length === 0) {
     return <p className="graph-empty">数字がえらばれていないよ。</p>;
   }
 
   if (type === "bar" || type === "histogram") {
-    const data = type === "bar" ? buildSeriesData(entries) : buildHistogramData(entries);
+    const isHist = type === "histogram";
+    const series = isHist ? null : seriesForAxis(entries, xAxisLabel);
+    const data = isHist ? buildHistogramData(entries) : series.data;
     return (
       <ResponsiveContainer width="100%" height={260}>
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: series?.axisLabel ? 24 : 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#efebda" />
-          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 11 }}
+            label={series?.axisLabel ? { value: series.axisLabel, position: "insideBottom", offset: -8, fontSize: 11 } : undefined}
+          />
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip />
           <Bar dataKey="value" radius={[6, 6, 0, 0]}>
@@ -51,12 +72,16 @@ export default function GraphView({ type, entries }) {
   }
 
   if (type === "line") {
-    const data = buildSeriesData(entries);
+    const { data, axisLabel } = seriesForAxis(entries, xAxisLabel);
     return (
       <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 10 }}>
+        <LineChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: axisLabel ? 24 : 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#efebda" />
-          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 11 }}
+            label={axisLabel ? { value: axisLabel, position: "insideBottom", offset: -8, fontSize: 11 } : undefined}
+          />
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip />
           <Line

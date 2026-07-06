@@ -143,7 +143,11 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
             <div className="graph-sub">
               えらんだグラフ: {getGraphTypeById(gd.graphType).label}
             </div>
-            <GraphView type={gd.graphType} entries={gd.entries || []} />
+            <GraphView
+              type={gd.graphType}
+              entries={gd.entries || []}
+              xAxisLabel={gd.xAxisLabel ?? undefined}
+            />
           </div>
           <button
             className="next-btn rec-save-btn"

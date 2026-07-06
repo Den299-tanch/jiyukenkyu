@@ -46,7 +46,7 @@ function entryName(e, i) {
   return d ? d : `#${i + 1}`;
 }
 
-// 棒・折れ線用: 1エントリ=1本
+// 棒・折れ線用: 1エントリ=1本(ヨコ軸は日づけ=observed_at)
 export function buildSeriesData(entries) {
   return entries.map((e, i) => ({
     name: entryName(e, i),
@@ -56,9 +56,40 @@ export function buildSeriesData(entries) {
   }));
 }
 
+// 同じ記録の中にある2つのラベルの値を1点にまとめる(散布図・ペア折れ線で共通)。
+// 例: 記録Aに「経過時間=5」「観察数=3」があれば {x:5, y:3} を1点にする。
+// xLabel と yLabel の両方がそろっている記録だけを点にする。
+export function pairByRecord(entries, xLabel, yLabel) {
+  const byRecord = new Map();
+  entries.forEach((e) => {
+    if (!byRecord.has(e.recordId)) byRecord.set(e.recordId, { date: e.date });
+    byRecord.get(e.recordId)[e.label] = e.value;
+  });
+  const points = [];
+  byRecord.forEach((vals) => {
+    if (vals[xLabel] !== undefined && vals[yLabel] !== undefined) {
+      points.push({ x: vals[xLabel], y: vals[yLabel], date: vals.date });
+    }
+  });
+  return points;
+}
+
+// 棒・折れ線用(2ラベル版): xLabel をヨコ軸、yLabel をタテ軸にしてペアにする。
+// 折れ線がなめらかに見えるよう x の昇順で並べる。
+export function buildPairedSeriesData(entries, xLabel, yLabel) {
+  return pairByRecord(entries, xLabel, yLabel)
+    .sort((a, b) => a.x - b.x)
+    .map((p) => ({
+      name: String(p.x),
+      value: p.y,
+      unit: "",
+      label: yLabel,
+    }));
+}
+
 // 円・帯用: 値の大きさ(絶対値)で割合を出す。単位が違っても機械的に%換算される。
 export function buildShareData(entries) {
-  return entries.map((e, i) => ({
+  return entries.map((e) => ({
     name: `${e.label}${shortDate(e.date) ? " " + shortDate(e.date) : ""}`,
     value: Math.abs(e.value),
   }));
@@ -99,17 +130,7 @@ export function buildScatterData(entries) {
   const labels = [...new Set(entries.map((e) => e.label))];
   if (labels.length >= 2) {
     const [ax, ay] = labels;
-    const byRecord = new Map();
-    entries.forEach((e) => {
-      if (!byRecord.has(e.recordId)) byRecord.set(e.recordId, {});
-      byRecord.get(e.recordId)[e.label] = e.value;
-    });
-    const points = [];
-    byRecord.forEach((vals) => {
-      if (vals[ax] !== undefined && vals[ay] !== undefined) {
-        points.push({ x: vals[ax], y: vals[ay] });
-      }
-    });
+    const points = pairByRecord(entries, ax, ay);
     if (points.length > 0) {
       return { points, xName: ax, yName: ay };
     }
