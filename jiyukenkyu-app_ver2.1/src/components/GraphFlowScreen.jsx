@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import GraphView from "./GraphView";
 import { GRAPH_TYPES, getGraphTypeById } from "../data/graphTypes";
-import { collectNumberEntries, shortDate } from "../data/graphBuild";
+import { collectNumberEntries, shortDate, pairByRecord } from "../data/graphBuild";
 import { layer1Checks } from "../data/graphSafety";
 
 const ASK_LIMIT = 3; // 層2(任意で聞く)の回数上限(コスト対策)
@@ -62,28 +62,37 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
     // 関係グラフ(散布図、または2数字をヨコ軸で見ている棒・折れ線)かどうかをAIに伝える。
     // これが無いと「単位がちがう数字を混ぜている」と誤解されてしまうため。
     const isRelationship = graphType === "scatter" || canPickAxis;
+    const xLbl = isRelationship
+      ? graphType === "scatter" ? selectedLabels[0] : effectiveXLabel
+      : null;
+    const yLbl = isRelationship
+      ? graphType === "scatter" ? selectedLabels[1] : selectedLabels.find((l) => l !== effectiveXLabel)
+      : null;
+    // 記録した順ではなく、グラフが実際に描く並び(ヨコ軸=x昇順)に揃えてAIに渡す。
+    // これを揃えないと、AIが「記録した順」だけを見て、実際には無い減少傾向などを誤って指摘してしまう。
+    const pairs = isRelationship
+      ? pairByRecord(selectedEntries, xLbl, yLbl)
+          .sort((a, b) => a.x - b.x)
+          .map((p) => ({ x: p.x, y: p.y }))
+      : null;
     return {
       theme_title: theme?.theme,
       hypothesis: hypothesis?.hypothesis,
       graph_type_label: getGraphTypeById(graphType).label,
       title,
       is_relationship: isRelationship,
-      x_axis_label: isRelationship
-        ? graphType === "scatter"
-          ? selectedLabels[0]
-          : effectiveXLabel
-        : null,
-      y_axis_label: isRelationship
-        ? graphType === "scatter"
-          ? selectedLabels[1]
-          : selectedLabels.find((l) => l !== effectiveXLabel)
-        : null,
-      numbers: selectedEntries.map((e) => ({
-        label: e.label,
-        value: e.value,
-        unit: e.unit,
-        date: shortDate(e.date),
-      })),
+      x_axis_label: xLbl,
+      y_axis_label: yLbl,
+      pairs,
+      // 関係グラフのときは pairs が実際の描画内容そのものなので、numbers は重複させない。
+      numbers: isRelationship
+        ? []
+        : selectedEntries.map((e) => ({
+            label: e.label,
+            value: e.value,
+            unit: e.unit,
+            date: shortDate(e.date),
+          })),
     };
   }
 

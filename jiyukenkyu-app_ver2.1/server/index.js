@@ -540,16 +540,25 @@ const GRAPH_ASK_SYSTEM = `あなたは小学生の自由研究を手伝う先生
 // グラフの中身を説明する文章を組み立てる(層1.5・層2で共通)
 function buildGraphUserText({
   theme_title, hypothesis, graph_type_label, title, numbers,
-  is_relationship, x_axis_label, y_axis_label,
+  is_relationship, x_axis_label, y_axis_label, pairs,
 }) {
   let text = '';
   if (theme_title) text += `テーマ: ${theme_title}\n`;
   if (hypothesis) text += `この子の予想: 「${hypothesis}」\n`;
   if (graph_type_label) text += `グラフの種類: ${graph_type_label}\n`;
   if (title) text += `グラフのタイトル: ${title}\n`;
-  if (is_relationship) {
+
+  // 関係グラフのときは、記録した順ではなく「グラフに実際に描かれている順(ヨコ軸の昇順)」で伝える。
+  // 記録した順のまま渡すと、実際には無い増減の傾向を誤って指摘してしまうため。
+  if (is_relationship && pairs?.length) {
     text += `これは関係グラフです。ヨコ軸=${x_axis_label ?? '?'} / タテ軸=${y_axis_label ?? '?'}\n`;
+    text += `\nグラフに実際に描かれている点(ヨコ軸の小さい順):\n`;
+    pairs.forEach((p) => {
+      text += `- ${x_axis_label}=${p.x} のとき ${y_axis_label}=${p.y}\n`;
+    });
+    return text;
   }
+
   text += '\n使っている数字:\n';
   (numbers ?? []).forEach((n) => {
     const unit = n.unit ? ` ${n.unit}` : '';
