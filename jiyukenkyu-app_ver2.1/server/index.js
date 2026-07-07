@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
+import { runner as migrationRunner } from 'node-pg-migrate';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -907,4 +908,35 @@ app.post('/api/admin/reports', async (req, res) => {
   }
 });
 
-app.listen(3001, () => console.log('Server running on http://localhost:3001'));
+// 起動時に未適用のマイグレーションを自動で流す。
+// 環境変数(DATABASE_URL)はRenderに預けているため、DBのURLを手元に持たなくても
+// デプロイのたびにサーバー自身がこれを実行してスキーマを最新化できる。
+// 既存の移行はすべて IF NOT EXISTS で書かれているので、再実行しても無害(no-op)。
+async function runMigrations() {
+  if (!process.env.DATABASE_URL) {
+    console.log('Migrations skipped: ❌ DATABASE_URL not set');
+    return;
+  }
+  try {
+    const applied = await migrationRunner({
+      databaseUrl: {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }, // Renderの場合これが必要
+      },
+      dir: path.join(__dirname, '..', 'migrations'),
+      direction: 'up',
+      count: Infinity,
+      migrationsTable: 'pgmigrations',
+      log: (msg) => console.log('[migrate]', msg),
+    });
+    console.log(`Migrations: ✅ OK (this boot applied ${applied.length})`);
+  } catch (err) {
+    // 移行に失敗してもAPI自体は動かしたいので、ここでは落とさずログだけ残す
+    console.error('Migration error: ❌', err.message);
+  }
+}
+
+// マイグレーションを試みてからサーバーを起動する(成否に関わらず起動はする)
+runMigrations().finally(() => {
+  app.listen(3001, () => console.log('Server running on http://localhost:3001'));
+});
