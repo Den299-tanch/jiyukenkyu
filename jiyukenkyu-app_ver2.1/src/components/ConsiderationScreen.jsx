@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { getGraphTypeById } from "../data/graphTypes";
 
-export default function ConsiderationScreen({ userId, theme, hypothesis, onBack }) {
+export default function ConsiderationScreen({ userId, theme, hypothesis, onBack, onNext }) {
   const [view, setView] = useState("reflect"); // 'reflect' | 'think'
   const [records, setRecords] = useState([]);
   const [graphs, setGraphs] = useState([]);
@@ -296,6 +296,15 @@ export default function ConsiderationScreen({ userId, theme, hypothesis, onBack 
             >
               {saving ? "ほぞん中…" : "💾 ほぞんする"}
             </button>
+
+            {onNext && (
+              <button
+                className="next-btn cons-to-summary-btn"
+                onClick={onNext}
+              >
+                📗 まとめを作る →
+              </button>
+            )}
           </>
         )}
       </div>

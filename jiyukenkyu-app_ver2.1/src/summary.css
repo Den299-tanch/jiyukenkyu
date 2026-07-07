@@ -1,0 +1,461 @@
+/* =========================================
+   STEP7 まとめ(レポート)パート
+   ========================================= */
+
+.summary-screen { width: 100%; }
+.summary-content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px 60px;
+}
+
+.summary-lead {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: #5b6b85;
+  background: #fffdf7;
+  border: 2px dashed #e4dfc9;
+  border-radius: 12px;
+  padding: 11px 14px;
+  margin: 4px 0 16px;
+}
+.summary-lead b { color: #146b63; }
+
+/* ヒント一覧 */
+.summary-hint-list { display: flex; flex-direction: column; gap: 8px; }
+.summary-hint {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  background: #fff;
+  border: 2px solid #e4dfc9;
+  border-radius: 12px;
+  padding: 9px 11px;
+}
+.summary-hint-badge {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.summary-hint-badge.b-kiroku { background: #e8f7f5; color: #146b63; }
+.summary-hint-badge.b-graph  { background: #fff7e0; color: #7a5c00; }
+.summary-hint-badge.b-shirabe{ background: #f1edfc; color: #5a44b0; }
+.summary-hint-text { font-size: 12.5px; line-height: 1.6; color: #1b3358; }
+
+.summary-to-preview-btn { width: 100%; margin-top: 20px; }
+
+/* プレビュー */
+.summary-preview-wrap { margin: 8px 0 16px; }
+.summary-preview-actions {
+  display: flex;
+  gap: 10px;
+  position: sticky;
+  bottom: 0;
+  padding: 12px 0;
+  background: linear-gradient(to top, #eff3ec 70%, transparent);
+}
+.summary-preview-actions .cons-secondary-btn,
+.summary-preview-actions .next-btn { margin: 0; flex: 1; }
+
+.cons-to-summary-btn { width: 100%; margin-top: 12px; }
+
+/* 完成画面 */
+.summary-done { text-align: center; padding: 16px 4px 6px; }
+.summary-done-emoji { font-size: 52px; margin-bottom: 6px; }
+.summary-done-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+  color: #1b3358;
+  margin-bottom: 12px;
+}
+.summary-done-note {
+  background: #e8f7f5;
+  border: 2px solid #2ec4b6;
+  border-radius: 14px;
+  padding: 12px 15px;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: #146b63;
+  text-align: left;
+  margin: 12px 0;
+}
+.summary-done-note b { font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif; font-weight: 400; }
+.summary-continue-note {
+  background: #fff7e0;
+  border: 2px dashed #ffc93c;
+  border-radius: 14px;
+  padding: 11px 14px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #7a5c00;
+  text-align: left;
+  margin-bottom: 16px;
+}
+.summary-done-preview { margin-top: 8px; text-align: left; }
+
+/* =========================================
+   ReportView(まとめの汎用テンプレート)
+   子どものプレビュー / 先生のPDF化 で共通
+   ========================================= */
+
+.report-sheet {
+  background: #fffdf7;
+  border: 2px solid #e4dfc9;
+  border-radius: 18px;
+  padding: 22px 20px 18px;
+  box-shadow: 0 10px 30px rgba(27, 51, 88, 0.08);
+  color: #1b3358;
+}
+.report-sheet.for-pdf {
+  box-shadow: none;
+  border-radius: 0;
+  border: none;
+  background: #ffffff;
+  padding: 26px 24px;
+}
+
+/* 表紙 */
+.report-cover {
+  text-align: center;
+  border-bottom: 3px double #e4dfc9;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+}
+.report-cover-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #2ec4b6;
+  background: #e8f7f5;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+.report-cover-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.5;
+  margin: 0 0 10px;
+  color: #1b3358;
+}
+.report-cover-meta {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #5b6b85;
+}
+
+/* セクション */
+.report-section { margin-bottom: 18px; page-break-inside: avoid; }
+.report-h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1b3358;
+  border-left: 5px solid #2ec4b6;
+  padding-left: 10px;
+  margin: 0 0 10px;
+}
+.report-section.tone-teal   .report-h { border-left-color: #2ec4b6; }
+.report-section.tone-yellow .report-h { border-left-color: #ffc93c; }
+.report-section.tone-coral  .report-h { border-left-color: #ff6b6b; }
+.report-section.tone-purple .report-h { border-left-color: #8a6fe0; }
+.report-h-icon { font-size: 16px; }
+
+.report-p { font-size: 13.5px; line-height: 1.85; color: #1b3358; margin: 0; }
+
+/* じぶんのことば枠 */
+.report-own-words {
+  position: relative;
+  background: #fffbf0;
+  border: 2px dashed #ffc93c;
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  margin-top: 6px;
+}
+.report-own-tag {
+  position: absolute;
+  top: -11px;
+  left: 12px;
+  background: #ffc93c;
+  color: #7a5c00;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 8px;
+}
+
+/* けんきゅうのながれ */
+.report-schedule-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.report-schedule-chip {
+  flex: 1 1 90px;
+  min-width: 90px;
+  background: #f1edfc;
+  border: 1.5px solid #ded3f7;
+  border-radius: 9px;
+  padding: 7px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.report-schedule-chip.is-done { opacity: 0.6; }
+.report-schedule-date { font-size: 10.5px; font-weight: 700; color: #5a44b0; }
+.report-schedule-task { font-size: 11px; line-height: 1.4; color: #4b3a91; }
+
+/* 記録カード */
+.report-record-list { display: flex; flex-direction: column; gap: 9px; }
+.report-record-card {
+  background: #fff;
+  border: 2px solid #eee7d2;
+  border-radius: 12px;
+  padding: 11px 12px;
+}
+.report-record-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.report-record-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.report-record-badge.b-kiroku  { background: #e8f7f5; color: #146b63; }
+.report-record-badge.b-shirabe { background: #f1edfc; color: #5a44b0; }
+.report-record-date { font-size: 11px; color: #8a93a5; }
+.report-record-why {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #1b3358;
+  margin: 4px 0 0;
+}
+.report-record-why b { color: #7a5c00; }
+.report-record-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.report-chip {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 8px;
+}
+.report-chip.vp  { background: #eef7ee; color: #2f7a43; }
+.report-chip.num { background: #fff7e0; color: #7a5c00; }
+
+/* グラフ */
+.report-graph-list { display: flex; flex-direction: column; gap: 14px; }
+.report-graph-card {
+  margin: 0;
+  background: #fff;
+  border: 2px solid #eee7d2;
+  border-radius: 12px;
+  padding: 12px 12px 8px;
+}
+.report-graph-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1b3358;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.report-graph-canvas { width: 100%; }
+.report-graph-sub {
+  font-size: 10.5px;
+  color: #8a93a5;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* ふりかえり */
+.report-reflect-block { margin-bottom: 10px; }
+.report-reflect-q {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #5a44b0;
+  margin-bottom: 3px;
+}
+
+.report-foot {
+  text-align: center;
+  font-size: 12px;
+  color: #5b6b85;
+  border-top: 2px dashed #e4dfc9;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+/* =========================================
+   管理者モード
+   ========================================= */
+.admin-app {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(46, 196, 182, 0.1), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(255, 201, 60, 0.14), transparent 40%),
+    #eff3ec;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  color: #1b3358;
+  padding: 24px 14px 60px;
+}
+
+/* ① パスコード */
+.admin-lock-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+.admin-lock-card {
+  width: 300px;
+  max-width: 100%;
+  text-align: center;
+  background: #fffdf7;
+  border: 2px solid #e4dfc9;
+  border-radius: 22px;
+  padding: 32px 26px;
+  box-shadow: 0 16px 40px rgba(27, 51, 88, 0.12);
+}
+.admin-lock-emoji { font-size: 40px; margin-bottom: 8px; }
+.admin-lock-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+.admin-lock-sub { font-size: 12px; color: #5b6b85; margin-bottom: 18px; }
+.admin-lock-input {
+  width: 100%;
+  border: 2.5px solid #e4dfc9;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 22px;
+  letter-spacing: 0.4em;
+  text-align: center;
+  padding: 12px;
+  color: #1b3358;
+  font-family: inherit;
+}
+.admin-lock-input:focus { outline: none; border-color: #2ec4b6; }
+.admin-lock-error { color: #d84f4f; font-size: 12px; font-weight: 700; margin-top: 10px; }
+.admin-lock-btn {
+  width: 100%;
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  padding: 13px;
+  border-radius: 13px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  box-shadow: 0 4px 0 #d84f4f;
+  cursor: pointer;
+  margin-top: 16px;
+}
+.admin-lock-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.admin-lock-note { font-size: 10px; color: #8a93a5; margin-top: 12px; line-height: 1.7; }
+
+/* ② 一覧 */
+.admin-list { max-width: 760px; margin: 0 auto; }
+.admin-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+.admin-list-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 19px;
+}
+.admin-list-count { font-size: 12px; color: #5b6b85; }
+.admin-bulk-note {
+  background: #e8f7f5;
+  border: 2px dashed #2ec4b6;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 12px;
+  color: #146b63;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.admin-empty {
+  background: #fffdf7;
+  border: 2px dashed #e4dfc9;
+  border-radius: 14px;
+  padding: 30px;
+  text-align: center;
+  color: #8a93a5;
+  font-size: 13px;
+}
+.admin-roster {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fffdf7;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.admin-roster th {
+  font-size: 11px;
+  color: #5b6b85;
+  font-weight: 700;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid #e4dfc9;
+  background: #f7f5ec;
+}
+.admin-roster td {
+  font-size: 13px;
+  padding: 12px;
+  border-bottom: 1px dashed #efebda;
+  vertical-align: middle;
+}
+.admin-num { font-weight: 700; white-space: nowrap; }
+.admin-theme { color: #1b3358; }
+.admin-time { color: #8a93a5; font-size: 12px; white-space: nowrap; }
+.admin-row-btn {
+  background: #ff6b6b;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.admin-row-btn:hover { background: #f05555; }
+
+/* ③ PDF化 */
+.admin-pdf { max-width: 720px; margin: 0 auto; }
+.admin-pdf-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 6px 0;
+  background: linear-gradient(to bottom, #eff3ec 75%, transparent);
+}
+.admin-pdf-bar .admin-back-btn,
+.admin-pdf-bar .admin-download-btn { margin: 0; flex: 1; }
+.admin-pdf-preview {
+  background: #fff;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 10px 30px rgba(27, 51, 88, 0.12);
+}

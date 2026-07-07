@@ -831,4 +831,80 @@ app.post('/api/consideration-polish', async (req, res) => {
   }
 });
 
+// ===== STEP7 まとめ(レポート)パート =====
+// 方針: まとめ1件をまるごと JSON で持つ。AIは使わず、子どもが書いた言葉と
+// これまでのDBデータ(記録・グラフ・スケジュール・考察)をそのまま流し込む。
+
+// まとめ保存エンドポイント(1仮説につき1件。あれば上書き、なければ新規作成)
+app.post('/api/save-report', async (req, res) => {
+  try {
+    const { user_id, theme_id, hypothesis_id, report_data } = req.body;
+    const result = await pool.query(
+      `INSERT INTO reports (user_id, theme_id, hypothesis_id, report_data, updated_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       ON CONFLICT (hypothesis_id)
+       DO UPDATE SET report_data = EXCLUDED.report_data, theme_id = EXCLUDED.theme_id,
+                     user_id = EXCLUDED.user_id, updated_at = NOW()
+       RETURNING *`,
+      [
+        user_id || null,
+        theme_id || null,
+        hypothesis_id || null,
+        JSON.stringify(report_data ?? {}),
+      ],
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('Save report error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ユーザーごとの保存済みまとめ取得(自分のまとめを開き直す/続きから編集するため)
+app.get('/api/reports/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      `SELECT id, theme_id, hypothesis_id, report_data, created_at, updated_at
+       FROM reports WHERE user_id = $1 ORDER BY updated_at DESC`,
+      [userId],
+    );
+    res.json({ success: true, reports: result.rows });
+  } catch (err) {
+    console.error('Get reports error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== 管理者モード =====
+// パスコードはサーバー側の環境変数で決め打ち。エンドユーザーには存在を見せない。
+// フォールバックは持たない: ADMIN_PASSCODE が未設定なら管理者モードは一切開けない
+// (デフォルト値で不用意に入れてしまう事故を防ぐフェイルクローズ)。
+const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE;
+
+// 管理者用: パスコードを照合し、全員分のまとめを一覧で返す。
+// GET だとURLやログにパスコードが残るので、必ず POST の body で受け取る。
+app.post('/api/admin/reports', async (req, res) => {
+  try {
+    const { passcode } = req.body;
+    // 環境変数が未設定のときは、どんなパスコードでも通さない
+    if (!ADMIN_PASSCODE) {
+      return res
+        .status(503)
+        .json({ success: false, error: '管理者モードはまだ設定されていません' });
+    }
+    if (!passcode || String(passcode) !== String(ADMIN_PASSCODE)) {
+      return res.status(401).json({ success: false, error: 'ちがうパスコードです' });
+    }
+    const result = await pool.query(
+      `SELECT id, user_id, theme_id, hypothesis_id, report_data, created_at, updated_at
+       FROM reports ORDER BY user_id ASC, updated_at DESC`,
+    );
+    res.json({ success: true, reports: result.rows });
+  } catch (err) {
+    console.error('Admin reports error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(3001, () => console.log('Server running on http://localhost:3001'));
