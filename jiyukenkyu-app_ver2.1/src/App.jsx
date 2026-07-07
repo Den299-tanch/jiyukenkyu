@@ -49,6 +49,11 @@ export default function App() {
   const DEBU_CODE_ON = 'den44gra';
   const DEBU_CODE_OFF = 'den44graoff';
 
+  // 番号が未入力の間は、他の画面を一切マウントしない(スクロールでの回避を防ぐ)
+  if (!userId) {
+    return <UserIdScreen onSubmit={(n) => setUserId(n)} />;
+  }
+
   // カテゴリが選択されたらチャット画面に遷移
   function handleCategorySelect(selectedCategory) {
     setCategory(selectedCategory);
@@ -146,10 +151,6 @@ export default function App() {
 
   return (
     <div className="app">
-      {!userId && (
-        <UserIdScreen onSubmit={(n) => setUserId(n)} />
-      )}
-
       {screen === 'title' && (
         <TitleScreen
           onDict={() => setScreen('dict-category')}
