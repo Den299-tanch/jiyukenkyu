@@ -1,4 +1,4 @@
-export default function TitleScreen({ onDict, onChat }) {
+export default function TitleScreen({ onDict, onChat, onGuide }) {
   return (
     <div className="title-screen">
       <div className="title-content">
@@ -19,6 +19,10 @@ export default function TitleScreen({ onDict, onChat }) {
             <span className="btn-desc">AIと一緒に考えよう</span>
           </button>
         </div>
+
+        <button className="guide-link-btn" onClick={onGuide}>
+          📘 つかいかたガイド
+        </button>
       </div>
     </div>
   );

@@ -30,6 +30,13 @@ pool.query('SELECT NOW()')
   .then(() => console.log('DB connected: ✅ OK'))
   .catch(err => console.error('DB connection error: ❌', err.message));
 
+// user_id は DB 上では integer に統一しているため、暗黙の型変換に頼らず
+// ここで明示的に整数へそろえる(数値化できない値は null 扱いにする)
+function toUserId(value) {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 // カテゴリごとのシステムプロンプト
 const PROMPTS = {
   'theme-biology':   '生き物や植物に関する自由研究のテーマを一緒に考えます。',
@@ -147,7 +154,7 @@ app.post('/api/save-theme', async (req, res) => {
     const { user_id, category, theme } = req.body;
     const result = await pool.query(
       'INSERT INTO themes (user_id, category, theme) VALUES ($1, $2, $3) RETURNING *',
-      [user_id || null, category, theme]
+      [toUserId(user_id), category, theme]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -162,7 +169,7 @@ app.get('/api/themes/:userId', async (req, res) => {
     const { userId } = req.params;
     const result = await pool.query(
       'SELECT id, category, theme, created_at FROM themes WHERE user_id = $1 ORDER BY created_at ASC',
-      [userId]
+      [toUserId(userId)]
     );
     res.json({ success: true, themes: result.rows });
   } catch (err) {
@@ -177,7 +184,7 @@ app.post('/api/save-hypothesis', async (req, res) => {
     const { user_id, theme_id, research_note, hypothesis } = req.body;
     const result = await pool.query(
       'INSERT INTO hypotheses (user_id, theme_id, research_note, hypothesis) VALUES ($1, $2, $3, $4) RETURNING *',
-      [user_id || null, theme_id || null, research_note || null, hypothesis]
+      [toUserId(user_id), theme_id || null, research_note || null, hypothesis]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -234,7 +241,7 @@ app.get('/api/hypotheses/:userId', async (req, res) => {
     const { userId } = req.params;
     const result = await pool.query(
       'SELECT id, theme_id, research_note, hypothesis, hint_count, created_at FROM hypotheses WHERE user_id = $1 ORDER BY created_at ASC',
-      [userId]
+      [toUserId(userId)]
     );
     res.json({ success: true, hypotheses: result.rows });
   } catch (err) {
@@ -263,7 +270,7 @@ app.post('/api/save-research-method', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
-        user_id || null,
+        toUserId(user_id),
         theme_id || null,
         hypothesis_id || null,
         method_type,
@@ -288,7 +295,7 @@ app.get('/api/research-methods/:userId', async (req, res) => {
     const result = await pool.query(
       `SELECT id, theme_id, hypothesis_id, method_type, what_to_study, tools_materials, location, duration, summary, created_at
        FROM research_methods WHERE user_id = $1 ORDER BY created_at ASC`,
-      [userId],
+      [toUserId(userId)],
     );
     res.json({ success: true, researchMethods: result.rows });
   } catch (err) {
@@ -414,7 +421,7 @@ app.post('/api/save-schedule', async (req, res) => {
        DO UPDATE SET end_date = EXCLUDED.end_date, tasks = EXCLUDED.tasks, updated_at = NOW()
        RETURNING *`,
       [
-        user_id || null,
+        toUserId(user_id),
         theme_id || null,
         hypothesis_id || null,
         end_date || null,
@@ -435,7 +442,7 @@ app.get('/api/schedules/:userId', async (req, res) => {
     const result = await pool.query(
       `SELECT id, theme_id, hypothesis_id, end_date, tasks, created_at, updated_at
        FROM schedules WHERE user_id = $1 ORDER BY created_at ASC`,
-      [userId],
+      [toUserId(userId)],
     );
     res.json({ success: true, schedules: result.rows });
   } catch (err) {
@@ -468,7 +475,7 @@ app.post('/api/save-record', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE($14, now()))
        RETURNING *`,
       [
-        user_id || null,
+        toUserId(user_id),
         theme_id || null,
         hypothesis_id || null,
         record_type,
@@ -500,7 +507,7 @@ app.get('/api/records/:userId', async (req, res) => {
               num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit,
               observed_at, created_at
        FROM records WHERE user_id = $1 ORDER BY observed_at ASC`,
-      [userId],
+      [toUserId(userId)],
     );
     res.json({ success: true, records: result.rows });
   } catch (err) {
@@ -516,7 +523,7 @@ app.delete('/api/records/:id', async (req, res) => {
     const { userId } = req.query;
     const result = await pool.query(
       'DELETE FROM records WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, userId || null],
+      [id, toUserId(userId)],
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ success: false, error: 'record not found' });
@@ -662,7 +669,7 @@ app.get('/api/record-labels/:userId', async (req, res) => {
           WHERE user_id = $1 AND num2_label IS NOT NULL AND num2_label <> ''
        ) t
        ORDER BY created_at DESC`,
-      [userId],
+      [toUserId(userId)],
     );
     // ラベルごとに1件へ集約(いちばん最近使った単位を代表にする)
     const seen = new Map();
@@ -688,7 +695,7 @@ app.post('/api/save-graph', async (req, res) => {
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
       [
-        user_id || null,
+        toUserId(user_id),
         theme_id || null,
         hypothesis_id || null,
         JSON.stringify(graph_data ?? {}),
@@ -708,7 +715,7 @@ app.get('/api/graphs/:userId', async (req, res) => {
     const result = await pool.query(
       `SELECT id, theme_id, hypothesis_id, graph_data, created_at
        FROM graphs WHERE user_id = $1 ORDER BY created_at ASC`,
-      [userId],
+      [toUserId(userId)],
     );
     res.json({ success: true, graphs: result.rows });
   } catch (err) {
@@ -724,7 +731,7 @@ app.delete('/api/graphs/:id', async (req, res) => {
     const { userId } = req.query;
     const result = await pool.query(
       'DELETE FROM graphs WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, userId || null],
+      [id, toUserId(userId)],
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ success: false, error: 'graph not found' });
@@ -755,7 +762,7 @@ app.post('/api/save-consideration', async (req, res) => {
        DO UPDATE SET q1 = EXCLUDED.q1, q2 = EXCLUDED.q2, updated_at = NOW()
        RETURNING *`,
       [
-        user_id || null,
+        toUserId(user_id),
         theme_id || null,
         hypothesis_id || null,
         q1 || null,
@@ -776,7 +783,7 @@ app.get('/api/considerations/:userId', async (req, res) => {
     const result = await pool.query(
       `SELECT id, theme_id, hypothesis_id, q1, q2, created_at, updated_at
        FROM considerations WHERE user_id = $1 ORDER BY created_at ASC`,
-      [userId],
+      [toUserId(userId)],
     );
     res.json({ success: true, considerations: result.rows });
   } catch (err) {
@@ -848,7 +855,7 @@ app.post('/api/save-report', async (req, res) => {
                      user_id = EXCLUDED.user_id, updated_at = NOW()
        RETURNING *`,
       [
-        user_id || null,
+        toUserId(user_id),
         theme_id || null,
         hypothesis_id || null,
         JSON.stringify(report_data ?? {}),
@@ -868,7 +875,7 @@ app.get('/api/reports/:userId', async (req, res) => {
     const result = await pool.query(
       `SELECT id, theme_id, hypothesis_id, report_data, created_at, updated_at
        FROM reports WHERE user_id = $1 ORDER BY updated_at DESC`,
-      [userId],
+      [toUserId(userId)],
     );
     res.json({ success: true, reports: result.rows });
   } catch (err) {

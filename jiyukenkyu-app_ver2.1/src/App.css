@@ -123,6 +123,266 @@
 .btn-label { font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif; font-size: 18px; font-weight: 400; }
 .btn-desc  { font-size: 13px; opacity: 0.9; }
 
+/* つかいかたガイドへのリンク(あえて2つの大きなボタンより目立たせない) */
+.guide-link-btn {
+  display: inline-block;
+  margin-top: 26px;
+  background: none;
+  border: none;
+  color: #8a97ab;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-family: inherit;
+}
+
+.guide-link-btn:hover {
+  color: #5b6b85;
+  background: rgba(91, 107, 133, 0.08);
+}
+
+/* ===== 使い方ガイド(全画面オーバーレイ・スライド形式) ===== */
+.guide-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 51, 88, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 20px;
+}
+
+.guide-card {
+  background: #fffdf8;
+  border-radius: 24px;
+  padding: 32px 28px 24px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 12px 32px rgba(27, 51, 88, 0.25);
+  position: relative;
+  text-align: center;
+  animation: guide-pop 0.18s ease-out;
+}
+
+@keyframes guide-pop {
+  from { transform: scale(0.94); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.guide-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #efebda;
+  color: #5b6b85;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.guide-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  max-height: 200px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(106, 90, 249, 0.08), transparent 60%),
+    #fbf8ee;
+  border-radius: 18px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.guide-emoji {
+  font-size: 72px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.guide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guide-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-size: 19px;
+  color: #1b3358;
+  margin: 0 0 10px;
+  font-weight: 400;
+}
+
+.guide-body {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #3a4a63;
+  white-space: pre-line;
+  margin: 0 0 20px;
+}
+
+.guide-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.guide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e4dfc9;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.guide-dot.active {
+  background: #d84f4f;
+  transform: scale(1.3);
+}
+
+.guide-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.guide-nav-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: 2px solid #e4dfc9;
+  background: #fff;
+  color: #5b6b85;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.guide-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.guide-nav-btn--primary {
+  background: #d84f4f;
+  border-color: #d84f4f;
+  color: #fff;
+}
+
+/* ===== 進捗バー(ロケットのサイドレール) =====
+   PC利用を前提とし、画面が狭いときは自動的に隠す */
+.rocket-rail {
+  position: fixed;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+  background: #fffdf8;
+  border: 2px solid #e4dfc9;
+  border-radius: 20px;
+  padding: 18px 16px 14px;
+  box-shadow: 0 6px 18px rgba(27, 51, 88, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 1180px) {
+  .rocket-rail { display: none; }
+}
+
+.rocket-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rocket-stop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7px 0;
+}
+
+.rocket-stop:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 0;
+  height: 20px;
+  border-left: 2px dashed #e4dfc9;
+  transform: translateX(-50%);
+}
+
+.rocket-stop--done:not(:last-child)::after {
+  border-left-color: #48bb78;
+}
+
+.rocket-stop-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: #efebda;
+  border: 2px solid #e4dfc9;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.rocket-stop--done .rocket-stop-dot {
+  background: #eafff1;
+  border-color: #48bb78;
+}
+
+.rocket-stop--active .rocket-stop-dot {
+  background: #fff5f5;
+  border-color: #d84f4f;
+  box-shadow: 0 0 0 4px rgba(216, 79, 79, 0.15);
+  transform: scale(1.15);
+}
+
+.rocket-stop-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #5b6b85;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.rocket-stop--active .rocket-stop-label {
+  color: #d84f4f;
+}
+
+.rocket-ship {
+  position: absolute;
+  left: 40px;
+  top: 4px;
+  font-size: 19px;
+  animation: float 2s ease-in-out infinite;
+}
+
+.rocket-progress-text {
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1b3358;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  text-align: center;
+  white-space: nowrap;
+}
+
 /* ===== カテゴリ選択画面 ===== */
 .category-screen {
   padding: 24px;

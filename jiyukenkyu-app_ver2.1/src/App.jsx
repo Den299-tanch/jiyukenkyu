@@ -14,6 +14,9 @@ import ScheduleScreen from './components/ScheduleScreen';
 import RecordScreen from './components/RecordScreen';
 import ConsiderationScreen from './components/ConsiderationScreen';
 import SummaryScreen from './components/SummaryScreen';
+import GuideOverlay from './components/GuideOverlay';
+import RocketProgress from './components/RocketProgress';
+import { getFlowStepIndex, FLOW_STEPS } from './flowSteps';
 
 
 // 画面の種類
@@ -25,8 +28,15 @@ import SummaryScreen from './components/SummaryScreen';
 
 export default function App() {
   const [screen, setScreen] = useState('title');
+  const [showGuide, setShowGuide] = useState(false);
 
-  const [userId, setUserId] = useState(sessionStorage.getItem('userId') || null);
+  // userId はアプリ内では常に number(または未入力なら null)として統一して扱う。
+  // sessionStorage は文字列しか保存できないため、読み出し時に必ず数値へ変換する。
+  const [userId, setUserId] = useState(() => {
+    const stored = sessionStorage.getItem('userId');
+    const n = parseInt(stored, 10);
+    return Number.isFinite(n) ? n : null;
+  });
 
   const [category, setCategory] = useState(null); // 選択されたカテゴリ
   const [messages, setMessages] = useState([]);
@@ -151,10 +161,15 @@ export default function App() {
 
   return (
     <div className="app">
+      <RocketProgress currentIndex={getFlowStepIndex(screen)} steps={FLOW_STEPS} />
+
+      {showGuide && <GuideOverlay onClose={() => setShowGuide(false)} />}
+
       {screen === 'title' && (
         <TitleScreen
           onDict={() => setScreen('dict-category')}
           onChat={() => setScreen('chat-category')}
+          onGuide={() => setShowGuide(true)}
         />
       )}
 
