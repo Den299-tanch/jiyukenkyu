@@ -86,8 +86,8 @@ app.post('/api/auth', async (req, res) => {
   try {
     const uid = toUserId(req.body.user_id);
     const pin = String(req.body.pin ?? '');
-    if (!uid || uid < 1 || uid > 30) {
-      return res.status(400).json({ success: false, error: '番号は1〜30で入力してね' });
+    if (!uid || uid < 1 || uid > 200) {
+      return res.status(400).json({ success: false, error: '番号は1〜200で入力してね' });
     }
     if (!/^\d{4}$/.test(pin)) {
       return res.status(400).json({ success: false, error: 'PINは4桁の数字で入力してね' });

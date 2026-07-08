@@ -10,8 +10,8 @@ export default function UserIdScreen({ onSubmit }) {
   async function handleSubmit() {
     if (loading) return;
     const n = parseInt(num, 10);
-    if (!n || n < 1 || n > 30) {
-      setError('1〜30の番号を入れてね');
+    if (!n || n < 1 || n > 200) {
+      setError('1〜200の番号を入れてね');
       return;
     }
     if (!/^\d{4}$/.test(pin)) {
@@ -46,7 +46,7 @@ export default function UserIdScreen({ onSubmit }) {
           value={num}
           onChange={(e) => setNum(e.target.value)}
           min="1"
-          max="30"
+          max="200"
         />
         <input
           type="password"
