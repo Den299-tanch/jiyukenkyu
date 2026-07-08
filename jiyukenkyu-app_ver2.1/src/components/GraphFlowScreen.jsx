@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { apiPost } from "../services/api";
 import GraphView from "./GraphView";
 import { GRAPH_TYPES, getGraphTypeById } from "../data/graphTypes";
 import { collectNumberEntries, shortDate, pairByRecord, recommendGraphType } from "../data/graphBuild";
@@ -25,7 +26,7 @@ function defaultSelectedKeys(entries) {
   return entries.map((e) => e.key);
 }
 
-export default function GraphFlowScreen({ userId, records, theme, hypothesis, onExit, onSaved }) {
+export default function GraphFlowScreen({ records, theme, hypothesis, onExit, onSaved }) {
   const [entries] = useState(() => collectNumberEntries(records));
   const [step, setStep] = useState("table"); // 'table' | 'choose' | 'show'
   const [selectedKeys, setSelectedKeys] = useState(() =>
@@ -109,15 +110,7 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
     setCheck15({ loading: true, warn: false, message: "" });
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL ?? ""}/api/graph-check`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(graphPayload()),
-          },
-        );
-        const data = await res.json();
+        const data = await apiPost('/api/graph-check', graphPayload());
         if (ignore) return;
         setCheck15({
           loading: false,
@@ -138,25 +131,16 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
     if (saving) return;
     setSaving(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/save-graph`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            hypothesis_id: hypothesis?.id,
-            // 材料一式(あとで再表示できるよう、使った数字ごと保存する)
-            graph_data: {
-              title: title.trim() || getGraphTypeById(graphType).label,
-              graphType,
-              entries: selectedEntries,
-              xAxisLabel: canPickAxis ? effectiveXLabel : null,
-            },
-          }),
+      const data = await apiPost('/api/save-graph', {
+        hypothesis_id: hypothesis?.id,
+        // 材料一式(あとで再表示できるよう、使った数字ごと保存する)
+        graph_data: {
+          title: title.trim() || getGraphTypeById(graphType).label,
+          graphType,
+          entries: selectedEntries,
+          xAxisLabel: canPickAxis ? effectiveXLabel : null,
         },
-      );
-      const data = await res.json();
+      });
       if (!data.success) throw new Error(data.error);
       onSaved ? onSaved(data.data) : onExit();
     } catch (err) {
@@ -169,15 +153,7 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
     if (asking || askLeft <= 0) return;
     setAsking(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/graph-ask`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(graphPayload()),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/graph-ask', graphPayload());
       if (!data.success) throw new Error(data.error);
       setQuestions((prev) => [...prev, data.question]);
     } catch {

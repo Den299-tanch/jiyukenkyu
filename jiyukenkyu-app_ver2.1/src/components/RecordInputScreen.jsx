@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getViewpoints } from "../data/recordViewpoints";
+import { apiGet, apiPost } from "../services/api";
 
 // 文字列を数値へ(空や数字でないものは null)
 function toNum(str) {
@@ -52,10 +53,7 @@ export default function RecordInputScreen({
     let ignore = false;
     async function fetchLabels() {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL ?? ""}/api/record-labels/${userId}`,
-        );
-        const data = await res.json();
+        const data = await apiGet('/api/record-labels');
         if (!ignore && data.success) setLabelHistory(data.labels ?? []);
       } catch {
         // 履歴が取れなくても、手入力はできるので黙って無視
@@ -93,29 +91,20 @@ export default function RecordInputScreen({
     if (!body.trim() || saving) return;
     setSaving(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/save-record`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            hypothesis_id: hypothesis?.id,
-            record_type: recordType,
-            viewpoints,
-            body: body.trim(),
-            why_note: whyNote.trim(),
-            observed_at: observedAt,
-            num1_label: num1Label.trim() || null,
-            num1_value: toNum(num1Value),
-            num1_unit: num1Unit.trim() || null,
-            num2_label: showNum2 ? num2Label.trim() || null : null,
-            num2_value: showNum2 ? toNum(num2Value) : null,
-            num2_unit: showNum2 ? num2Unit.trim() || null : null,
-          }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/save-record', {
+        hypothesis_id: hypothesis?.id,
+        record_type: recordType,
+        viewpoints,
+        body: body.trim(),
+        why_note: whyNote.trim(),
+        observed_at: observedAt,
+        num1_label: num1Label.trim() || null,
+        num1_value: toNum(num1Value),
+        num1_unit: num1Unit.trim() || null,
+        num2_label: showNum2 ? num2Label.trim() || null : null,
+        num2_value: showNum2 ? toNum(num2Value) : null,
+        num2_unit: showNum2 ? num2Unit.trim() || null : null,
+      });
       if (!data.success) throw new Error(data.error);
       onSaved(data.data);
     } catch (err) {

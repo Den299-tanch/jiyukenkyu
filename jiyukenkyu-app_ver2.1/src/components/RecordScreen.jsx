@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { apiGet, apiDelete } from "../services/api";
+import { useResearch } from "../contexts/ResearchContext";
 import RecordInputScreen from "./RecordInputScreen";
 import RecordSavedScreen from "./RecordSavedScreen";
 import GraphFlowScreen from "./GraphFlowScreen";
@@ -14,7 +16,9 @@ import {
   getMeasuredNumber,
 } from "../data/recordNumbers";
 
-export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext }) {
+export default function RecordScreen({ userId, onBack, onNext }) {
+  const { research } = useResearch();
+  const { theme, hypothesis } = research ?? {};
   const [view, setView] = useState("list"); // 'list' | 'input' | 'saved' | 'graph' | 'graphlist'
   const [records, setRecords] = useState([]);
   const [graphs, setGraphs] = useState([]);
@@ -26,30 +30,16 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
 
   // 画面に来たとき、この仮説の記録と保存グラフを読み込む
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !hypothesis?.id) return;
     let ignore = false;
     async function fetchAll() {
       setLoading(true);
-      const base = import.meta.env.VITE_API_URL ?? "";
       try {
-        const [recRes, graphRes] = await Promise.all([
-          fetch(`${base}/api/records/${userId}`).then((r) => r.json()),
-          fetch(`${base}/api/graphs/${userId}`).then((r) => r.json()),
-        ]);
+        const data = await apiGet(`/api/research/${hypothesis.id}`);
         if (ignore) return;
-        if (recRes.success) {
-          setRecords(
-            hypothesis?.id
-              ? recRes.records.filter((r) => r.hypothesis_id === hypothesis.id)
-              : recRes.records,
-          );
-        }
-        if (graphRes.success) {
-          setGraphs(
-            hypothesis?.id
-              ? graphRes.graphs.filter((g) => g.hypothesis_id === hypothesis.id)
-              : graphRes.graphs,
-          );
+        if (data.success) {
+          setRecords(data.records);
+          setGraphs(data.graphs);
         }
       } catch {
         // 読み込みに失敗しても、新しく追加すること自体はできるので黙って無視
@@ -86,12 +76,7 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
     if (!deleteTarget || deleting) return;
     setDeleting(true);
     try {
-      const base = import.meta.env.VITE_API_URL ?? "";
-      const res = await fetch(
-        `${base}/api/records/${deleteTarget.id}?userId=${userId}`,
-        { method: "DELETE" },
-      );
-      const data = await res.json();
+      const data = await apiDelete(`/api/records/${deleteTarget.id}`);
       if (!data.success) throw new Error(data.error);
       setRecords((prev) => prev.filter((r) => r.id !== deleteTarget.id));
       setDeleteTarget(null);
@@ -133,7 +118,6 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
   if (view === "graph") {
     return (
       <GraphFlowScreen
-        userId={userId}
         records={records}
         theme={theme}
         hypothesis={hypothesis}
@@ -146,7 +130,6 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
   if (view === "graphlist") {
     return (
       <GraphListScreen
-        userId={userId}
         graphs={graphs}
         onBack={() => setView("list")}
         onDeleted={handleGraphDeleted}

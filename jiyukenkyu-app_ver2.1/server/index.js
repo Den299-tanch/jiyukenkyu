@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
+import crypto from 'crypto';
 import { runner as migrationRunner } from 'node-pg-migrate';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +37,91 @@ function toUserId(value) {
   const n = parseInt(value, 10);
   return Number.isFinite(n) ? n : null;
 }
+
+// ===== 軽量認証(番号+PINでのログイン) =====
+// PINは4桁想定で組み合わせが少なく、ハッシュ強度を上げても総当たり耐性は
+// ほとんど変わらないため、実装の単純さを優先してsha256(salt+値)の1本に統一する。
+function sha256Hex(input) {
+  return crypto.createHash('sha256').update(input).digest('hex');
+}
+
+function hashPin(pin, salt) {
+  return sha256Hex(salt + pin);
+}
+
+// トークンは32byteのランダム値で十分に一意なので、salt無しでそのままハッシュする
+function hashToken(token) {
+  return sha256Hex(token);
+}
+
+// 以降の全エンドポイントは、クライアントが送ってくる user_id を一切信用せず、
+// この認証を通って得られた req.userId だけを本人のIDとして扱う。
+async function requireAuth(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!token) {
+      return res.status(401).json({ success: false, error: 'ログインが必要です' });
+    }
+    const result = await pool.query(
+      'SELECT id FROM users WHERE token_hash = $1',
+      [hashToken(token)],
+    );
+    if (result.rowCount === 0) {
+      return res.status(401).json({ success: false, error: 'ログインが必要です' });
+    }
+    req.userId = result.rows[0].id;
+    next();
+  } catch (err) {
+    console.error('Auth check error:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// 番号+PINでの登録/ログイン(1本に統合)。
+// その番号が未登録なら新規作成(=登録も兼ねる)、既存ならPIN照合してトークン発行。
+// トークンは「今有効な1本」だけをDBに持つ方針なので、ログインのたび上書きされ
+// 古いトークンは自動的に無効になる(有効期限・複数端末同時ログインは持たない)。
+app.post('/api/auth', async (req, res) => {
+  try {
+    const uid = toUserId(req.body.user_id);
+    const pin = String(req.body.pin ?? '');
+    if (!uid || uid < 1 || uid > 30) {
+      return res.status(400).json({ success: false, error: '番号は1〜30で入力してね' });
+    }
+    if (!/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ success: false, error: 'PINは4桁の数字で入力してね' });
+    }
+
+    const existing = await pool.query(
+      'SELECT pin_hash, pin_salt FROM users WHERE id = $1',
+      [uid],
+    );
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = hashToken(token);
+
+    if (existing.rowCount === 0) {
+      // 新規登録(この番号を初めて使う)
+      const salt = crypto.randomBytes(16).toString('hex');
+      await pool.query(
+        'INSERT INTO users (id, pin_hash, pin_salt, token_hash) VALUES ($1, $2, $3, $4)',
+        [uid, hashPin(pin, salt), salt, tokenHash],
+      );
+      return res.json({ success: true, created: true, user_id: uid, token });
+    }
+
+    // 既存の番号: PIN照合(不一致ならログイン拒否)
+    const { pin_hash, pin_salt } = existing.rows[0];
+    if (hashPin(pin, pin_salt) !== pin_hash) {
+      return res.status(401).json({ success: false, error: 'PINがちがいます' });
+    }
+    await pool.query('UPDATE users SET token_hash = $1 WHERE id = $2', [tokenHash, uid]);
+    res.json({ success: true, created: false, user_id: uid, token });
+  } catch (err) {
+    console.error('Auth error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // カテゴリごとのシステムプロンプト
 const PROMPTS = {
@@ -149,12 +235,12 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // テーマ保存エンドポイント(サーバーへの窓口)
-app.post('/api/save-theme', async (req, res) => {
+app.post('/api/save-theme', requireAuth, async (req, res) => {
   try {
-    const { user_id, category, theme } = req.body;
+    const { category, theme } = req.body;
     const result = await pool.query(
       'INSERT INTO themes (user_id, category, theme) VALUES ($1, $2, $3) RETURNING *',
-      [toUserId(user_id), category, theme]
+      [req.userId, category, theme]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -164,12 +250,11 @@ app.post('/api/save-theme', async (req, res) => {
 });
 
 // ユーザーごとのテーマ取得エンドポイント
-app.get('/api/themes/:userId', async (req, res) => {
+app.get('/api/themes', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       'SELECT id, category, theme, created_at FROM themes WHERE user_id = $1 ORDER BY created_at ASC',
-      [toUserId(userId)]
+      [req.userId]
     );
     res.json({ success: true, themes: result.rows });
   } catch (err) {
@@ -179,12 +264,12 @@ app.get('/api/themes/:userId', async (req, res) => {
 });
 
 // 仮説保存エンドポイント
-app.post('/api/save-hypothesis', async (req, res) => {
+app.post('/api/save-hypothesis', requireAuth, async (req, res) => {
   try {
-    const { user_id, theme_id, research_note, hypothesis } = req.body;
+    const { theme_id, research_note, hypothesis } = req.body;
     const result = await pool.query(
       'INSERT INTO hypotheses (user_id, theme_id, research_note, hypothesis) VALUES ($1, $2, $3, $4) RETURNING *',
-      [toUserId(user_id), theme_id || null, research_note || null, hypothesis]
+      [req.userId, theme_id || null, research_note || null, hypothesis]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -236,12 +321,11 @@ app.post('/api/hypothesis-hint', async (req, res) => {
 });
 
 // ユーザーごとの仮説取得エンドポイント
-app.get('/api/hypotheses/:userId', async (req, res) => {
+app.get('/api/hypotheses', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       'SELECT id, theme_id, research_note, hypothesis, hint_count, created_at FROM hypotheses WHERE user_id = $1 ORDER BY created_at ASC',
-      [toUserId(userId)]
+      [req.userId]
     );
     res.json({ success: true, hypotheses: result.rows });
   } catch (err) {
@@ -251,10 +335,9 @@ app.get('/api/hypotheses/:userId', async (req, res) => {
 });
 
 // 研究方法保存エンドポイント
-app.post('/api/save-research-method', async (req, res) => {
+app.post('/api/save-research-method', requireAuth, async (req, res) => {
   try {
     const {
-      user_id,
       hypothesis_id,
       method_type,
       what_to_study,
@@ -269,7 +352,7 @@ app.post('/api/save-research-method', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
-        toUserId(user_id),
+        req.userId,
         hypothesis_id || null,
         method_type,
         what_to_study,
@@ -287,16 +370,15 @@ app.post('/api/save-research-method', async (req, res) => {
 });
 
 // ユーザーごとの研究方法取得エンドポイント
-app.get('/api/research-methods/:userId', async (req, res) => {
+app.get('/api/research-methods', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       `SELECT rm.id, h.theme_id, rm.hypothesis_id, rm.method_type, rm.what_to_study,
               rm.tools_materials, rm.location, rm.duration, rm.summary, rm.created_at
        FROM research_methods rm
        LEFT JOIN hypotheses h ON rm.hypothesis_id = h.id
        WHERE rm.user_id = $1 ORDER BY rm.created_at ASC`,
-      [toUserId(userId)],
+      [req.userId],
     );
     res.json({ success: true, researchMethods: result.rows });
   } catch (err) {
@@ -406,10 +488,9 @@ app.post('/api/schedule-draft', async (req, res) => {
 });
 
 // スケジュール保存エンドポイント(hypothesis_id ごとに1件。あれば上書き、なければ新規作成)
-app.post('/api/save-schedule', async (req, res) => {
+app.post('/api/save-schedule', requireAuth, async (req, res) => {
   try {
     const {
-      user_id,
       hypothesis_id,
       end_date,
       tasks,
@@ -421,7 +502,7 @@ app.post('/api/save-schedule', async (req, res) => {
        DO UPDATE SET end_date = EXCLUDED.end_date, tasks = EXCLUDED.tasks, updated_at = NOW()
        RETURNING *`,
       [
-        toUserId(user_id),
+        req.userId,
         hypothesis_id || null,
         end_date || null,
         JSON.stringify(tasks ?? []),
@@ -435,15 +516,14 @@ app.post('/api/save-schedule', async (req, res) => {
 });
 
 // ユーザーごとのスケジュール取得エンドポイント
-app.get('/api/schedules/:userId', async (req, res) => {
+app.get('/api/schedules', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       `SELECT s.id, h.theme_id, s.hypothesis_id, s.end_date, s.tasks, s.created_at, s.updated_at
        FROM schedules s
        LEFT JOIN hypotheses h ON s.hypothesis_id = h.id
        WHERE s.user_id = $1 ORDER BY s.created_at ASC`,
-      [toUserId(userId)],
+      [req.userId],
     );
     res.json({ success: true, schedules: result.rows });
   } catch (err) {
@@ -455,10 +535,9 @@ app.get('/api/schedules/:userId', async (req, res) => {
 // ===== STEP5 記録パート =====
 
 // 記録保存エンドポイント(1件ずつ追加。きろく/しらべたことの両方をこの1つで扱う)
-app.post('/api/save-record', async (req, res) => {
+app.post('/api/save-record', requireAuth, async (req, res) => {
   try {
     const {
-      user_id,
       hypothesis_id,
       record_type,   // 'kiroku'(きろく) / 'shirabe'(しらべたこと)
       viewpoints,    // 選んだ視点チップidの配列 例: ["jikan","ookisa"]
@@ -475,7 +554,7 @@ app.post('/api/save-record', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, COALESCE($13, now()))
        RETURNING *`,
       [
-        toUserId(user_id),
+        req.userId,
         hypothesis_id || null,
         record_type,
         JSON.stringify(viewpoints ?? []),
@@ -498,9 +577,8 @@ app.post('/api/save-record', async (req, res) => {
 });
 
 // ユーザーごとの記録取得エンドポイント(数字の列も返す。数字機能はS4で使用)
-app.get('/api/records/:userId', async (req, res) => {
+app.get('/api/records', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       `SELECT r.id, h.theme_id, r.hypothesis_id, r.record_type, r.viewpoints, r.body, r.why_note,
               r.num1_label, r.num1_value, r.num1_unit, r.num2_label, r.num2_value, r.num2_unit,
@@ -508,7 +586,7 @@ app.get('/api/records/:userId', async (req, res) => {
        FROM records r
        LEFT JOIN hypotheses h ON r.hypothesis_id = h.id
        WHERE r.user_id = $1 ORDER BY r.observed_at ASC`,
-      [toUserId(userId)],
+      [req.userId],
     );
     res.json({ success: true, records: result.rows });
   } catch (err) {
@@ -518,13 +596,12 @@ app.get('/api/records/:userId', async (req, res) => {
 });
 
 // 記録の削除エンドポイント(本人の記録だけ消せるよう user_id も照合する)
-app.delete('/api/records/:id', async (req, res) => {
+app.delete('/api/records/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId } = req.query;
     const result = await pool.query(
       'DELETE FROM records WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, toUserId(userId)],
+      [id, req.userId],
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ success: false, error: 'record not found' });
@@ -656,9 +733,8 @@ app.post('/api/graph-ask', async (req, res) => {
 
 // ラベル/単位オートコンプリート用: その子が過去に入力したラベルと単位の一覧
 // (AIは使わない。表記ゆれを防いで同じラベルをそろえるための「入力履歴の表示」)
-app.get('/api/record-labels/:userId', async (req, res) => {
+app.get('/api/record-labels', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       `SELECT label, unit FROM (
          SELECT num1_label AS label, num1_unit AS unit, created_at
@@ -670,7 +746,7 @@ app.get('/api/record-labels/:userId', async (req, res) => {
           WHERE user_id = $1 AND num2_label IS NOT NULL AND num2_label <> ''
        ) t
        ORDER BY created_at DESC`,
-      [toUserId(userId)],
+      [req.userId],
     );
     // ラベルごとに1件へ集約(いちばん最近使った単位を代表にする)
     const seen = new Map();
@@ -688,15 +764,15 @@ app.get('/api/record-labels/:userId', async (req, res) => {
 // ===== STEP5 グラフの保存 =====
 
 // グラフ保存エンドポイント(材料一式は graph_data の JSON 1列にまとめて保存)
-app.post('/api/save-graph', async (req, res) => {
+app.post('/api/save-graph', requireAuth, async (req, res) => {
   try {
-    const { user_id, hypothesis_id, graph_data } = req.body;
+    const { hypothesis_id, graph_data } = req.body;
     const result = await pool.query(
       `INSERT INTO graphs (user_id, hypothesis_id, graph_data)
        VALUES ($1, $2, $3)
        RETURNING *`,
       [
-        toUserId(user_id),
+        req.userId,
         hypothesis_id || null,
         JSON.stringify(graph_data ?? {}),
       ],
@@ -709,15 +785,14 @@ app.post('/api/save-graph', async (req, res) => {
 });
 
 // ユーザーごとの保存グラフ取得エンドポイント
-app.get('/api/graphs/:userId', async (req, res) => {
+app.get('/api/graphs', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       `SELECT g.id, h.theme_id, g.hypothesis_id, g.graph_data, g.created_at
        FROM graphs g
        LEFT JOIN hypotheses h ON g.hypothesis_id = h.id
        WHERE g.user_id = $1 ORDER BY g.created_at ASC`,
-      [toUserId(userId)],
+      [req.userId],
     );
     res.json({ success: true, graphs: result.rows });
   } catch (err) {
@@ -727,13 +802,12 @@ app.get('/api/graphs/:userId', async (req, res) => {
 });
 
 // グラフの削除エンドポイント(本人のグラフだけ消せるよう user_id も照合する)
-app.delete('/api/graphs/:id', async (req, res) => {
+app.delete('/api/graphs/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId } = req.query;
     const result = await pool.query(
       'DELETE FROM graphs WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, toUserId(userId)],
+      [id, req.userId],
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ success: false, error: 'graph not found' });
@@ -748,10 +822,9 @@ app.delete('/api/graphs/:id', async (req, res) => {
 // ===== STEP6 考察パート =====
 
 // 考察保存エンドポイント(1仮説につき1件。あれば上書き、なければ新規作成)
-app.post('/api/save-consideration', async (req, res) => {
+app.post('/api/save-consideration', requireAuth, async (req, res) => {
   try {
     const {
-      user_id,
       hypothesis_id,
       q1,   // ぜんぶ見返して、一番の発見は?
       q2,   // さいしょの予想と比べてどうだった?
@@ -763,7 +836,7 @@ app.post('/api/save-consideration', async (req, res) => {
        DO UPDATE SET q1 = EXCLUDED.q1, q2 = EXCLUDED.q2, updated_at = NOW()
        RETURNING *`,
       [
-        toUserId(user_id),
+        req.userId,
         hypothesis_id || null,
         q1 || null,
         q2 || null,
@@ -777,15 +850,14 @@ app.post('/api/save-consideration', async (req, res) => {
 });
 
 // ユーザーごとの考察取得エンドポイント
-app.get('/api/considerations/:userId', async (req, res) => {
+app.get('/api/considerations', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       `SELECT c.id, h.theme_id, c.hypothesis_id, c.q1, c.q2, c.created_at, c.updated_at
        FROM considerations c
        LEFT JOIN hypotheses h ON c.hypothesis_id = h.id
        WHERE c.user_id = $1 ORDER BY c.created_at ASC`,
-      [toUserId(userId)],
+      [req.userId],
     );
     res.json({ success: true, considerations: result.rows });
   } catch (err) {
@@ -846,9 +918,9 @@ app.post('/api/consideration-polish', async (req, res) => {
 // これまでのDBデータ(記録・グラフ・スケジュール・考察)をそのまま流し込む。
 
 // まとめ保存エンドポイント(1仮説につき1件。あれば上書き、なければ新規作成)
-app.post('/api/save-report', async (req, res) => {
+app.post('/api/save-report', requireAuth, async (req, res) => {
   try {
-    const { user_id, hypothesis_id, report_data } = req.body;
+    const { hypothesis_id, report_data } = req.body;
     const result = await pool.query(
       `INSERT INTO reports (user_id, hypothesis_id, report_data, updated_at)
        VALUES ($1, $2, $3, NOW())
@@ -857,7 +929,7 @@ app.post('/api/save-report', async (req, res) => {
                      user_id = EXCLUDED.user_id, updated_at = NOW()
        RETURNING *`,
       [
-        toUserId(user_id),
+        req.userId,
         hypothesis_id || null,
         JSON.stringify(report_data ?? {}),
       ],
@@ -870,15 +942,14 @@ app.post('/api/save-report', async (req, res) => {
 });
 
 // ユーザーごとの保存済みまとめ取得(自分のまとめを開き直す/続きから編集するため)
-app.get('/api/reports/:userId', async (req, res) => {
+app.get('/api/reports', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.params;
     const result = await pool.query(
       `SELECT r.id, h.theme_id, r.hypothesis_id, r.report_data, r.created_at, r.updated_at
        FROM reports r
        LEFT JOIN hypotheses h ON r.hypothesis_id = h.id
        WHERE r.user_id = $1 ORDER BY r.updated_at DESC`,
-      [toUserId(userId)],
+      [req.userId],
     );
     res.json({ success: true, reports: result.rows });
   } catch (err) {
@@ -892,7 +963,7 @@ app.get('/api/reports/:userId', async (req, res) => {
 // フロントがリロード時に sessionStorage の hypothesis_id をもとに研究データを復元するために使う。
 // 「仮説1件＝1軸」の理念どおり、単数(theme/hypothesis/schedule/consideration/report)と
 // 複数(researchMethods/records/graphs)を分けて返す。
-app.get('/api/research/:hypothesisId', async (req, res) => {
+app.get('/api/research/:hypothesisId', requireAuth, async (req, res) => {
   try {
     const hid = parseInt(req.params.hypothesisId, 10);
     if (!Number.isFinite(hid)) {
@@ -909,7 +980,8 @@ app.get('/api/research/:hypothesisId', async (req, res) => {
        WHERE h.id = $1`,
       [hid],
     );
-    if (spine.rowCount === 0) {
+    // 他人の仮説idを推測されても中身を返さないよう、無ければ/自分のでなければ同じ404にする
+    if (spine.rowCount === 0 || spine.rows[0].user_id !== req.userId) {
       return res.status(404).json({ success: false, error: 'research not found' });
     }
     const row = spine.rows[0];
@@ -1012,6 +1084,35 @@ app.post('/api/admin/reports', async (req, res) => {
     res.json({ success: true, reports: result.rows });
   } catch (err) {
     console.error('Admin reports error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 管理者用: 指定した番号のPIN登録情報をリセットする(PIN忘れの救済)。
+// usersの行ごと削除するだけなので、次回その番号を打つと「未登録」扱いになり
+// 新しいPINで登録し直せる(研究データはuser_idに紐づいたままなので消えない)。
+app.post('/api/admin/reset-user', async (req, res) => {
+  try {
+    const { passcode, user_id } = req.body;
+    if (!ADMIN_PASSCODE) {
+      return res
+        .status(503)
+        .json({ success: false, error: '管理者モードはまだ設定されていません' });
+    }
+    if (!passcode || String(passcode) !== String(ADMIN_PASSCODE)) {
+      return res.status(401).json({ success: false, error: 'ちがうパスコードです' });
+    }
+    const uid = toUserId(user_id);
+    if (!uid) {
+      return res.status(400).json({ success: false, error: 'invalid user_id' });
+    }
+    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [uid]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'この番号はまだ登録されていません' });
+    }
+    res.json({ success: true, user_id: uid });
+  } catch (err) {
+    console.error('Admin reset user error:', err);
     res.status(500).json({ error: err.message });
   }
 });

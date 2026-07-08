@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { apiGet, apiPost } from "../services/api";
+import { useResearch } from "../contexts/ResearchContext";
 import ReportView from "./ReportView";
 import { getGraphTypeById } from "../data/graphTypes";
 import { buildReportData } from "../data/buildReport";
@@ -7,7 +9,9 @@ import { buildReportData } from "../data/buildReport";
 // ①じぶんのことば → ②プレビュー → ③かんせい
 // AIは使わない。子どもが書いた Q1・Q2 と、これまでのDBデータを
 // そのままレポート(JSON)に流し込み、承認したらDBへ保存する。
-export default function SummaryScreen({ userId, theme, hypothesis, onBack }) {
+export default function SummaryScreen({ userId, onBack }) {
+  const { research } = useResearch();
+  const { theme, hypothesis } = research ?? {};
   const [view, setView] = useState("write"); // 'write' | 'preview' | 'done'
 
   const [records, setRecords] = useState([]);
@@ -24,36 +28,24 @@ export default function SummaryScreen({ userId, theme, hypothesis, onBack }) {
 
   // この仮説の記録・グラフ・スケジュール・考察・(あれば)保存済みまとめを読み込む
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !hypothesis?.id) return;
     let ignore = false;
     async function fetchAll() {
       setLoading(true);
-      const base = import.meta.env.VITE_API_URL ?? "";
-      const byHypo = (arr, key = "hypothesis_id") =>
-        hypothesis?.id ? arr.filter((x) => x[key] === hypothesis.id) : arr;
       try {
-        const [recRes, graphRes, schRes, consRes, repRes] = await Promise.all([
-          fetch(`${base}/api/records/${userId}`).then((r) => r.json()),
-          fetch(`${base}/api/graphs/${userId}`).then((r) => r.json()),
-          fetch(`${base}/api/schedules/${userId}`).then((r) => r.json()),
-          fetch(`${base}/api/considerations/${userId}`).then((r) => r.json()),
-          fetch(`${base}/api/reports/${userId}`).then((r) => r.json()),
-        ]);
+        const data = await apiGet(`/api/research/${hypothesis.id}`);
         if (ignore) return;
-        if (recRes.success) setRecords(byHypo(recRes.records));
-        if (graphRes.success) setGraphs(byHypo(graphRes.graphs));
-        if (schRes.success) {
-          const sc = byHypo(schRes.schedules)[0];
-          if (sc) setSchedule({ endDate: sc.end_date, tasks: sc.tasks ?? [] });
-        }
-        if (consRes.success) {
-          const c = byHypo(consRes.considerations)[0];
-          if (c) setReflection({ q1: c.q1 ?? "", q2: c.q2 ?? "" });
-        }
-        // すでにまとめを作っていれば、書いた言葉を復元する
-        if (repRes.success) {
-          const rep = byHypo(repRes.reports)[0];
-          const rd = rep?.report_data;
+        if (data.success) {
+          setRecords(data.records);
+          setGraphs(data.graphs);
+          if (data.schedule) {
+            setSchedule({ endDate: data.schedule.end_date, tasks: data.schedule.tasks ?? [] });
+          }
+          if (data.consideration) {
+            setReflection({ q1: data.consideration.q1 ?? "", q2: data.consideration.q2 ?? "" });
+          }
+          // すでにまとめを作っていれば、書いた言葉を復元する
+          const rd = data.report?.report_data;
           if (rd) {
             setSummaryDid(rd.summaryDid ?? "");
             setSummaryTell(rd.summaryTell ?? "");
@@ -101,19 +93,10 @@ export default function SummaryScreen({ userId, theme, hypothesis, onBack }) {
     if (saving) return;
     setSaving(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/save-report`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            hypothesis_id: hypothesis?.id,
-            report_data: report,
-          }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/save-report', {
+        hypothesis_id: hypothesis?.id,
+        report_data: report,
+      });
       if (!data.success) throw new Error(data.error);
       setView("done");
       window.scrollTo({ top: 0, behavior: "smooth" });

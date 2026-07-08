@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { getCategoryById } from "../data/categories";
 import { METHOD_TYPES, getMethodTypeById } from "../data/methodTypes";
+import { apiGet, apiPost } from "../services/api";
+import { useResearch } from "../contexts/ResearchContext";
 
 const HINT_LIMIT = 3;
 
 export default function ResearchMethodScreen({
   userId,
-  theme,
   savedHypotheses,
   onBack,
   onNext,
 }) {
+  const { research } = useResearch();
+  const theme = research?.theme;
   const cat = getCategoryById(theme?.category);
   const hasMultiple = (savedHypotheses?.length ?? 0) > 1;
 
@@ -45,16 +48,9 @@ export default function ResearchMethodScreen({
     if (!userId || !selectedHypothesis?.id) return;
     async function fetchExisting() {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL ?? ""}/api/research-methods/${userId}`,
-        );
-        const data = await res.json();
+        const data = await apiGet(`/api/research/${selectedHypothesis.id}`);
         if (!data.success) return;
-        setSavedList(
-          data.researchMethods.filter(
-            (r) => r.hypothesis_id === selectedHypothesis.id,
-          ),
-        );
+        setSavedList(data.researchMethods);
       } catch {
         // 読み込みに失敗しても、新しく追加すること自体はできるので黙って無視
       }
@@ -65,22 +61,14 @@ export default function ResearchMethodScreen({
   async function fetchHint(field, currentText, history, setHistory, setCount, setLoading) {
     setLoading(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/research-method-hint`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            category: cat?.mode,
-            field,
-            theme_title: theme?.theme,
-            hypothesis: selectedHypothesis?.hypothesis,
-            current_text: currentText,
-            previous_hints: history,
-          }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/research-method-hint', {
+        category: cat?.mode,
+        field,
+        theme_title: theme?.theme,
+        hypothesis: selectedHypothesis?.hypothesis,
+        current_text: currentText,
+        previous_hints: history,
+      });
       if (!data.content)
         throw new Error(data.error?.message ?? JSON.stringify(data));
 
@@ -108,24 +96,15 @@ export default function ResearchMethodScreen({
 
     setSaving(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/save-research-method`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            hypothesis_id: selectedHypothesis?.id,
-            method_type: methodType,
-            what_to_study: whatToStudy.trim(),
-            tools_materials: toolsMaterials.trim(),
-            location: location.trim(),
-            duration: duration.trim(),
-            summary: summary.trim(),
-          }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/save-research-method', {
+        hypothesis_id: selectedHypothesis?.id,
+        method_type: methodType,
+        what_to_study: whatToStudy.trim(),
+        tools_materials: toolsMaterials.trim(),
+        location: location.trim(),
+        duration: duration.trim(),
+        summary: summary.trim(),
+      });
       if (!data.success) throw new Error(data.error);
 
       setSavedList((prev) => [...prev, data.data]);

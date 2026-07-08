@@ -5,8 +5,11 @@ import CategorySelect from './components/CategorySelect';
 import ChatBox from './components/ChatBox';
 import DictScreen from './components/DictScreen'; 
 import { callClaude } from './services/Claudeapi';
+import { apiGet, apiPost, setUnauthorizedHandler } from './services/api';
+import { ResearchProvider } from './contexts/ResearchContext';
 import SaveThemeArea from './components/SaveThemeArea';
 import UserIdScreen from './components/UserIdScreen';
+import ResearchListScreen from './components/ResearchListScreen';
 import ThemeListScreen from './components/ThemeListScreen';
 import HypothesisScreen from './components/HypothesisScreen';
 import ResearchMethodScreen from './components/ResearchMethodScreen';
@@ -26,7 +29,7 @@ import { getFlowStepIndex, FLOW_STEPS } from './flowSteps';
 // 'chat'           → チャット画面（テーマ決定）
 // 'dict'           → 辞書のキーワード選択
 
-// リロード復元で戻ってよい画面(scheduleContext.hypothesis が確定している画面)
+// リロード復元で戻ってよい画面(research.hypothesis が確定している画面)
 const RESTORABLE_SCREENS = ['schedule', 'record', 'consideration', 'summary'];
 
 export default function App() {
@@ -34,12 +37,24 @@ export default function App() {
   const [showGuide, setShowGuide] = useState(false);
 
   // userId はアプリ内では常に number(または未入力なら null)として統一して扱う。
-  // sessionStorage は文字列しか保存できないため、読み出し時に必ず数値へ変換する。
+  // ログイントークンと寿命を合わせるため localStorage に保存する(タブを閉じても
+  // 消えず、番号+PINでのログイン状態がそのまま続く)。文字列しか保存できないため、
+  // 読み出し時に必ず数値へ変換する。
   const [userId, setUserId] = useState(() => {
-    const stored = sessionStorage.getItem('userId');
+    const stored = localStorage.getItem('userId');
     const n = parseInt(stored, 10);
-    return Number.isFinite(n) ? n : null;
+    return Number.isFinite(n) && localStorage.getItem('token') ? n : null;
   });
+
+  // トークンが無効になった(PINリセットなど)ときは、ログイン情報を捨てて
+  // 番号+PIN入力画面に戻す。
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('token');
+      setUserId(null);
+    });
+  }, []);
 
   const [category, setCategory] = useState(null); // 選択されたカテゴリ
   const [messages, setMessages] = useState([]);
@@ -52,9 +67,12 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [savedThemes, setSavedThemes] = useState([]);
 
-  const [selectedTheme, setSelectedTheme] = useState(null);
-  const [savedHypotheses, setSavedHypotheses] = useState([]);
-  const [scheduleContext, setScheduleContext] = useState(null); // { researchMethods, hypothesis }
+  // 「今の研究」(テーマ・仮説・研究方法)を1つにまとめて持つ。
+  // 以前は selectedTheme と scheduleContext の2つに分かれていて、
+  // 片方だけ更新し忘れると状態がズレる恐れがあったため統合した。
+  // 画面へは ResearchContext(useResearch)経由で配る。
+  const [research, setResearch] = useState(null); // { theme, hypothesis, researchMethods } | null
+  const [savedHypotheses, setSavedHypotheses] = useState([]); // 仮説パートで追加中の候補一覧(まだ1本に絞る前)
 
   // 復元中フラグ: sessionStorage に研究(仮説)が残っていればリロード直後だけ true。
   // 復元が終わるまで通常画面を出さず、チラつきを防ぐ。
@@ -62,52 +80,55 @@ export default function App() {
     () => Number.isFinite(parseInt(sessionStorage.getItem('hypothesisId'), 10)),
   );
 
-  // リロード時: sessionStorage に残した hypothesis_id から、④のエンドポイントで
-  // 研究データ(テーマ・仮説・研究方法)をまとめて取り直し、続きの画面に戻す。
+  // リロード時: sessionStorage に hypothesis_id が残っていれば、それは
+  // 「さっき見ていた画面に一発で戻る」ためのおまけの近道として使う(無くても、
+  // ログイン後は研究一覧画面から選び直せば同じ場所に戻れる=必須の仕組みではない)。
   useEffect(() => {
     const hid = parseInt(sessionStorage.getItem('hypothesisId'), 10);
-    if (!Number.isFinite(hid)) return;
+    if (!Number.isFinite(hid)) {
+      // 近道が無ければ、ログイン済みのときは研究一覧をデフォルトの着地点にする
+      if (userId) setScreen('research-list');
+      return;
+    }
 
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL ?? ''}/api/research/${hid}`,
-        );
-        const data = await res.json();
+        const data = await apiGet(`/api/research/${hid}`);
         if (!data.success) throw new Error(data.error);
         if (cancelled) return;
 
-        // 各画面が必要とする props(テーマ・仮説・研究方法)を組み立て直す。
         // 記録・グラフなどの中身は各画面がDBから読み直すので、ここでは背骨だけ戻す。
-        setSelectedTheme(data.theme);
-        setScheduleContext({
+        setResearch({
+          theme: data.theme,
           hypothesis: data.hypothesis,
           researchMethods: data.researchMethods,
         });
         const savedScreen = sessionStorage.getItem('screen');
         setScreen(RESTORABLE_SCREENS.includes(savedScreen) ? savedScreen : 'schedule');
       } catch {
-        // 復元できなければ保存情報を捨てて、通常のはじめからのフローに戻す
+        // 復元できなければ近道の情報を捨て、研究一覧から選び直すフローに戻す
         sessionStorage.removeItem('hypothesisId');
         sessionStorage.removeItem('screen');
+        setScreen('research-list');
       } finally {
         if (!cancelled) setRestoring(false);
       }
     })();
 
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 研究(仮説)が確定している間は、現在の hypothesis_id と画面を sessionStorage に反映する。
   // userId と同じく「文字列で保存し、読み出し時に数値へ戻す」方針にそろえる。
   useEffect(() => {
-    const hid = scheduleContext?.hypothesis?.id;
+    const hid = research?.hypothesis?.id;
     if (Number.isFinite(hid)) {
       sessionStorage.setItem('hypothesisId', String(hid));
       sessionStorage.setItem('screen', screen);
     }
-  }, [scheduleContext, screen]);
+  }, [research, screen]);
 
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
@@ -117,7 +138,14 @@ export default function App() {
 
   // 番号が未入力の間は、他の画面を一切マウントしない(スクロールでの回避を防ぐ)
   if (!userId) {
-    return <UserIdScreen onSubmit={(n) => setUserId(n)} />;
+    return (
+      <UserIdScreen
+        onSubmit={(n) => {
+          setUserId(n);
+          setScreen('research-list');
+        }}
+      />
+    );
   }
 
   // リロード直後の研究データ復元中は、通常画面を出さずに待つ
@@ -203,16 +231,10 @@ export default function App() {
 
     setSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/save-theme`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          category: category?.id,
-          theme,
-        }),
+      const data = await apiPost('/api/save-theme', {
+        category: category?.id,
+        theme,
       });
-      const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
       setSavedThemes(prev => [...prev, theme]);
@@ -225,10 +247,24 @@ export default function App() {
   }
 
   return (
+    <ResearchProvider value={{ research, setResearch }}>
     <div className="app">
       <RocketProgress currentIndex={getFlowStepIndex(screen)} steps={FLOW_STEPS} />
 
       {showGuide && <GuideOverlay onClose={() => setShowGuide(false)} />}
+
+      {screen === 'research-list' && (
+        <ResearchListScreen
+          onSelect={(selected) => {
+            setResearch(selected);
+            setScreen('schedule');
+          }}
+          onStartNew={() => {
+            setResearch(null);
+            setScreen('title');
+          }}
+        />
+      )}
 
       {screen === 'title' && (
         <TitleScreen
@@ -298,10 +334,9 @@ export default function App() {
       {screen === 'theme-list' && (
         <ThemeListScreen
           userId={userId}
-          currentThemeId={selectedTheme?.id}
           onBack={() => setScreen('chat')}
           onNext={(theme) => {
-            setSelectedTheme(theme);
+            setResearch({ theme, hypothesis: null, researchMethods: [] });
             setScreen('hypothesis');
           }}
         />
@@ -310,7 +345,6 @@ export default function App() {
       {screen === 'hypothesis' && (
         <HypothesisScreen
           userId={userId}
-          theme={selectedTheme}
           onBack={() => setScreen('theme-list')}
           onNext={(savedHypothesis) => {
             setSavedHypotheses(savedHypothesis);
@@ -322,11 +356,10 @@ export default function App() {
       {screen === 'research-method' && (
         <ResearchMethodScreen
           userId={userId}
-          theme={selectedTheme}
           savedHypotheses={savedHypotheses}
           onBack={() => setScreen('hypothesis')}
           onNext={(context) => {
-            setScheduleContext(context);
+            setResearch((prev) => ({ theme: prev?.theme, ...context }));
             setScreen('schedule');
           }}
         />
@@ -335,9 +368,6 @@ export default function App() {
       {screen === 'schedule' && (
         <ScheduleScreen
           userId={userId}
-          theme={selectedTheme}
-          hypothesis={scheduleContext?.hypothesis}
-          researchMethods={scheduleContext?.researchMethods}
           onBack={() => setScreen('research-method')}
           onNext={() => {
             // スケジュール保存後は STEP5(記録パート)へ
@@ -349,8 +379,6 @@ export default function App() {
       {screen === 'record' && (
         <RecordScreen
           userId={userId}
-          theme={selectedTheme}
-          hypothesis={scheduleContext?.hypothesis}
           onBack={() => setScreen('schedule')}
           onNext={() => setScreen('consideration')}
         />
@@ -359,7 +387,6 @@ export default function App() {
       {screen === 'consideration' && (
         <ConsiderationScreen
           userId={userId}
-          hypothesis={scheduleContext?.hypothesis}
           onBack={() => setScreen('record')}
           onNext={() => setScreen('summary')}
         />
@@ -368,12 +395,11 @@ export default function App() {
       {screen === 'summary' && (
         <SummaryScreen
           userId={userId}
-          theme={selectedTheme}
-          hypothesis={scheduleContext?.hypothesis}
           onBack={() => setScreen('consideration')}
         />
       )}
 
     </div>
+    </ResearchProvider>
   );
 }

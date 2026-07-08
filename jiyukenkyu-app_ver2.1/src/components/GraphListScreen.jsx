@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { apiDelete } from "../services/api";
 import GraphView from "./GraphView";
 import ConfirmModal from "./ConfirmModal";
 import { getGraphTypeById } from "../data/graphTypes";
 
 // 保存したグラフだけを見られる一覧画面(記録とは別)。
 // PC・タブレット横持ちでの一覧性を優先したグリッドギャラリー。
-export default function GraphListScreen({ userId, graphs, onBack, onDeleted }) {
+export default function GraphListScreen({ graphs, onBack, onDeleted }) {
   const [openGraph, setOpenGraph] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -14,12 +15,7 @@ export default function GraphListScreen({ userId, graphs, onBack, onDeleted }) {
     if (!deleteTarget || deleting) return;
     setDeleting(true);
     try {
-      const base = import.meta.env.VITE_API_URL ?? "";
-      const res = await fetch(
-        `${base}/api/graphs/${deleteTarget.id}?userId=${userId}`,
-        { method: "DELETE" },
-      );
-      const data = await res.json();
+      const data = await apiDelete(`/api/graphs/${deleteTarget.id}`);
       if (!data.success) throw new Error(data.error);
       onDeleted(deleteTarget.id);
       if (openGraph?.id === deleteTarget.id) setOpenGraph(null);

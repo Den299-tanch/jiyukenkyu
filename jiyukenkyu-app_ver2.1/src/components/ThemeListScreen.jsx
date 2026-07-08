@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getCategoryById } from '../data/categories';
+import { apiGet } from '../services/api';
+import { useResearch } from '../contexts/ResearchContext';
 
-export default function ThemeListScreen({ userId, currentThemeId, onBack, onNext }) {
+export default function ThemeListScreen({ userId, onBack, onNext }) {
+  const { research } = useResearch();
+  const currentThemeId = research?.theme?.id;
   const [themes, setThemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,8 +15,7 @@ export default function ThemeListScreen({ userId, currentThemeId, onBack, onNext
   useEffect(() => {
     async function fetchThemes() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/themes/${userId}`);
-        const data = await res.json();
+        const data = await apiGet('/api/themes');
         if (!data.success) throw new Error(data.error);
         setThemes(data.themes);
         // 戻るボタンで再度この画面に来たとき、前回選んでいたテーマの選択状態を復元する

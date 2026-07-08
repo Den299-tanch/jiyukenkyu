@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { getMethodTypeById } from "../data/methodTypes";
 import { TASK_TYPES, getTaskTypeById } from "../data/taskTypes";
+import { apiGet, apiPost } from "../services/api";
+import { useResearch } from "../contexts/ResearchContext";
 
 const DRAFT_LIMIT = 3;
 
@@ -10,12 +12,11 @@ function makeTaskId() {
 
 export default function ScheduleScreen({
   userId,
-  theme,
-  hypothesis,
-  researchMethods,
   onBack,
   onNext,
 }) {
+  const { research } = useResearch();
+  const { theme, hypothesis, researchMethods } = research ?? {};
   const [tab, setTab] = useState("intro");
   const [endDate, setEndDate] = useState("");
   const [tasks, setTasks] = useState([]);
@@ -35,14 +36,9 @@ export default function ScheduleScreen({
     if (!userId || !hypothesis?.id) return;
     async function fetchExisting() {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL ?? ""}/api/schedules/${userId}`,
-        );
-        const data = await res.json();
+        const data = await apiGet(`/api/research/${hypothesis.id}`);
         if (!data.success) return;
-        const existing = data.schedules.find(
-          (s) => s.hypothesis_id === hypothesis.id,
-        );
+        const existing = data.schedule;
         if (existing) {
           setEndDate(existing.end_date ?? "");
           setTasks(existing.tasks ?? []);
@@ -77,28 +73,20 @@ export default function ScheduleScreen({
     setDraftLoading(true);
     setDraftError("");
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/schedule-draft`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            theme_title: theme?.theme,
-            hypothesis: hypothesis?.hypothesis,
-            end_date: endDate,
-            research_methods: (researchMethods ?? []).map((rm) => ({
-              method_type_label: getMethodTypeById(rm.method_type)?.label,
-              what_to_study: rm.what_to_study,
-              tools_materials: rm.tools_materials,
-              location: rm.location,
-              duration: rm.duration,
-              summary: rm.summary,
-            })),
-            previous_tasks: isRetry ? tasks : undefined,
-          }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/schedule-draft', {
+        theme_title: theme?.theme,
+        hypothesis: hypothesis?.hypothesis,
+        end_date: endDate,
+        research_methods: (researchMethods ?? []).map((rm) => ({
+          method_type_label: getMethodTypeById(rm.method_type)?.label,
+          what_to_study: rm.what_to_study,
+          tools_materials: rm.tools_materials,
+          location: rm.location,
+          duration: rm.duration,
+          summary: rm.summary,
+        })),
+        previous_tasks: isRetry ? tasks : undefined,
+      });
       if (!data.content)
         throw new Error(data.error?.message ?? JSON.stringify(data));
 
@@ -154,20 +142,11 @@ export default function ScheduleScreen({
   }
 
   async function saveScheduleToServer() {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL ?? ""}/api/save-schedule`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          hypothesis_id: hypothesis?.id,
-          end_date: endDate,
-          tasks,
-        }),
-      },
-    );
-    const data = await res.json();
+    const data = await apiPost('/api/save-schedule', {
+      hypothesis_id: hypothesis?.id,
+      end_date: endDate,
+      tasks,
+    });
     if (!data.success) throw new Error(data.error);
     return data;
   }

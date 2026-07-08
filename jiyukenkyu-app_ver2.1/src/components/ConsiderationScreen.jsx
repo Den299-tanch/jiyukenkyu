@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { getGraphTypeById } from "../data/graphTypes";
+import { apiGet, apiPost } from "../services/api";
+import { useResearch } from "../contexts/ResearchContext";
 
-export default function ConsiderationScreen({ userId, hypothesis, onBack, onNext }) {
+export default function ConsiderationScreen({ userId, onBack, onNext }) {
+  const { research } = useResearch();
+  const hypothesis = research?.hypothesis;
   const [view, setView] = useState("reflect"); // 'reflect' | 'think'
   const [records, setRecords] = useState([]);
   const [graphs, setGraphs] = useState([]);
@@ -20,39 +24,19 @@ export default function ConsiderationScreen({ userId, hypothesis, onBack, onNext
 
   // 画面に来たとき、この仮説の記録・グラフ・すでに書いた考察を読み込む
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !hypothesis?.id) return;
     let ignore = false;
     async function fetchAll() {
       setLoadingList(true);
-      const base = import.meta.env.VITE_API_URL ?? "";
       try {
-        const [recRes, graphRes, consRes] = await Promise.all([
-          fetch(`${base}/api/records/${userId}`).then((r) => r.json()),
-          fetch(`${base}/api/graphs/${userId}`).then((r) => r.json()),
-          fetch(`${base}/api/considerations/${userId}`).then((r) => r.json()),
-        ]);
+        const data = await apiGet(`/api/research/${hypothesis.id}`);
         if (ignore) return;
-        if (recRes.success) {
-          setRecords(
-            hypothesis?.id
-              ? recRes.records.filter((r) => r.hypothesis_id === hypothesis.id)
-              : recRes.records,
-          );
-        }
-        if (graphRes.success) {
-          setGraphs(
-            hypothesis?.id
-              ? graphRes.graphs.filter((g) => g.hypothesis_id === hypothesis.id)
-              : graphRes.graphs,
-          );
-        }
-        if (consRes.success && hypothesis?.id) {
-          const existing = consRes.considerations.find(
-            (c) => c.hypothesis_id === hypothesis.id,
-          );
-          if (existing) {
-            setQ1(existing.q1 ?? "");
-            setQ2(existing.q2 ?? "");
+        if (data.success) {
+          setRecords(data.records);
+          setGraphs(data.graphs);
+          if (data.consideration) {
+            setQ1(data.consideration.q1 ?? "");
+            setQ2(data.consideration.q2 ?? "");
             setRestoredNotice(true);
           }
         }
@@ -82,15 +66,7 @@ export default function ConsiderationScreen({ userId, hypothesis, onBack, onNext
     setPolishLoading(true);
     setPolishError("");
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/consideration-polish`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q1, q2 }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/consideration-polish', { q1, q2 });
       if (!data.success) throw new Error(data.error);
       setPolished({ q1: data.q1, q2: data.q2 });
     } catch (err) {
@@ -114,20 +90,11 @@ export default function ConsiderationScreen({ userId, hypothesis, onBack, onNext
     setSaving(true);
     setSaveMessage("");
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/save-consideration`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            hypothesis_id: hypothesis?.id,
-            q1,
-            q2,
-          }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/save-consideration', {
+        hypothesis_id: hypothesis?.id,
+        q1,
+        q2,
+      });
       if (!data.success) throw new Error(data.error);
       setRestoredNotice(false);
       setSaveMessage("✅ かんがえたことをほぞんしたよ!");

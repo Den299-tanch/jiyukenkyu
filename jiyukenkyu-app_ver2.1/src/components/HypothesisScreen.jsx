@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { getCategoryById } from "../data/categories";
+import { apiGet, apiPost } from "../services/api";
+import { useResearch } from "../contexts/ResearchContext";
 
 const HINT_LIMIT = 3;
 
-export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
+export default function HypothesisScreen({ userId, onBack, onNext }) {
+  const { research } = useResearch();
+  const theme = research?.theme;
   const [researchNote, setResearchNote] = useState("");
   const [hypothesis, setHypothesis] = useState("");
   const [hintCount, setHintCount] = useState(0);
@@ -21,10 +25,7 @@ export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
     if (!userId || !theme?.id) return;
     async function fetchExisting() {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL ?? ""}/api/hypotheses/${userId}`,
-        );
-        const data = await res.json();
+        const data = await apiGet('/api/hypotheses');
         if (!data.success) return;
         setSavedList(data.hypotheses.filter((h) => h.theme_id === theme.id));
       } catch {
@@ -38,19 +39,11 @@ export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
     if (hintsLeft <= 0 || hintLoading) return;
     setHintLoading(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/hypothesis-hint`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            category: cat?.mode,
-            research_note: researchNote,
-            previous_hints: hintHistory, // ← 追加: これまで出したヒントを一緒に送る
-          }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/hypothesis-hint', {
+        category: cat?.mode,
+        research_note: researchNote,
+        previous_hints: hintHistory, // これまで出したヒントを一緒に送る
+      });
       if (!data.content)
         throw new Error(data.error?.message ?? JSON.stringify(data));
 
@@ -69,20 +62,11 @@ export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
 
     setSaving(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? ""}/api/save-hypothesis`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            theme_id: theme?.id,
-            research_note: researchNote.trim(),
-            hypothesis: trimmedHypothesis,
-          }),
-        },
-      );
-      const data = await res.json();
+      const data = await apiPost('/api/save-hypothesis', {
+        theme_id: theme?.id,
+        research_note: researchNote.trim(),
+        hypothesis: trimmedHypothesis,
+      });
       if (!data.success) throw new Error(data.error);
 
       // リストに追加
