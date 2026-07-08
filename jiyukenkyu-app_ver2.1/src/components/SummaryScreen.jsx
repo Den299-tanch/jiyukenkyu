@@ -108,7 +108,6 @@ export default function SummaryScreen({ userId, theme, hypothesis, onBack }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: userId,
-            theme_id: theme?.id,
             hypothesis_id: hypothesis?.id,
             report_data: report,
           }),

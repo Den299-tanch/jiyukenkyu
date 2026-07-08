@@ -115,7 +115,6 @@ export default function ResearchMethodScreen({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: userId,
-            theme_id: theme?.id,
             hypothesis_id: selectedHypothesis?.id,
             method_type: methodType,
             what_to_study: whatToStudy.trim(),

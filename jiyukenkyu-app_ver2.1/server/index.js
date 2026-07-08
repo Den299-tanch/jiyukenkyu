@@ -255,7 +255,6 @@ app.post('/api/save-research-method', async (req, res) => {
   try {
     const {
       user_id,
-      theme_id,
       hypothesis_id,
       method_type,
       what_to_study,
@@ -266,12 +265,11 @@ app.post('/api/save-research-method', async (req, res) => {
     } = req.body;
     const result = await pool.query(
       `INSERT INTO research_methods
-        (user_id, theme_id, hypothesis_id, method_type, what_to_study, tools_materials, location, duration, summary)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        (user_id, hypothesis_id, method_type, what_to_study, tools_materials, location, duration, summary)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         toUserId(user_id),
-        theme_id || null,
         hypothesis_id || null,
         method_type,
         what_to_study,
@@ -293,8 +291,11 @@ app.get('/api/research-methods/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await pool.query(
-      `SELECT id, theme_id, hypothesis_id, method_type, what_to_study, tools_materials, location, duration, summary, created_at
-       FROM research_methods WHERE user_id = $1 ORDER BY created_at ASC`,
+      `SELECT rm.id, h.theme_id, rm.hypothesis_id, rm.method_type, rm.what_to_study,
+              rm.tools_materials, rm.location, rm.duration, rm.summary, rm.created_at
+       FROM research_methods rm
+       LEFT JOIN hypotheses h ON rm.hypothesis_id = h.id
+       WHERE rm.user_id = $1 ORDER BY rm.created_at ASC`,
       [toUserId(userId)],
     );
     res.json({ success: true, researchMethods: result.rows });
@@ -409,20 +410,18 @@ app.post('/api/save-schedule', async (req, res) => {
   try {
     const {
       user_id,
-      theme_id,
       hypothesis_id,
       end_date,
       tasks,
     } = req.body;
     const result = await pool.query(
-      `INSERT INTO schedules (user_id, theme_id, hypothesis_id, end_date, tasks, updated_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
+      `INSERT INTO schedules (user_id, hypothesis_id, end_date, tasks, updated_at)
+       VALUES ($1, $2, $3, $4, NOW())
        ON CONFLICT (hypothesis_id)
        DO UPDATE SET end_date = EXCLUDED.end_date, tasks = EXCLUDED.tasks, updated_at = NOW()
        RETURNING *`,
       [
         toUserId(user_id),
-        theme_id || null,
         hypothesis_id || null,
         end_date || null,
         JSON.stringify(tasks ?? []),
@@ -440,8 +439,10 @@ app.get('/api/schedules/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await pool.query(
-      `SELECT id, theme_id, hypothesis_id, end_date, tasks, created_at, updated_at
-       FROM schedules WHERE user_id = $1 ORDER BY created_at ASC`,
+      `SELECT s.id, h.theme_id, s.hypothesis_id, s.end_date, s.tasks, s.created_at, s.updated_at
+       FROM schedules s
+       LEFT JOIN hypotheses h ON s.hypothesis_id = h.id
+       WHERE s.user_id = $1 ORDER BY s.created_at ASC`,
       [toUserId(userId)],
     );
     res.json({ success: true, schedules: result.rows });
@@ -458,7 +459,6 @@ app.post('/api/save-record', async (req, res) => {
   try {
     const {
       user_id,
-      theme_id,
       hypothesis_id,
       record_type,   // 'kiroku'(きろく) / 'shirabe'(しらべたこと)
       viewpoints,    // 選んだ視点チップidの配列 例: ["jikan","ookisa"]
@@ -470,13 +470,12 @@ app.post('/api/save-record', async (req, res) => {
     } = req.body;
     const result = await pool.query(
       `INSERT INTO records
-        (user_id, theme_id, hypothesis_id, record_type, viewpoints, body, why_note,
+        (user_id, hypothesis_id, record_type, viewpoints, body, why_note,
          num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit, observed_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE($14, now()))
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, COALESCE($13, now()))
        RETURNING *`,
       [
         toUserId(user_id),
-        theme_id || null,
         hypothesis_id || null,
         record_type,
         JSON.stringify(viewpoints ?? []),
@@ -503,10 +502,12 @@ app.get('/api/records/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await pool.query(
-      `SELECT id, theme_id, hypothesis_id, record_type, viewpoints, body, why_note,
-              num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit,
-              observed_at, created_at
-       FROM records WHERE user_id = $1 ORDER BY observed_at ASC`,
+      `SELECT r.id, h.theme_id, r.hypothesis_id, r.record_type, r.viewpoints, r.body, r.why_note,
+              r.num1_label, r.num1_value, r.num1_unit, r.num2_label, r.num2_value, r.num2_unit,
+              r.observed_at, r.created_at
+       FROM records r
+       LEFT JOIN hypotheses h ON r.hypothesis_id = h.id
+       WHERE r.user_id = $1 ORDER BY r.observed_at ASC`,
       [toUserId(userId)],
     );
     res.json({ success: true, records: result.rows });
@@ -689,14 +690,13 @@ app.get('/api/record-labels/:userId', async (req, res) => {
 // グラフ保存エンドポイント(材料一式は graph_data の JSON 1列にまとめて保存)
 app.post('/api/save-graph', async (req, res) => {
   try {
-    const { user_id, theme_id, hypothesis_id, graph_data } = req.body;
+    const { user_id, hypothesis_id, graph_data } = req.body;
     const result = await pool.query(
-      `INSERT INTO graphs (user_id, theme_id, hypothesis_id, graph_data)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO graphs (user_id, hypothesis_id, graph_data)
+       VALUES ($1, $2, $3)
        RETURNING *`,
       [
         toUserId(user_id),
-        theme_id || null,
         hypothesis_id || null,
         JSON.stringify(graph_data ?? {}),
       ],
@@ -713,8 +713,10 @@ app.get('/api/graphs/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await pool.query(
-      `SELECT id, theme_id, hypothesis_id, graph_data, created_at
-       FROM graphs WHERE user_id = $1 ORDER BY created_at ASC`,
+      `SELECT g.id, h.theme_id, g.hypothesis_id, g.graph_data, g.created_at
+       FROM graphs g
+       LEFT JOIN hypotheses h ON g.hypothesis_id = h.id
+       WHERE g.user_id = $1 ORDER BY g.created_at ASC`,
       [toUserId(userId)],
     );
     res.json({ success: true, graphs: result.rows });
@@ -750,20 +752,18 @@ app.post('/api/save-consideration', async (req, res) => {
   try {
     const {
       user_id,
-      theme_id,
       hypothesis_id,
       q1,   // ぜんぶ見返して、一番の発見は?
       q2,   // さいしょの予想と比べてどうだった?
     } = req.body;
     const result = await pool.query(
-      `INSERT INTO considerations (user_id, theme_id, hypothesis_id, q1, q2, updated_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
+      `INSERT INTO considerations (user_id, hypothesis_id, q1, q2, updated_at)
+       VALUES ($1, $2, $3, $4, NOW())
        ON CONFLICT (hypothesis_id)
        DO UPDATE SET q1 = EXCLUDED.q1, q2 = EXCLUDED.q2, updated_at = NOW()
        RETURNING *`,
       [
         toUserId(user_id),
-        theme_id || null,
         hypothesis_id || null,
         q1 || null,
         q2 || null,
@@ -781,8 +781,10 @@ app.get('/api/considerations/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await pool.query(
-      `SELECT id, theme_id, hypothesis_id, q1, q2, created_at, updated_at
-       FROM considerations WHERE user_id = $1 ORDER BY created_at ASC`,
+      `SELECT c.id, h.theme_id, c.hypothesis_id, c.q1, c.q2, c.created_at, c.updated_at
+       FROM considerations c
+       LEFT JOIN hypotheses h ON c.hypothesis_id = h.id
+       WHERE c.user_id = $1 ORDER BY c.created_at ASC`,
       [toUserId(userId)],
     );
     res.json({ success: true, considerations: result.rows });
@@ -846,17 +848,16 @@ app.post('/api/consideration-polish', async (req, res) => {
 // まとめ保存エンドポイント(1仮説につき1件。あれば上書き、なければ新規作成)
 app.post('/api/save-report', async (req, res) => {
   try {
-    const { user_id, theme_id, hypothesis_id, report_data } = req.body;
+    const { user_id, hypothesis_id, report_data } = req.body;
     const result = await pool.query(
-      `INSERT INTO reports (user_id, theme_id, hypothesis_id, report_data, updated_at)
-       VALUES ($1, $2, $3, $4, NOW())
+      `INSERT INTO reports (user_id, hypothesis_id, report_data, updated_at)
+       VALUES ($1, $2, $3, NOW())
        ON CONFLICT (hypothesis_id)
-       DO UPDATE SET report_data = EXCLUDED.report_data, theme_id = EXCLUDED.theme_id,
+       DO UPDATE SET report_data = EXCLUDED.report_data,
                      user_id = EXCLUDED.user_id, updated_at = NOW()
        RETURNING *`,
       [
         toUserId(user_id),
-        theme_id || null,
         hypothesis_id || null,
         JSON.stringify(report_data ?? {}),
       ],
@@ -873,13 +874,111 @@ app.get('/api/reports/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await pool.query(
-      `SELECT id, theme_id, hypothesis_id, report_data, created_at, updated_at
-       FROM reports WHERE user_id = $1 ORDER BY updated_at DESC`,
+      `SELECT r.id, h.theme_id, r.hypothesis_id, r.report_data, r.created_at, r.updated_at
+       FROM reports r
+       LEFT JOIN hypotheses h ON r.hypothesis_id = h.id
+       WHERE r.user_id = $1 ORDER BY r.updated_at DESC`,
       [toUserId(userId)],
     );
     res.json({ success: true, reports: result.rows });
   } catch (err) {
     console.error('Get reports error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== 研究データの一括取得 =====
+// 1つの hypothesis_id から、その研究(=1つの軸)にひもづく情報を丸ごと1レスポンスで返す。
+// フロントがリロード時に sessionStorage の hypothesis_id をもとに研究データを復元するために使う。
+// 「仮説1件＝1軸」の理念どおり、単数(theme/hypothesis/schedule/consideration/report)と
+// 複数(researchMethods/records/graphs)を分けて返す。
+app.get('/api/research/:hypothesisId', async (req, res) => {
+  try {
+    const hid = parseInt(req.params.hypothesisId, 10);
+    if (!Number.isFinite(hid)) {
+      return res.status(400).json({ success: false, error: 'invalid hypothesisId' });
+    }
+
+    // 背骨(仮説)とテーマを1回で取得。theme_id は NOT NULL なので JOIN は必ず1件返る。
+    // 仮説そのものが無ければ研究が存在しないので 404。
+    const spine = await pool.query(
+      `SELECT h.id, h.user_id, h.theme_id, h.research_note, h.hypothesis, h.hint_count, h.created_at,
+              t.category AS theme_category, t.theme AS theme_title, t.created_at AS theme_created_at
+       FROM hypotheses h
+       JOIN themes t ON h.theme_id = t.id
+       WHERE h.id = $1`,
+      [hid],
+    );
+    if (spine.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'research not found' });
+    }
+    const row = spine.rows[0];
+    const hypothesis = {
+      id: row.id,
+      user_id: row.user_id,
+      theme_id: row.theme_id,
+      research_note: row.research_note,
+      hypothesis: row.hypothesis,
+      hint_count: row.hint_count,
+      created_at: row.created_at,
+    };
+    const theme = {
+      id: row.theme_id,
+      category: row.theme_category,
+      theme: row.theme_title,
+      created_at: row.theme_created_at,
+    };
+
+    // 残り(複数=配列 / 単数=1件)は hypothesis_id で並列に取得する
+    const [researchMethods, schedule, records, graphs, consideration, report] =
+      await Promise.all([
+        pool.query(
+          `SELECT id, hypothesis_id, method_type, what_to_study, tools_materials, location, duration, summary, created_at
+           FROM research_methods WHERE hypothesis_id = $1 ORDER BY created_at ASC`,
+          [hid],
+        ),
+        pool.query(
+          `SELECT id, hypothesis_id, end_date, tasks, created_at, updated_at
+           FROM schedules WHERE hypothesis_id = $1`,
+          [hid],
+        ),
+        pool.query(
+          `SELECT id, hypothesis_id, record_type, viewpoints, body, why_note,
+                  num1_label, num1_value, num1_unit, num2_label, num2_value, num2_unit,
+                  observed_at, created_at
+           FROM records WHERE hypothesis_id = $1 ORDER BY observed_at ASC`,
+          [hid],
+        ),
+        pool.query(
+          `SELECT id, hypothesis_id, graph_data, created_at
+           FROM graphs WHERE hypothesis_id = $1 ORDER BY created_at ASC`,
+          [hid],
+        ),
+        pool.query(
+          `SELECT id, hypothesis_id, q1, q2, created_at, updated_at
+           FROM considerations WHERE hypothesis_id = $1`,
+          [hid],
+        ),
+        pool.query(
+          `SELECT id, hypothesis_id, report_data, created_at, updated_at
+           FROM reports WHERE hypothesis_id = $1`,
+          [hid],
+        ),
+      ]);
+
+    res.json({
+      success: true,
+      theme,
+      hypothesis,
+      researchMethods: researchMethods.rows,
+      schedule: schedule.rows[0] ?? null,
+      records: records.rows,
+      graphs: graphs.rows,
+      consideration: consideration.rows[0] ?? null,
+      report: report.rows[0] ?? null,
+    });
+  } catch (err) {
+    console.error('Get research error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -905,8 +1004,10 @@ app.post('/api/admin/reports', async (req, res) => {
       return res.status(401).json({ success: false, error: 'ちがうパスコードです' });
     }
     const result = await pool.query(
-      `SELECT id, user_id, theme_id, hypothesis_id, report_data, created_at, updated_at
-       FROM reports ORDER BY user_id ASC, updated_at DESC`,
+      `SELECT r.id, r.user_id, h.theme_id, r.hypothesis_id, r.report_data, r.created_at, r.updated_at
+       FROM reports r
+       LEFT JOIN hypotheses h ON r.hypothesis_id = h.id
+       ORDER BY r.user_id ASC, r.updated_at DESC`,
     );
     res.json({ success: true, reports: result.rows });
   } catch (err) {

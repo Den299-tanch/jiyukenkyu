@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import TitleScreen from './components/TitleScreen';
 import CategorySelect from './components/CategorySelect';
@@ -25,6 +25,9 @@ import { getFlowStepIndex, FLOW_STEPS } from './flowSteps';
 // 'chat-category'  → テーマ決定のカテゴリ選択
 // 'chat'           → チャット画面（テーマ決定）
 // 'dict'           → 辞書のキーワード選択
+
+// リロード復元で戻ってよい画面(scheduleContext.hypothesis が確定している画面)
+const RESTORABLE_SCREENS = ['schedule', 'record', 'consideration', 'summary'];
 
 export default function App() {
   const [screen, setScreen] = useState('title');
@@ -53,6 +56,59 @@ export default function App() {
   const [savedHypotheses, setSavedHypotheses] = useState([]);
   const [scheduleContext, setScheduleContext] = useState(null); // { researchMethods, hypothesis }
 
+  // 復元中フラグ: sessionStorage に研究(仮説)が残っていればリロード直後だけ true。
+  // 復元が終わるまで通常画面を出さず、チラつきを防ぐ。
+  const [restoring, setRestoring] = useState(
+    () => Number.isFinite(parseInt(sessionStorage.getItem('hypothesisId'), 10)),
+  );
+
+  // リロード時: sessionStorage に残した hypothesis_id から、④のエンドポイントで
+  // 研究データ(テーマ・仮説・研究方法)をまとめて取り直し、続きの画面に戻す。
+  useEffect(() => {
+    const hid = parseInt(sessionStorage.getItem('hypothesisId'), 10);
+    if (!Number.isFinite(hid)) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL ?? ''}/api/research/${hid}`,
+        );
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        if (cancelled) return;
+
+        // 各画面が必要とする props(テーマ・仮説・研究方法)を組み立て直す。
+        // 記録・グラフなどの中身は各画面がDBから読み直すので、ここでは背骨だけ戻す。
+        setSelectedTheme(data.theme);
+        setScheduleContext({
+          hypothesis: data.hypothesis,
+          researchMethods: data.researchMethods,
+        });
+        const savedScreen = sessionStorage.getItem('screen');
+        setScreen(RESTORABLE_SCREENS.includes(savedScreen) ? savedScreen : 'schedule');
+      } catch {
+        // 復元できなければ保存情報を捨てて、通常のはじめからのフローに戻す
+        sessionStorage.removeItem('hypothesisId');
+        sessionStorage.removeItem('screen');
+      } finally {
+        if (!cancelled) setRestoring(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // 研究(仮説)が確定している間は、現在の hypothesis_id と画面を sessionStorage に反映する。
+  // userId と同じく「文字列で保存し、読み出し時に数値へ戻す」方針にそろえる。
+  useEffect(() => {
+    const hid = scheduleContext?.hypothesis?.id;
+    if (Number.isFinite(hid)) {
+      sessionStorage.setItem('hypothesisId', String(hid));
+      sessionStorage.setItem('screen', screen);
+    }
+  }, [scheduleContext, screen]);
+
   const DEV_CODE_ON  = 'den44bug';
   const DEV_CODE_OFF = 'den44bugoff';
 
@@ -62,6 +118,15 @@ export default function App() {
   // 番号が未入力の間は、他の画面を一切マウントしない(スクロールでの回避を防ぐ)
   if (!userId) {
     return <UserIdScreen onSubmit={(n) => setUserId(n)} />;
+  }
+
+  // リロード直後の研究データ復元中は、通常画面を出さずに待つ
+  if (restoring) {
+    return (
+      <div className="app">
+        <p style={{ textAlign: 'center', padding: '2rem' }}>研究データを よみこみ中…</p>
+      </div>
+    );
   }
 
   // カテゴリが選択されたらチャット画面に遷移
@@ -274,7 +339,7 @@ export default function App() {
           hypothesis={scheduleContext?.hypothesis}
           researchMethods={scheduleContext?.researchMethods}
           onBack={() => setScreen('research-method')}
-          onNext={(savedSchedule) => {
+          onNext={() => {
             // スケジュール保存後は STEP5(記録パート)へ
             setScreen('record');
           }}
@@ -294,7 +359,6 @@ export default function App() {
       {screen === 'consideration' && (
         <ConsiderationScreen
           userId={userId}
-          theme={selectedTheme}
           hypothesis={scheduleContext?.hypothesis}
           onBack={() => setScreen('record')}
           onNext={() => setScreen('summary')}

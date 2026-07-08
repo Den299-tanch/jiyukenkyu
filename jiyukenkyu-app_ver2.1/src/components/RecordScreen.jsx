@@ -105,7 +105,6 @@ export default function RecordScreen({ userId, theme, hypothesis, onBack, onNext
     return (
       <RecordInputScreen
         userId={userId}
-        theme={theme}
         hypothesis={hypothesis}
         initialType={initialType}
         onBack={() => setView("list")}

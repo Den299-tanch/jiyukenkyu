@@ -6,7 +6,6 @@ const HINT_LIMIT = 3;
 export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
   const [researchNote, setResearchNote] = useState("");
   const [hypothesis, setHypothesis] = useState("");
-  const [hint, setHint] = useState("");
   const [hintCount, setHintCount] = useState(0);
   const [hintHistory, setHintHistory] = useState([]); // これまで出したヒントを溜めておく配列
   const [savedList, setSavedList] = useState([]); // このテーマで追加した仮説の一覧
@@ -56,11 +55,10 @@ export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
         throw new Error(data.error?.message ?? JSON.stringify(data));
 
       const newHint = data.content[0].text;
-      setHint(newHint);
-      setHintHistory((prev) => [...prev, newHint]); // ← 追加: 履歴配列に今回のヒントを足す
+      setHintHistory((prev) => [...prev, newHint]); // 履歴配列に今回のヒントを足す(表示もここから)
       setHintCount((prev) => prev + 1);
     } catch (err) {
-      setHint("エラー: " + err.message);
+      console.error("Hypothesis hint error:", err);
     }
     setHintLoading(false);
   }
@@ -93,7 +91,6 @@ export default function HypothesisScreen({ userId, theme, onBack, onNext }) {
       // 次の1件を書けるように入力欄・ヒント関連をリセット
       setResearchNote("");
       setHypothesis("");
-      setHint("");
       setHintHistory([]);
       setHintCount(0);
     } catch (err) {

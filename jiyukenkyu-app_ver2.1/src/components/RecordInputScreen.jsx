@@ -18,7 +18,6 @@ function todayStr() {
 
 export default function RecordInputScreen({
   userId,
-  theme,
   hypothesis,
   initialType,
   onBack,
@@ -101,7 +100,6 @@ export default function RecordInputScreen({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: userId,
-            theme_id: theme?.id,
             hypothesis_id: hypothesis?.id,
             record_type: recordType,
             viewpoints,

@@ -161,7 +161,6 @@ export default function ScheduleScreen({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: userId,
-          theme_id: theme?.id,
           hypothesis_id: hypothesis?.id,
           end_date: endDate,
           tasks,

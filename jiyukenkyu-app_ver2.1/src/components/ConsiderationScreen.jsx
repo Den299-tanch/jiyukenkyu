@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { getGraphTypeById } from "../data/graphTypes";
 
-export default function ConsiderationScreen({ userId, theme, hypothesis, onBack, onNext }) {
+export default function ConsiderationScreen({ userId, hypothesis, onBack, onNext }) {
   const [view, setView] = useState("reflect"); // 'reflect' | 'think'
   const [records, setRecords] = useState([]);
   const [graphs, setGraphs] = useState([]);
@@ -121,7 +121,6 @@ export default function ConsiderationScreen({ userId, theme, hypothesis, onBack,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: userId,
-            theme_id: theme?.id,
             hypothesis_id: hypothesis?.id,
             q1,
             q2,

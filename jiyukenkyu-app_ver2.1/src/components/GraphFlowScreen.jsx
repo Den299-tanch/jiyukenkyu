@@ -145,7 +145,6 @@ export default function GraphFlowScreen({ userId, records, theme, hypothesis, on
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: userId,
-            theme_id: theme?.id,
             hypothesis_id: hypothesis?.id,
             // 材料一式(あとで再表示できるよう、使った数字ごと保存する)
             graph_data: {
