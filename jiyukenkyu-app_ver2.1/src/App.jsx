@@ -19,7 +19,7 @@ import ConsiderationScreen from './components/ConsiderationScreen';
 import SummaryScreen from './components/SummaryScreen';
 import GuideOverlay from './components/GuideOverlay';
 import RocketProgress from './components/RocketProgress';
-import { getFlowStepIndex, FLOW_STEPS } from './flowSteps';
+import { getFlowStepIndex, FLOW_STEPS, pickResearchLandingScreen } from './flowSteps';
 
 
 // 画面の種類
@@ -256,8 +256,12 @@ export default function App() {
       {screen === 'research-list' && (
         <ResearchListScreen
           onSelect={(selected) => {
-            setResearch(selected);
-            setScreen('schedule');
+            setResearch({
+              theme: selected.theme,
+              hypothesis: selected.hypothesis,
+              researchMethods: selected.researchMethods,
+            });
+            setScreen(pickResearchLandingScreen(selected));
           }}
           onStartNew={() => {
             setResearch(null);

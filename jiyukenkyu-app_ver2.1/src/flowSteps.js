@@ -13,3 +13,14 @@ export const FLOW_STEPS = [
 export function getFlowStepIndex(screen) {
   return FLOW_STEPS.findIndex((step) => step.screens.includes(screen));
 }
+
+// 研究一覧から選んだ研究がどこまで進んでいるかを、GET /api/research/:id が
+// 返す schedule/consideration/report の有無から判定し、続きの画面を決める。
+// (sessionStorageでの近道は「直前に見ていた画面」をそのまま覚えているので
+//  この判定は使わない。ここは"覚えていない"選び直しのときの決め方)
+export function pickResearchLandingScreen({ schedule, consideration, report }) {
+  if (report) return 'summary';
+  if (consideration) return 'summary';
+  if (schedule) return 'record';
+  return 'schedule';
+}

@@ -51,11 +51,9 @@ export default function ResearchListScreen({ onSelect, onStartNew }) {
     try {
       const data = await apiGet(`/api/research/${hypothesisId}`);
       if (!data.success) throw new Error(data.error);
-      onSelect({
-        theme: data.theme,
-        hypothesis: data.hypothesis,
-        researchMethods: data.researchMethods,
-      });
+      // schedule/consideration/report の有無から、呼び出し側(App.jsx)が
+      // どこまで進んでいるかを判定して続きの画面を決められるよう、まるごと渡す。
+      onSelect(data);
     } catch (err) {
       alert('研究の読み込みに失敗しました: ' + err.message);
       setOpeningId(null);
