@@ -19,7 +19,7 @@ import ConsiderationScreen from './components/ConsiderationScreen';
 import SummaryScreen from './components/SummaryScreen';
 import GuideOverlay from './components/GuideOverlay';
 import RocketProgress from './components/RocketProgress';
-import { getFlowStepIndex, FLOW_STEPS, pickResearchLandingScreen } from './flowSteps';
+import { getFlowStepIndex, FLOW_STEPS } from './flowSteps';
 
 
 // 画面の種類
@@ -261,7 +261,9 @@ export default function App() {
               hypothesis: selected.hypothesis,
               researchMethods: selected.researchMethods,
             });
-            setScreen(pickResearchLandingScreen(selected));
+            // 研究を選んだあとは常にTitleScreen(辞書/テーマ選びの入口)に着地させる。
+            // 進捗ごとの分岐は増改築のたびにメンテが要るため採用しない。
+            setScreen('title');
           }}
           onStartNew={() => {
             setResearch(null);
