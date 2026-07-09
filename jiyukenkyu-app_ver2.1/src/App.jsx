@@ -260,6 +260,19 @@ export default function App() {
     <div className="app">
       <RocketProgress currentIndex={getFlowStepIndex(screen)} steps={FLOW_STEPS} />
 
+      {/* タイトル画面以外なら、どのフロー画面からでもタイトルへ戻れるようにする
+          (各画面ごとの「← 戻る」は1つ前のステップに戻るだけなので、これとは別) */}
+      {screen !== 'title' && (
+        <button
+          className="home-fab"
+          onClick={() => setScreen('title')}
+          aria-label="タイトルへ戻る"
+          title="タイトルへ戻る"
+        >
+          🏠
+        </button>
+      )}
+
       {showGuide && <GuideOverlay onClose={() => setShowGuide(false)} />}
 
       {showContinueModal && (

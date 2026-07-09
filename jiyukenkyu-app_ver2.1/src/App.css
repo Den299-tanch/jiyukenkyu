@@ -370,6 +370,36 @@
   color: #fff;
 }
 
+/* ===== どの画面からでもタイトルへ戻れるボタン =====
+   rocket-railはPC想定で狭い画面では隠れるため、これは独立して常に出す */
+.home-fab {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 200;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #e4dfc9;
+  background: #fffdf8;
+  box-shadow: 0 4px 12px rgba(27, 51, 88, 0.15);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.home-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(27, 51, 88, 0.2);
+}
+
+.home-fab:active {
+  transform: translateY(1px);
+}
+
 /* ===== 進捗バー(ロケットのサイドレール) =====
    PC利用を前提とし、画面が狭いときは自動的に隠す */
 .rocket-rail {
