@@ -1,4 +1,4 @@
-export default function TitleScreen({ onDict, onChat, onGuide }) {
+export default function TitleScreen({ onDict, onChat, onGuide, onLogout }) {
   return (
     <div className="title-screen">
       <div className="title-content">
@@ -22,6 +22,10 @@ export default function TitleScreen({ onDict, onChat, onGuide }) {
 
         <button className="guide-link-btn" onClick={onGuide}>
           📘 つかいかたガイド
+        </button>
+
+        <button className="guide-link-btn" onClick={onLogout}>
+          🚪 番号をかえる(ログアウト)
         </button>
       </div>
     </div>

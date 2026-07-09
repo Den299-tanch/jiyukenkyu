@@ -225,6 +225,19 @@ export default function App() {
     setLoading(false);
   }
 
+  // 番号+PIN入力画面に戻す(ログアウト)。テスト等で番号を切り替えたいときのため。
+  // 前のユーザーの研究状態が次のログインに紛れ込まないよう、sessionStorageの
+  // 近道も一緒に消す。
+  function handleLogout() {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('hypothesisId');
+    sessionStorage.removeItem('screen');
+    setResearch(null);
+    setScreen('title');
+    setUserId(null);
+  }
+
   async function handleSaveTheme() {
     const theme = themeInput.trim();
     if (!theme) return;
@@ -277,6 +290,7 @@ export default function App() {
           onDict={() => setScreen('dict-category')}
           onChat={() => setScreen('chat-category')}
           onGuide={() => setShowGuide(true)}
+          onLogout={handleLogout}
         />
       )}
 
