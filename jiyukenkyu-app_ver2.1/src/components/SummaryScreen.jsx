@@ -4,6 +4,7 @@ import { useResearch } from "../contexts/ResearchContext";
 import ReportView from "./ReportView";
 import { getGraphTypeById } from "../data/graphTypes";
 import { buildReportData } from "../data/buildReport";
+import GraphView from "./GraphView";
 
 // STEP7: じゆうけんきゅうを まとめよう
 // ①じぶんのことば → ②プレビュー → ③かんせい
@@ -221,16 +222,6 @@ export default function SummaryScreen({ userId, onBack }) {
                     <span className="summary-hint-text">{r.why_note}</span>
                   </div>
                 ))}
-                {graphs.map((g) => {
-                  const gd = g.graph_data || {};
-                  const info = getGraphTypeById(gd.graphType);
-                  return (
-                    <div className="summary-hint" key={`g${g.id}`}>
-                      <span className="summary-hint-badge b-graph">📊 グラフ</span>
-                      <span className="summary-hint-text">{gd.title || info.label}</span>
-                    </div>
-                  );
-                })}
                 {reflection.q1 && (
                   <div className="summary-hint">
                     <span className="summary-hint-badge b-shirabe">💡 考察</span>
@@ -241,6 +232,32 @@ export default function SummaryScreen({ userId, onBack }) {
                   <div className="cons-empty-note">まだヒントになるきろくがないよ</div>
                 )}
               </div>
+            )}
+
+            {!loading && graphs.length > 0 && (
+              <>
+                <p className="cons-sublabel">📊 作ったグラフ</p>
+                <div className="cons-graph-scroll">
+                  {graphs.map((g) => {
+                    const gd = g.graph_data || {};
+                    const label = getGraphTypeById(gd.graphType).label;
+                    return (
+                      <div className="cons-graph-recap" key={g.id}>
+                        <div className="cons-graph-recap-title">{gd.title || label}</div>
+                        <div className="cons-graph-recap-chart">
+                          <GraphView
+                            type={gd.graphType}
+                            entries={gd.entries || []}
+                            xAxisLabel={gd.xAxisLabel ?? undefined}
+                            compact
+                          />
+                        </div>
+                        <div className="cons-graph-recap-sub">{label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
 
             <div className="cons-q-card" style={{ marginTop: 18 }}>
