@@ -64,6 +64,7 @@
 
 /* 完成画面 */
 .summary-done { text-align: center; padding: 16px 4px 6px; }
+.summary-download-btn { width: 100%; margin-bottom: 18px; }
 .summary-done-emoji { font-size: 52px; margin-bottom: 6px; }
 .summary-done-title {
   font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;

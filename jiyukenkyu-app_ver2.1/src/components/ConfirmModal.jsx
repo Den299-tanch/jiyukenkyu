@@ -1,10 +1,12 @@
-// 汎用の「本当に消す?」確認モーダル(削除など取り消せない操作の前に挟む)
+// 汎用の確認モーダル。既定は「本当に消す?」(削除など取り消せない操作の前に挟む)。
+// variant="primary" にすると、削除以外の確認(ダウンロードなど)向けの見た目になる。
 export default function ConfirmModal({
   emoji = "🗑️",
   message,
   confirmLabel = "けす",
   cancelLabel = "やめる",
   confirming = false,
+  variant = "danger", // 'danger' | 'primary'
   onConfirm,
   onCancel,
 }) {
@@ -14,11 +16,11 @@ export default function ConfirmModal({
         <div className="cf-modal-emoji">{emoji}</div>
         <p className="cf-modal-text">{message}</p>
         <button
-          className="cf-modal-danger-btn"
+          className={variant === "primary" ? "cf-modal-primary-btn" : "cf-modal-danger-btn"}
           onClick={onConfirm}
           disabled={confirming}
         >
-          {confirming ? "けしています…" : confirmLabel}
+          {confirming ? (variant === "primary" ? "少しまってね…" : "けしています…") : confirmLabel}
         </button>
         <button
           className="cf-modal-cancel-btn"

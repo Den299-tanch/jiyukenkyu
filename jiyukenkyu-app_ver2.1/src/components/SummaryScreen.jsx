@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { apiGet, apiPost } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
 import ReportView from "./ReportView";
+import ConfirmModal from "./ConfirmModal";
 import { getGraphTypeById } from "../data/graphTypes";
 import { buildReportData } from "../data/buildReport";
+import { downloadElementAsPdf } from "../services/pdf";
 import GraphView from "./GraphView";
 
 // STEP7: じゆうけんきゅうを まとめよう
@@ -26,6 +28,10 @@ export default function SummaryScreen({ userId, onBack }) {
   const [restoredNotice, setRestoredNotice] = useState(false);
 
   const [saving, setSaving] = useState(false);
+
+  const [showPdfConfirm, setShowPdfConfirm] = useState(false);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+  const pdfSheetRef = useRef(null);
 
   // 今の仮説"以外"のテーマ・仮説(タイトルだけ)。多くの子はテーマ・仮説を
   // いくつも考えるが、研究方法から先は1本にしぼって進める想定なので、
@@ -146,6 +152,19 @@ export default function SummaryScreen({ userId, onBack }) {
       alert("まとめの保存に失敗しました: " + err.message);
     }
     setSaving(false);
+  }
+
+  async function handleDownloadPdf() {
+    if (pdfDownloading) return;
+    setPdfDownloading(true);
+    try {
+      const name = `${userId ?? "no"}ばん_${(report.theme || "まとめ").slice(0, 20)}.pdf`;
+      await downloadElementAsPdf(pdfSheetRef.current, name);
+      setShowPdfConfirm(false);
+    } catch (err) {
+      alert("PDFの作成に失敗しました: " + err.message);
+    }
+    setPdfDownloading(false);
   }
 
   return (
@@ -335,6 +354,13 @@ export default function SummaryScreen({ userId, onBack }) {
         {/* ③ かんせい */}
         {view === "done" && (
           <div className="summary-done">
+            <button
+              className="next-btn summary-download-btn"
+              onClick={() => setShowPdfConfirm(true)}
+            >
+              ⬇️ PDFをダウンロードする
+            </button>
+
             <div className="summary-done-emoji">🎉</div>
             <div className="summary-done-title">まとめができたよ!</div>
 
@@ -353,12 +379,33 @@ export default function SummaryScreen({ userId, onBack }) {
               <ReportView report={report} />
             </div>
 
+            {/* PDF化専用の非表示コピー。forPdf で崩れにくい静的な体裁にして書き出す。
+                position:fixed で画面のスクロール領域を広げずに画面外へ逃がす */}
+            <div style={{ position: "fixed", left: "-9999px", top: 0 }}>
+              <div ref={pdfSheetRef}>
+                <ReportView report={report} forPdf />
+              </div>
+            </div>
+
             <button
               className="cons-secondary-btn"
               onClick={() => setView("write")}
             >
               ✏️ もう一度なおす
             </button>
+
+            {showPdfConfirm && (
+              <ConfirmModal
+                emoji="📄"
+                variant="primary"
+                message={"このまとめをPDFにして\nダウンロードする?"}
+                confirmLabel="⬇️ ダウンロードする"
+                cancelLabel="やめる"
+                confirming={pdfDownloading}
+                onConfirm={handleDownloadPdf}
+                onCancel={() => setShowPdfConfirm(false)}
+              />
+            )}
           </div>
         )}
       </div>

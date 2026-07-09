@@ -2138,6 +2138,26 @@
   cursor: not-allowed;
 }
 
+.cf-modal-primary-btn {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #6a5af9, #5044d6);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #4636a8;
+}
+
+.cf-modal-primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .cf-modal-cancel-btn {
   width: 100%;
   padding: 12px;
