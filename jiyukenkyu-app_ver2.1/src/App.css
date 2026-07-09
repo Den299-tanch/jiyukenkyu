@@ -82,6 +82,20 @@
   transform: translateY(2px);
 }
 
+.continue-btn {
+  background: linear-gradient(135deg, #6ee7b7, #10b981);
+  color: white;
+  box-shadow: 0 6px 0 #087a58;
+}
+
+.continue-btn:hover {
+  box-shadow: 0 9px 0 #087a58;
+}
+
+.continue-btn:active {
+  box-shadow: 0 3px 0 #087a58;
+}
+
 .dict-btn {
   background: linear-gradient(135deg, #4facfe, #0072ff);
   color: white;
@@ -232,6 +246,85 @@
   justify-content: center;
   gap: 6px;
   margin-bottom: 20px;
+}
+
+/* ===== 「つづきから」モーダル(guide-backdropを流用) ===== */
+.continue-card {
+  background: #fffdf8;
+  border-radius: 24px;
+  padding: 32px 24px 24px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 32px rgba(27, 51, 88, 0.25);
+  position: relative;
+  text-align: left;
+  animation: guide-pop 0.18s ease-out;
+}
+
+.continue-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-size: 18px;
+  color: #1b3358;
+  margin: 0 0 16px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.continue-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.continue-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 2px solid #e4dfc9;
+  border-radius: 12px;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 0 #e4dfc9;
+}
+
+.continue-item:hover {
+  background: #fdf8ec;
+  box-shadow: 0 4px 0 #e8ceab;
+}
+
+.continue-item-cat {
+  display: inline-block;
+  align-self: flex-start;
+  color: #7a5c00;
+  background: #fdf3df;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.continue-item-theme {
+  color: #1b3358;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.continue-item-hypo {
+  color: #5b6b85;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.continue-item-loading {
+  color: #6a5af9;
+  font-size: 12px;
 }
 
 .guide-dot {
@@ -910,81 +1003,6 @@
   color: #8a92a6;
   margin-top: 20px;
   line-height: 1.6;
-}
-
-/* ===== 研究一覧(ログイン後の入り口) ===== */
-.research-list-screen {
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(106, 90, 249, 0.06), transparent 40%),
-    radial-gradient(circle at 85% 90%, rgba(72, 187, 120, 0.08), transparent 40%),
-    #fffdf8;
-  padding-bottom: 40px;
-}
-
-.research-list-content {
-  max-width: 800px;
-  margin: 24px auto;
-  padding: 0 24px;
-}
-
-.research-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.research-list-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px 20px;
-  background: #ffffff;
-  border: 2px solid #e4dfc9;
-  border-radius: 12px;
-  transition: background 0.2s, box-shadow 0.2s;
-  box-shadow: 0 3px 0 #e4dfc9;
-}
-
-.research-list-item:hover {
-  background: #fdf8ec;
-  box-shadow: 0 4px 0 #e8ceab;
-}
-
-.research-list-cat {
-  display: inline-block;
-  align-self: flex-start;
-  color: #7a5c00;
-  background: #fdf3df;
-  font-size: 11px;
-  font-weight: bold;
-  padding: 2px 10px;
-  border-radius: 10px;
-}
-
-.research-list-theme {
-  color: #1b3358;
-  font-size: 15px;
-  font-weight: bold;
-}
-
-.research-list-hypo {
-  color: #5b6b85;
-  font-size: 15px;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.research-list-loading {
-  color: #6a5af9;
-  font-size: 13px;
-}
-
-.research-list-new-btn {
-  width: 100%;
 }
 
 /* ===== 保存済みテーマ一覧 ===== */

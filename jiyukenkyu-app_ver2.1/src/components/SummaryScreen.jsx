@@ -69,7 +69,7 @@ export default function SummaryScreen({ userId, onBack }) {
   }, [userId, hypothesis?.id]);
 
   // 今の仮説以外のテーマ・仮説(タイトルだけ)を読み込む。テーマ選択・仮説パートの
-  // ために用意した既存エンドポイントをそのまま使う(ResearchListScreenと同じ
+  // ために用意した既存エンドポイントをそのまま使う(ContinueResearchModalと同じ
   // 組み立て方)。admin側のPDF化は report_data のスナップショットしか見ないため、
   // この一覧は"表示"ではなくreport_dataに焼き込む材料としてここで持つ。
   useEffect(() => {

@@ -1,4 +1,4 @@
-export default function TitleScreen({ onDict, onChat, onGuide, onLogout }) {
+export default function TitleScreen({ onDict, onChat, onContinue, onGuide, onLogout }) {
   return (
     <div className="title-screen">
       <div className="title-content">
@@ -7,6 +7,12 @@ export default function TitleScreen({ onDict, onChat, onGuide, onLogout }) {
         <p className="title-sub">何をしたいですか？</p>
 
         <div className="title-buttons">
+          <button className="title-btn continue-btn" onClick={onContinue}>
+            <span className="btn-icon">🔄</span>
+            <span className="btn-label">つづきから</span>
+            <span className="btn-desc">前にやった研究をえらぶ</span>
+          </button>
+
           <button className="title-btn dict-btn" onClick={onDict}>
             <span className="btn-icon">📖</span>
             <span className="btn-label">既習単元辞書</span>

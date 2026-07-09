@@ -13,3 +13,12 @@ export const FLOW_STEPS = [
 export function getFlowStepIndex(screen) {
   return FLOW_STEPS.findIndex((step) => step.screens.includes(screen));
 }
+
+// 「🔄 つづきから」で選んだ研究がどこまで進んでいるかを、GET /api/research/:id が
+// 返す schedule/consideration/report の有無から判定し、続きの画面を決める。
+export function pickResearchLandingScreen({ schedule, consideration, report }) {
+  if (report) return 'summary';
+  if (consideration) return 'summary';
+  if (schedule) return 'record';
+  return 'schedule';
+}

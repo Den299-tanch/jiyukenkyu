@@ -9,7 +9,7 @@ import { apiGet, apiPost, setUnauthorizedHandler } from './services/api';
 import { ResearchProvider } from './contexts/ResearchContext';
 import SaveThemeArea from './components/SaveThemeArea';
 import UserIdScreen from './components/UserIdScreen';
-import ResearchListScreen from './components/ResearchListScreen';
+import ContinueResearchModal from './components/ContinueResearchModal';
 import ThemeListScreen from './components/ThemeListScreen';
 import HypothesisScreen from './components/HypothesisScreen';
 import ResearchMethodScreen from './components/ResearchMethodScreen';
@@ -19,7 +19,7 @@ import ConsiderationScreen from './components/ConsiderationScreen';
 import SummaryScreen from './components/SummaryScreen';
 import GuideOverlay from './components/GuideOverlay';
 import RocketProgress from './components/RocketProgress';
-import { getFlowStepIndex, FLOW_STEPS } from './flowSteps';
+import { getFlowStepIndex, FLOW_STEPS, pickResearchLandingScreen } from './flowSteps';
 
 
 // 画面の種類
@@ -35,6 +35,7 @@ const RESTORABLE_SCREENS = ['schedule', 'record', 'consideration', 'summary'];
 export default function App() {
   const [screen, setScreen] = useState('title');
   const [showGuide, setShowGuide] = useState(false);
+  const [showContinueModal, setShowContinueModal] = useState(false);
 
   // userId はアプリ内では常に number(または未入力なら null)として統一して扱う。
   // ログイントークンと寿命を合わせるため localStorage に保存する(タブを閉じても
@@ -82,14 +83,10 @@ export default function App() {
 
   // リロード時: sessionStorage に hypothesis_id が残っていれば、それは
   // 「さっき見ていた画面に一発で戻る」ためのおまけの近道として使う(無くても、
-  // ログイン後は研究一覧画面から選び直せば同じ場所に戻れる=必須の仕組みではない)。
+  // TitleScreenの「🔄 つづきから」から選び直せば同じ場所に戻れる=必須の仕組みではない)。
   useEffect(() => {
     const hid = parseInt(sessionStorage.getItem('hypothesisId'), 10);
-    if (!Number.isFinite(hid)) {
-      // 近道が無ければ、ログイン済みのときは研究一覧をデフォルトの着地点にする
-      if (userId) setScreen('research-list');
-      return;
-    }
+    if (!Number.isFinite(hid)) return; // 近道が無ければ通常どおりTitleScreenへ
 
     let cancelled = false;
     (async () => {
@@ -107,17 +104,16 @@ export default function App() {
         const savedScreen = sessionStorage.getItem('screen');
         setScreen(RESTORABLE_SCREENS.includes(savedScreen) ? savedScreen : 'schedule');
       } catch {
-        // 復元できなければ近道の情報を捨て、研究一覧から選び直すフローに戻す
+        // 復元できなければ近道の情報を捨て、通常どおりTitleScreenへ
+        // (「🔄 つづきから」からいつでも選び直せる)
         sessionStorage.removeItem('hypothesisId');
         sessionStorage.removeItem('screen');
-        setScreen('research-list');
       } finally {
         if (!cancelled) setRestoring(false);
       }
     })();
 
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 研究(仮説)が確定している間は、現在の hypothesis_id と画面を sessionStorage に反映する。
@@ -142,7 +138,7 @@ export default function App() {
       <UserIdScreen
         onSubmit={(n) => {
           setUserId(n);
-          setScreen('research-list');
+          setScreen('title');
         }}
       />
     );
@@ -266,21 +262,19 @@ export default function App() {
 
       {showGuide && <GuideOverlay onClose={() => setShowGuide(false)} />}
 
-      {screen === 'research-list' && (
-        <ResearchListScreen
-          onSelect={(selected) => {
+      {showContinueModal && (
+        <ContinueResearchModal
+          onClose={() => setShowContinueModal(false)}
+          onSelect={(data) => {
             setResearch({
-              theme: selected.theme,
-              hypothesis: selected.hypothesis,
-              researchMethods: selected.researchMethods,
+              theme: data.theme,
+              hypothesis: data.hypothesis,
+              researchMethods: data.researchMethods,
             });
-            // 研究を選んだあとは常にTitleScreen(辞書/テーマ選びの入口)に着地させる。
-            // 進捗ごとの分岐は増改築のたびにメンテが要るため採用しない。
-            setScreen('title');
-          }}
-          onStartNew={() => {
-            setResearch(null);
-            setScreen('title');
+            // どこまで進んでいるかをDBの中身(schedule/consideration/report)から
+            // 判定し、続きの画面に直接飛ぶ(選んでも何も起きない、を防ぐ)。
+            setScreen(pickResearchLandingScreen(data));
+            setShowContinueModal(false);
           }}
         />
       )}
@@ -289,6 +283,7 @@ export default function App() {
         <TitleScreen
           onDict={() => setScreen('dict-category')}
           onChat={() => setScreen('chat-category')}
+          onContinue={() => setShowContinueModal(true)}
           onGuide={() => setShowGuide(true)}
           onLogout={handleLogout}
         />
