@@ -154,7 +154,10 @@
 }
 
 /* セクション */
-.report-section { margin-bottom: 18px; page-break-inside: avoid; }
+/* セクション自体は割ってはいけない単位にしない(中に何枚もカードが入りうる
+   大きな塊のため、丸ごと不可分にすると次ページへ丸ごと送られて手前が
+   大きく空白になる)。割ってはいけない単位は、下の各カード要素側で指定する。 */
+.report-section { margin-bottom: 18px; }
 .report-h {
   display: flex;
   align-items: center;
@@ -182,6 +185,8 @@
   border-radius: 12px;
   padding: 14px 14px 12px;
   margin-top: 6px;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 .report-own-tag {
   position: absolute;
@@ -193,6 +198,38 @@
   font-weight: 700;
   padding: 2px 10px;
   border-radius: 8px;
+}
+
+/* ほかにも考えたテーマ・仮説(タイトルだけ) */
+.report-other-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.report-other-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  background: #f1edfc;
+  border: 1.5px solid #ded3f7;
+  border-radius: 9px;
+  padding: 8px 10px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.report-other-theme {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5a44b0;
+}
+.report-other-hypo {
+  font-size: 12px;
+  color: #4b3a91;
+  line-height: 1.5;
 }
 
 /* けんきゅうのながれ */
@@ -211,6 +248,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 .report-schedule-chip.is-done { opacity: 0.6; }
 .report-schedule-date { font-size: 10.5px; font-weight: 700; color: #5a44b0; }
@@ -223,6 +262,8 @@
   border: 2px solid #eee7d2;
   border-radius: 12px;
   padding: 11px 12px;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 .report-record-head {
   display: flex;
@@ -264,6 +305,8 @@
   border: 2px solid #eee7d2;
   border-radius: 12px;
   padding: 12px 12px 8px;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 .report-graph-title {
   font-size: 12.5px;
@@ -281,7 +324,7 @@
 }
 
 /* ふりかえり */
-.report-reflect-block { margin-bottom: 10px; }
+.report-reflect-block { margin-bottom: 10px; break-inside: avoid; page-break-inside: avoid; }
 .report-reflect-q {
   font-size: 11.5px;
   font-weight: 700;

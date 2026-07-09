@@ -26,6 +26,11 @@ export default function SummaryScreen({ userId, onBack }) {
 
   const [saving, setSaving] = useState(false);
 
+  // 今の仮説"以外"のテーマ・仮説(タイトルだけ)。多くの子はテーマ・仮説を
+  // いくつも考えるが、研究方法から先は1本にしぼって進める想定なので、
+  // 経緯として「ほかにも考えたこと」をまとめのPDFにタイトルだけ載せる。
+  const [otherResearch, setOtherResearch] = useState([]);
+
   // この仮説の記録・グラフ・スケジュール・考察・(あれば)保存済みまとめを読み込む
   useEffect(() => {
     if (!userId || !hypothesis?.id) return;
@@ -63,6 +68,41 @@ export default function SummaryScreen({ userId, onBack }) {
     };
   }, [userId, hypothesis?.id]);
 
+  // 今の仮説以外のテーマ・仮説(タイトルだけ)を読み込む。テーマ選択・仮説パートの
+  // ために用意した既存エンドポイントをそのまま使う(ResearchListScreenと同じ
+  // 組み立て方)。admin側のPDF化は report_data のスナップショットしか見ないため、
+  // この一覧は"表示"ではなくreport_dataに焼き込む材料としてここで持つ。
+  useEffect(() => {
+    if (!userId) return;
+    let ignore = false;
+    async function fetchOtherResearch() {
+      try {
+        const [themesRes, hypRes] = await Promise.all([
+          apiGet('/api/themes'),
+          apiGet('/api/hypotheses'),
+        ]);
+        if (ignore) return;
+        if (themesRes.success && hypRes.success) {
+          const themeById = new Map(themesRes.themes.map((t) => [t.id, t]));
+          const list = hypRes.hypotheses
+            .filter((h) => h.id !== hypothesis?.id)
+            .map((h) => ({
+              theme: themeById.get(h.theme_id)?.theme ?? "",
+              hypothesis: h.hypothesis,
+            }))
+            .reverse(); // 新しい順
+          setOtherResearch(list);
+        }
+      } catch {
+        // 一覧が取れなくても、今の研究のまとめ作成自体はできるので黙って無視
+      }
+    }
+    fetchOtherResearch();
+    return () => {
+      ignore = true;
+    };
+  }, [userId, hypothesis?.id]);
+
   // プレビュー/保存で使う report JSON。書いた言葉やデータが変わるたび作り直す。
   const report = useMemo(
     () =>
@@ -77,8 +117,9 @@ export default function SummaryScreen({ userId, onBack }) {
         reflection,
         summaryDid,
         summaryTell,
+        otherResearch,
       }),
-    [userId, theme, hypothesis, schedule, records, graphs, reflection, summaryDid, summaryTell],
+    [userId, theme, hypothesis, schedule, records, graphs, reflection, summaryDid, summaryTell, otherResearch],
   );
 
   // ヒント: これまで書いた「なぜ?」を日づけ順に

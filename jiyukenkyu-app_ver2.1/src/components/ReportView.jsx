@@ -16,6 +16,7 @@ export default function ReportView({ report, forPdf = false }) {
     userNumber,
     theme,
     hypothesis,
+    otherResearch = [],
     period,
     schedule = [],
     summaryDid,
@@ -38,6 +39,22 @@ export default function ReportView({ report, forPdf = false }) {
           {periodText && <span>🗓️ {periodText}</span>}
         </div>
       </header>
+
+      {/* ほかにも考えたテーマ・仮説(タイトルだけ。深く進めたのは下の1本) */}
+      {otherResearch.length > 0 && (
+        <Section icon="📚" title="ほかにも考えたテーマ・予想" tone="purple">
+          <ul className="report-other-list">
+            {otherResearch.map((o, i) => (
+              <li className="report-other-item" key={i}>
+                {o.theme && <span className="report-other-theme">{o.theme}</span>}
+                {o.hypothesis && (
+                  <span className="report-other-hypo">{o.hypothesis}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       {/* さいしょの予想 */}
       {hypothesis && (

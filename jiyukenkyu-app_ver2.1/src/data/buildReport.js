@@ -17,17 +17,24 @@ export function buildReportData({
   reflection = {},
   summaryDid = "",
   summaryTell = "",
+  otherResearch = [], // 深く進めなかった、ほかのテーマ・仮説(タイトルだけ)
 }) {
   const sortedRecords = records
     .slice()
     .sort((a, b) => new Date(a.observed_at) - new Date(b.observed_at));
 
   return {
-    version: 1,
+    version: 2, // v2: otherResearch(ほかに考えたテーマ・仮説のタイトル一覧)を追加
     userNumber: userNumber ?? null,
     theme: theme ?? "",
     category: category ?? null,
     hypothesis: hypothesis ?? "",
+    // 深く進めた研究(このレポート本体)とは別に、経緯として
+    // 「ほかにも考えたけど、深くは進めなかったテーマ・仮説」をタイトルだけ残す。
+    otherResearch: otherResearch.map((o) => ({
+      theme: o.theme ?? "",
+      hypothesis: o.hypothesis ?? "",
+    })),
     period: {
       start: sortedRecords[0]?.observed_at ?? null,
       end: schedule?.endDate ?? null,
