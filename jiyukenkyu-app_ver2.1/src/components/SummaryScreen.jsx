@@ -244,8 +244,11 @@ export default function SummaryScreen({ userId, onBack }) {
             )}
 
             <div className="cons-q-card" style={{ marginTop: 18 }}>
-              <div className="cons-q-label">
-                Q1. 今回の自由研究では、どんなことをしらべた・やってみた?
+              <div className="cons-q-head">
+                <span className="cons-q-num cons-q-num-1">Q1</span>
+                <span className="cons-q-label">
+                  今回の自由研究では、どんなことをしらべた・やってみた?
+                </span>
               </div>
               <textarea
                 className="rec-textarea"
@@ -257,8 +260,11 @@ export default function SummaryScreen({ userId, onBack }) {
             </div>
 
             <div className="cons-q-card">
-              <div className="cons-q-label">
-                Q2. やってみて、いちばん つたえたいことは?
+              <div className="cons-q-head">
+                <span className="cons-q-num cons-q-num-2">Q2</span>
+                <span className="cons-q-label">
+                  やってみて、いちばん つたえたいことは?
+                </span>
               </div>
               <textarea
                 className="rec-textarea"

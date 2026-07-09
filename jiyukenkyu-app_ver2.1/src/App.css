@@ -2963,23 +2963,55 @@
   margin: 18px 0 8px;
 }
 
-/* グラフの簡易再掲 */
+/* グラフの簡易再掲(横スクロール) */
+.cons-graph-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  scroll-snap-type: x proximity;
+}
 .cons-graph-recap {
+  flex: 0 0 200px;
+  scroll-snap-align: start;
   background: #fff;
   border: 2px solid #ffc93c;
   border-radius: 12px;
   padding: 10px 13px;
-  margin-bottom: 8px;
 }
 .cons-graph-recap-title {
   font-size: 13.5px;
   font-weight: 700;
   color: #1b3358;
   margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .cons-graph-recap-sub {
   font-size: 11.5px;
   color: #5b6b85;
+}
+.cons-graph-recap-chart {
+  margin: 4px 0;
+  pointer-events: none;
+}
+
+/* 「なぜ?」タイムライン */
+.cons-why-timeline {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 8px;
+}
+.cons-why-timeline::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: #e4dfc9;
 }
 
 /* 記録なしのときの一言 */
@@ -2994,8 +3026,9 @@
   margin-bottom: 8px;
 }
 
-/* 「なぜ?」ミニリスト */
+/* 「なぜ?」ミニリスト(タイムラインの1件) */
 .cons-why-item {
+  position: relative;
   display: flex;
   gap: 9px;
   align-items: flex-start;
@@ -3003,12 +3036,23 @@
   border: 2px solid #e4dfc9;
   border-radius: 12px;
   padding: 9px 11px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .cons-why-item .rec-type-badge {
   flex-shrink: 0;
   white-space: nowrap;
 }
+.cons-why-dot {
+  position: absolute;
+  left: -16px;
+  top: 14px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid #fffdf8;
+}
+.cons-why-dot.rt-kiroku { background: #2ec4b6; }
+.cons-why-dot.rt-shirabe { background: #8a6fe0; }
 .cons-why-text {
   font-size: 13px;
   line-height: 1.6;
@@ -3032,13 +3076,33 @@
   padding: 14px;
   margin-bottom: 14px;
 }
+.cons-q-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.cons-q-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cons-q-num-1 { background: #8a6fe0; }
+.cons-q-num-2 { background: #2ec4b6; }
 .cons-q-label {
   font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 1.6;
-  margin-bottom: 9px;
   color: #1b3358;
+  padding-top: 2px;
 }
 
 /* AIが整えた案の比較表示 */

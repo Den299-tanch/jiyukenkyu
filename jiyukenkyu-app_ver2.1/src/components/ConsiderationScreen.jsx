@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getGraphTypeById } from "../data/graphTypes";
 import { apiGet, apiPost } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
+import GraphView from "./GraphView";
 
 export default function ConsiderationScreen({ userId, onBack, onNext }) {
   const { research } = useResearch();
@@ -143,16 +144,26 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
             {graphs.length > 0 && (
               <>
                 <p className="cons-sublabel">📊 作ったグラフ</p>
-                {graphs.map((g) => {
-                  const gd = g.graph_data || {};
-                  const label = getGraphTypeById(gd.graphType).label;
-                  return (
-                    <div className="cons-graph-recap" key={g.id}>
-                      <div className="cons-graph-recap-title">{gd.title || label}</div>
-                      <div className="cons-graph-recap-sub">{label}</div>
-                    </div>
-                  );
-                })}
+                <div className="cons-graph-scroll">
+                  {graphs.map((g) => {
+                    const gd = g.graph_data || {};
+                    const label = getGraphTypeById(gd.graphType).label;
+                    return (
+                      <div className="cons-graph-recap" key={g.id}>
+                        <div className="cons-graph-recap-title">{gd.title || label}</div>
+                        <div className="cons-graph-recap-chart">
+                          <GraphView
+                            type={gd.graphType}
+                            entries={gd.entries || []}
+                            xAxisLabel={gd.xAxisLabel ?? undefined}
+                            compact
+                          />
+                        </div>
+                        <div className="cons-graph-recap-sub">{label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
               </>
             )}
 
@@ -163,19 +174,22 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
             ) : whyList.length === 0 ? (
               <div className="cons-empty-note">まだきろく・しらべたことがないよ</div>
             ) : (
-              whyList.map((r) => (
-                <div className="cons-why-item" key={r.id}>
-                  <span
-                    className={`rec-type-badge ${r.record_type === "kiroku" ? "rt-kiroku" : "rt-shirabe"}`}
-                  >
-                    {r.record_type === "kiroku" ? "🧪" : "🔍"} {formatDate(r.observed_at)}
-                  </span>
-                  <span className="cons-why-text">
-                    <b>{r.record_type === "kiroku" ? "なんでだと思う?" : "予想と同じ?ちがった?"}</b>{" "}
-                    {r.why_note}
-                  </span>
-                </div>
-              ))
+              <div className="cons-why-timeline">
+                {whyList.map((r) => (
+                  <div className="cons-why-item" key={r.id}>
+                    <span className={`cons-why-dot ${r.record_type === "kiroku" ? "rt-kiroku" : "rt-shirabe"}`} />
+                    <span
+                      className={`rec-type-badge ${r.record_type === "kiroku" ? "rt-kiroku" : "rt-shirabe"}`}
+                    >
+                      {r.record_type === "kiroku" ? "🧪" : "🔍"} {formatDate(r.observed_at)}
+                    </span>
+                    <span className="cons-why-text">
+                      <b>{r.record_type === "kiroku" ? "なんでだと思う?" : "予想と同じ?ちがった?"}</b>{" "}
+                      {r.why_note}
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
 
             <button className="next-btn cons-to-think-btn" onClick={() => setView("think")}>
@@ -200,7 +214,10 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
             )}
 
             <div className="cons-q-card">
-              <div className="cons-q-label">Q1. ぜんぶ見返して、一番の発見は?</div>
+              <div className="cons-q-head">
+                <span className="cons-q-num cons-q-num-1">Q1</span>
+                <span className="cons-q-label">ぜんぶ見返して、一番の発見は?</span>
+              </div>
               <textarea
                 className="rec-textarea"
                 rows={3}
@@ -219,7 +236,10 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
             </div>
 
             <div className="cons-q-card">
-              <div className="cons-q-label">Q2. さいしょの予想と比べてどうだった?</div>
+              <div className="cons-q-head">
+                <span className="cons-q-num cons-q-num-2">Q2</span>
+                <span className="cons-q-label">さいしょの予想と比べてどうだった?</span>
+              </div>
               <textarea
                 className="rec-textarea"
                 rows={3}
