@@ -3,6 +3,7 @@ import { apiDelete } from "../services/api";
 import GraphView from "./GraphView";
 import ConfirmModal from "./ConfirmModal";
 import { getGraphTypeById } from "../data/graphTypes";
+import Ruby from "./Ruby";
 
 // 保存したグラフだけを見られる一覧画面(記録とは別)。
 // PC・タブレット横持ちでの一覧性を優先したグリッドギャラリー。
@@ -30,9 +31,9 @@ export default function GraphListScreen({ graphs, onBack, onDeleted }) {
     <div className="record-screen">
       <div className="screen-header">
         <button className="back-btn" onClick={onBack}>
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
-        <h2>📊 グラフ一覧</h2>
+        <h2>📊 <Ruby>{"グラフ一覧[いちらん]"}</Ruby></h2>
       </div>
 
       <div className="record-content">

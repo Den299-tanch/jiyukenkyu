@@ -1,6 +1,7 @@
 import GraphView from "./GraphView";
 import { getGraphTypeById } from "../data/graphTypes";
 import { getViewpointLabel } from "../data/recordViewpoints";
+import Ruby from "./Ruby";
 
 // まとめレポートの「見た目」を1つにまとめた汎用テンプレート。
 // 子どもの承認プレビューでも、先生のPDF化画面でも、この同じ部品を使う。
@@ -33,7 +34,7 @@ export default function ReportView({ report, forPdf = false }) {
       {/* 表紙ヘッダー */}
       <header className="report-cover">
         <div className="report-cover-tag">じゆうけんきゅう</div>
-        <h1 className="report-cover-title">{theme || "わたしの自由研究"}</h1>
+        <h1 className="report-cover-title">{theme || <Ruby>{"わたしの自由研究[じゆうけんきゅう]"}</Ruby>}</h1>
         <div className="report-cover-meta">
           {userNumber != null && <span>🙋 {userNumber}ばん</span>}
           {periodText && <span>🗓️ {periodText}</span>}
@@ -42,7 +43,7 @@ export default function ReportView({ report, forPdf = false }) {
 
       {/* ほかにも考えたテーマ・仮説(タイトルだけ。深く進めたのは下の1本) */}
       {otherResearch.length > 0 && (
-        <Section icon="📚" title="ほかにも考えたテーマ・予想" tone="purple">
+        <Section icon="📚" title="ほかにも考[かんが]えたテーマ・予想[よそう]" tone="purple">
           <ul className="report-other-list">
             {otherResearch.map((o, i) => (
               <li className="report-other-item" key={i}>
@@ -58,7 +59,7 @@ export default function ReportView({ report, forPdf = false }) {
 
       {/* さいしょの予想 */}
       {hypothesis && (
-        <Section icon="💭" title="さいしょの予想" tone="purple">
+        <Section icon="💭" title="さいしょの予想[よそう]" tone="purple">
           <p className="report-p">{hypothesis}</p>
         </Section>
       )}
@@ -138,20 +139,20 @@ export default function ReportView({ report, forPdf = false }) {
         <Section icon="💡" title="ふりかえって かんがえたこと" tone="purple">
           {reflection.q1 && (
             <div className="report-reflect-block">
-              <div className="report-reflect-q">いちばんの発見</div>
+              <div className="report-reflect-q"><Ruby>{"いちばんの発見[はっけん]"}</Ruby></div>
               <p className="report-p">{reflection.q1}</p>
             </div>
           )}
           {reflection.q2 && (
             <div className="report-reflect-block">
-              <div className="report-reflect-q">予想とくらべて</div>
+              <div className="report-reflect-q"><Ruby>{"予想[よそう]とくらべて"}</Ruby></div>
               <p className="report-p">{reflection.q2}</p>
             </div>
           )}
         </Section>
       )}
 
-      <footer className="report-foot">🌱 じぶんの力でまとめた、りっぱな自由研究！</footer>
+      <footer className="report-foot">🌱 <Ruby>{"じぶんの力[ちから]でまとめた、りっぱな自由研究[じゆうけんきゅう]！"}</Ruby></footer>
     </div>
   );
 }
@@ -162,7 +163,7 @@ function Section({ icon, title, tone, children }) {
     <section className={`report-section tone-${tone}`}>
       <h2 className="report-h">
         <span className="report-h-icon">{icon}</span>
-        {title}
+        <Ruby>{title}</Ruby>
       </h2>
       {children}
     </section>

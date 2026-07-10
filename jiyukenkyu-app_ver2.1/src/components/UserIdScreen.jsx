@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiPost } from '../services/api';
+import Ruby from './Ruby';
 
 export default function UserIdScreen({ onSubmit }) {
   const [num, setNum] = useState('');
@@ -35,7 +36,7 @@ export default function UserIdScreen({ onSubmit }) {
   return (
     <div className="userid-screen">
       <div className="userid-content">
-        <h2 className="userid-title">📱 あなたの番号は？</h2>
+        <h2 className="userid-title">📱 <Ruby>{"あなたの番号[ばんごう]は？"}</Ruby></h2>
         <p className="userid-sub">
           自分の番号と、あんしょう番号(4けた)を入れてね
         </p>
@@ -64,7 +65,7 @@ export default function UserIdScreen({ onSubmit }) {
           onClick={handleSubmit}
           disabled={!num || pin.length !== 4 || loading}
         >
-          {loading ? '確認中…' : 'はじめる！'}
+          {loading ? <Ruby>{'確認中[かくにんちゅう]…'}</Ruby> : 'はじめる！'}
         </button>
         <p className="userid-note">
           はじめての番号なら、そのままとうろくされるよ。

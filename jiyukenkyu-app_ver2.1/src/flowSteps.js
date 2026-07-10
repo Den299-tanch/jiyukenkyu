@@ -3,7 +3,7 @@
 export const FLOW_STEPS = [
   { key: 'theme', emoji: '💡', label: 'テーマ', screens: ['chat-category', 'chat', 'theme-list'] },
   { key: 'hypothesis', emoji: '🔮', label: 'よそう', screens: ['hypothesis'] },
-  { key: 'method', emoji: '🔍', label: 'しらべ方', screens: ['research-method'] },
+  { key: 'method', emoji: '🔍', label: 'しらべ方[かた]', screens: ['research-method'] },
   { key: 'schedule', emoji: '🗓️', label: 'よてい', screens: ['schedule'] },
   { key: 'record', emoji: '📝', label: 'きろく', screens: ['record'] },
   { key: 'consideration', emoji: '🤔', label: 'こうさつ', screens: ['consideration'] },

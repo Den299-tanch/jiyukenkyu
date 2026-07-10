@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiGet } from '../services/api';
 import { getCategoryById } from '../data/categories';
+import Ruby from './Ruby';
 
 // TitleScreenの「🔄 つづきから」から開くモーダル。
 // テーマ選択・仮説パートのために用意した既存エンドポイント(/api/themes・
@@ -70,7 +71,7 @@ export default function ContinueResearchModal({ onClose, onSelect }) {
         {error && <p className="theme-list-msg">エラー: {error}</p>}
 
         {!loading && !error && items.length === 0 && (
-          <p className="theme-list-msg">まだ研究がないよ。新しくはじめよう！</p>
+          <p className="theme-list-msg"><Ruby>{"まだ研究[けんきゅう]がないよ。新[あたら]しくはじめよう！"}</Ruby></p>
         )}
 
         {!loading && !error && items.length > 0 && (

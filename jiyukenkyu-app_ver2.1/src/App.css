@@ -7,6 +7,18 @@
   min-height: 100vh;
 }
 
+/* ===== ルビ（ふりがな） ===== */
+ruby {
+  ruby-position: over;
+  ruby-align: center;
+}
+rt {
+  font-size: 0.55em;
+  font-weight: 400;
+  color: #5b6b85;
+  user-select: none;
+}
+
 
 /* ===== タイトル画面 ===== */
 .title-screen {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getCategoryById } from '../data/categories';
 import { apiGet } from '../services/api';
 import { useResearch } from '../contexts/ResearchContext';
+import Ruby from './Ruby';
 
 export default function ThemeListScreen({ userId, onBack, onNext }) {
   const { research } = useResearch();
@@ -34,8 +35,8 @@ export default function ThemeListScreen({ userId, onBack, onNext }) {
   return (
     <div className="theme-list-screen">
       <div className="screen-header">
-        <button className="back-btn" onClick={onBack}>← 戻る</button>
-        <h2>📋 きみのテーマ一覧（{userId}番）</h2>
+        <button className="back-btn" onClick={onBack}>← <Ruby>{"戻[もど]る"}</Ruby></button>
+        <h2>📋 <Ruby>{"きみのテーマ一覧[いちらん]（"}</Ruby>{userId}<Ruby>{"番[ばん]）"}</Ruby></h2>
       </div>
 
       <div className="theme-list-content">
@@ -75,7 +76,7 @@ export default function ThemeListScreen({ userId, onBack, onNext }) {
           onClick={() => onNext(selectedTheme)}
           disabled={!selectedTheme}
         >
-          仮説を考える →
+          <Ruby>{"仮説[かせつ]を考[かんが]える →"}</Ruby>
         </button>
       </div>
     </div>

@@ -1,28 +1,30 @@
+import Ruby from './Ruby';
+
 export default function TitleScreen({ onDict, onChat, onContinue, onGuide, onLogout }) {
   return (
     <div className="title-screen">
       <div className="title-content">
         <div className="title-icon">🔬</div>
-        <h1 className="title-main">自由研究<br />AIアシスタント</h1>
-        <p className="title-sub">何をしたいですか？</p>
+        <h1 className="title-main"><Ruby>{"自由研究[じゆうけんきゅう]"}</Ruby><br />AIアシスタント</h1>
+        <p className="title-sub"><Ruby>{"何[なに]をしたいですか？"}</Ruby></p>
 
         <div className="title-buttons">
           <button className="title-btn continue-btn" onClick={onContinue}>
             <span className="btn-icon">🔄</span>
             <span className="btn-label">つづきから</span>
-            <span className="btn-desc">前にやった研究をえらぶ</span>
+            <span className="btn-desc"><Ruby>{"前[まえ]にやった研究[けんきゅう]をえらぶ"}</Ruby></span>
           </button>
 
           <button className="title-btn dict-btn" onClick={onDict}>
             <span className="btn-icon">📖</span>
-            <span className="btn-label">既習単元辞書</span>
-            <span className="btn-desc">習ったことを調べよう</span>
+            <span className="btn-label"><Ruby>{"既習単元辞書[きしゅうたんげんじしょ]"}</Ruby></span>
+            <span className="btn-desc"><Ruby>{"習[なら]ったことを調[しら]べよう"}</Ruby></span>
           </button>
 
           <button className="title-btn chat-btn" onClick={onChat}>
             <span className="btn-icon">💡</span>
-            <span className="btn-label">テーマを決める</span>
-            <span className="btn-desc">AIと一緒に考えよう</span>
+            <span className="btn-label"><Ruby>{"テーマを決[き]める"}</Ruby></span>
+            <span className="btn-desc"><Ruby>{"AIと一緒[いっしょ]に考[かんが]えよう"}</Ruby></span>
           </button>
         </div>
 
@@ -31,7 +33,7 @@ export default function TitleScreen({ onDict, onChat, onContinue, onGuide, onLog
         </button>
 
         <button className="guide-link-btn" onClick={onLogout}>
-          🚪 番号をかえる(ログアウト)
+          🚪 <Ruby>{"番号[ばんごう]をかえる(ログアウト)"}</Ruby>
         </button>
       </div>
     </div>

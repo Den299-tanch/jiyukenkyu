@@ -4,6 +4,7 @@ import { METHOD_TYPES, getMethodTypeById } from "../data/methodTypes";
 import { apiGet, apiPost, apiDelete } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
 import ConfirmModal from "./ConfirmModal";
+import Ruby from "./Ruby";
 
 const HINT_LIMIT = 3;
 
@@ -162,9 +163,9 @@ export default function ResearchMethodScreen({
     <div className="research-method-screen">
       <div className="screen-header">
         <button className="back-btn" onClick={handleBack}>
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
-        <h2>🧭 研究方法を考えよう</h2>
+        <h2>🧭 <Ruby>{"研究方法[けんきゅうほうほう]を考[かんが]えよう"}</Ruby></h2>
       </div>
 
       <div className="research-method-content">
@@ -226,7 +227,7 @@ export default function ResearchMethodScreen({
             {savedList.length > 0 && (
               <div className="rm-saved-list">
                 <h3 className="rm-saved-title">
-                  📋 追加した研究方法 ({savedList.length}件)
+                  📋 <Ruby>{"追加[ついか]した研究方法[けんきゅうほうほう] ("}</Ruby>{savedList.length}<Ruby>{"件[けん])"}</Ruby>
                 </h3>
                 {savedList.map((item) => {
                   const info = getMethodTypeById(item.method_type);
@@ -401,7 +402,7 @@ export default function ResearchMethodScreen({
               onClick={handleAddToList}
               disabled={saving || !whatToStudy.trim() || !toolsMaterials.trim() || !summary.trim()}
             >
-              {saving ? "追加中…" : "＋ この研究方法をリストに追加"}
+              {saving ? <Ruby>{"追加中[ついかちゅう]…"}</Ruby> : <Ruby>{"＋ この研究方法[けんきゅうほうほう]をリストに追加[ついか]"}</Ruby>}
             </button>
           </>
         )}

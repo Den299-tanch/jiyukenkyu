@@ -7,6 +7,7 @@ import { getGraphTypeById } from "../data/graphTypes";
 import { buildReportData } from "../data/buildReport";
 import { downloadElementAsPdf } from "../services/pdf";
 import GraphView from "./GraphView";
+import Ruby from "./Ruby";
 
 // STEP7: じゆうけんきゅうを まとめよう
 // ①じぶんのことば → ②プレビュー → ③かんせい
@@ -171,7 +172,7 @@ export default function SummaryScreen({ userId, onBack }) {
     <div className="summary-screen">
       <div className="screen-header">
         <button className="back-btn" onClick={onBack}>
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
         <h2>📗 じゆうけんきゅうを まとめよう</h2>
       </div>
@@ -338,7 +339,7 @@ export default function SummaryScreen({ userId, onBack }) {
                 className="cons-secondary-btn"
                 onClick={() => setView("write")}
               >
-                ✏️ 書きなおす
+                ✏️ <Ruby>{"書[か]きなおす"}</Ruby>
               </button>
               <button
                 className="next-btn"
@@ -391,7 +392,7 @@ export default function SummaryScreen({ userId, onBack }) {
               className="cons-secondary-btn"
               onClick={() => setView("write")}
             >
-              ✏️ もう一度なおす
+              ✏️ もう<Ruby>{"一度[いちど]"}</Ruby>なおす
             </button>
 
             {showPdfConfirm && (

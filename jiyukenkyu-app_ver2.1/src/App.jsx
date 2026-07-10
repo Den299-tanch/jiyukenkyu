@@ -19,6 +19,7 @@ import ConsiderationScreen from './components/ConsiderationScreen';
 import SummaryScreen from './components/SummaryScreen';
 import GuideOverlay from './components/GuideOverlay';
 import RocketProgress from './components/RocketProgress';
+import Ruby from './components/Ruby';
 import { getFlowStepIndex, FLOW_STEPS, pickResearchLandingScreen } from './flowSteps';
 
 
@@ -324,8 +325,8 @@ export default function App() {
       {screen === 'chat' && (
         <>
           <div className="screen-header">
-            <button className="back-btn" onClick={() => setScreen('chat-category')}>← 戻る</button>
-            <h2>🔬 {category?.label} のテーマを考えよう</h2>
+            <button className="back-btn" onClick={() => setScreen('chat-category')}>← <Ruby>{"戻[もど]る"}</Ruby></button>
+            <h2>🔬 {category?.label} の<Ruby>{"テーマを考[かんが]えよう"}</Ruby></h2>
           </div>
           <ChatBox
             messages={messages}

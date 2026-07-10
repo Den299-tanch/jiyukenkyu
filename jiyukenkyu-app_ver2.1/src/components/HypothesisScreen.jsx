@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getCategoryById } from "../data/categories";
 import { apiGet, apiPost } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
+import Ruby from "./Ruby";
 
 const HINT_LIMIT = 3;
 
@@ -91,10 +92,10 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
     <div className="hypothesis-screen">
       <div className="screen-header">
         <button className="back-btn" onClick={onBack}>
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
         <h2>
-          {cat ? `${cat.icon} ${theme.theme}` : theme?.theme} の仮説を考えよう
+          {cat ? `${cat.icon} ${theme.theme}` : theme?.theme} の<Ruby>{"仮説[かせつ]を考[かんが]えよう"}</Ruby>
         </h2>
       </div>
 
@@ -149,13 +150,13 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
     onClick={handleAddToList}
     disabled={saving || !hypothesis.trim()}
   >
-    {saving ? '追加中…' : '＋ この仮説をリストに追加'}
+    {saving ? <Ruby>{"追加中[ついかちゅう]…"}</Ruby> : <Ruby>{"＋ この仮説[かせつ]をリストに追加[ついか]"}</Ruby>}
   </button>
 </div>
 
 {savedList.length > 0 && (
   <div className="saved-hypothesis-list">
-    <h3 className="saved-list-title">📋 追加した仮説 ({savedList.length}件)</h3>
+    <h3 className="saved-list-title">📋 <Ruby>{"追加[ついか]した仮説[かせつ] ("}</Ruby>{savedList.length}<Ruby>{"件[けん])"}</Ruby></h3>
     {savedList.map((item) => (
       <div key={item.id} className="saved-hypothesis-card">
         {item.research_note && (
@@ -173,7 +174,7 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
     onClick={handleNext}
     disabled={savedList.length === 0}
   >
-    次のステップへ進む →
+    <Ruby>{"次[つぎ]のステップへ進[すす]む →"}</Ruby>
   </button>
 </div>
       </div>

@@ -1,3 +1,5 @@
+import Ruby from './Ruby';
+
 export default function RocketProgress({ currentIndex, steps }) {
   if (currentIndex < 0) return null;
 
@@ -11,7 +13,7 @@ export default function RocketProgress({ currentIndex, steps }) {
               <div className="rocket-stop-dot">
                 {state === 'done' ? '⭐' : step.emoji}
               </div>
-              <div className="rocket-stop-label">{step.label}</div>
+              <div className="rocket-stop-label"><Ruby>{step.label}</Ruby></div>
               {state === 'active' && <div className="rocket-ship">🚀</div>}
             </div>
           );

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Ruby from './Ruby';
 
 // ===== 辞書データ =====
 // メンバーから集めるキーワード＋説明文を、ここに入れていく
@@ -620,7 +621,7 @@ export default function DictScreen({ category, onBack }) {
 
   return (
     <div className="dict-screen">
-      <button className="back-btn" onClick={onBack}>← 戻る</button>
+      <button className="back-btn" onClick={onBack}>← <Ruby>{"戻[もど]る"}</Ruby></button>
 
       <h2 className="dict-title">
         {category?.icon} {category?.label} のキーワード

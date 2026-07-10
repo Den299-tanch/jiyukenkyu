@@ -3,6 +3,7 @@ import { getGraphTypeById } from "../data/graphTypes";
 import { apiGet, apiPost } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
 import GraphView from "./GraphView";
+import Ruby from "./Ruby";
 
 export default function ConsiderationScreen({ userId, onBack, onNext }) {
   const { research } = useResearch();
@@ -109,7 +110,7 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
     <div className="consideration-screen">
       <div className="screen-header">
         <button className="back-btn" onClick={onBack}>
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
         <h2>💡 かんがえたことを まとめよう</h2>
       </div>
@@ -193,7 +194,7 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
             )}
 
             <button className="next-btn cons-to-think-btn" onClick={() => setView("think")}>
-              かんがえたことを書く →
+              かんがえたことを<Ruby>{"書[か]く"}</Ruby> →
             </button>
           </>
         )}
