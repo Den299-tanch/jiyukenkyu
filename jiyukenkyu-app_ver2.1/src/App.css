@@ -1833,7 +1833,7 @@
 
 .sch-cal-cell {
   position: relative;
-  min-height: 56px;
+  min-height: 68px;
   border-radius: 8px;
   border: 1.5px solid #efebda;
   background: #ffffff;
@@ -1861,15 +1861,47 @@
 .sch-cal-cell.col-sun .sch-cal-daynum { color: #d84f4f; }
 .sch-cal-cell.col-sat .sch-cal-daynum { color: #2b5d8a; }
 
-.sch-cal-icons {
+.sch-cal-tasks {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1px;
+  flex-direction: column;
+  gap: 2px;
   margin-top: 3px;
 }
 
+.sch-cal-task-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.sch-cal-mini-check {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid #e4dfc9;
+  background: #fff;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+}
+
+.sch-cal-mini-check.checked {
+  background: #48bb78;
+  border-color: #48bb78;
+}
+
+.sch-cal-mini-check.checked::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  font-size: 8px;
+  line-height: 9px;
+}
+
 .sch-cal-icon {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1;
 }
 
@@ -1880,7 +1912,7 @@
 .sch-cal-more {
   font-size: 9px;
   color: #5b6b85;
-  align-self: center;
+  margin-left: 15px;
 }
 
 .sch-cal-popover {
@@ -1916,9 +1948,6 @@
 }
 
 .sch-cal-popover-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
   margin-bottom: 8px;
 }
 .sch-cal-popover-item:last-child { margin-bottom: 0; }

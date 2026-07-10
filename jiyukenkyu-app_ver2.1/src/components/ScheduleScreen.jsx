@@ -379,9 +379,11 @@ export default function ScheduleScreen({
               );
             })}
 
-            <button className="sch-add-row-btn" onClick={addRow}>
-              ＋ タスクを追加
-            </button>
+            {planView === "list" && (
+              <button className="sch-add-row-btn" onClick={addRow}>
+                ＋ タスクを追加
+              </button>
+            )}
 
             {draftError && <p className="sch-draft-error">{draftError}</p>}
 
@@ -556,20 +558,28 @@ function CalendarMonth({ year, month, tasksByDay, openDay, setOpenDay, toggleDon
             >
               <span className="sch-cal-daynum">{d}</span>
               {hasTasks && (
-                <div className="sch-cal-icons">
-                  {dayTasks.slice(0, 3).map((t, ti) => {
+                <div className="sch-cal-tasks">
+                  {dayTasks.slice(0, 2).map((t, ti) => {
                     const info = getTaskTypeById(t.type);
                     return (
-                      <span
+                      <div
+                        className="sch-cal-task-row"
                         key={ti}
-                        className={`sch-cal-icon ${t.done ? "done" : ""}`}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {info.icon}
-                      </span>
+                        <button
+                          className={`sch-cal-mini-check ${t.done ? "checked" : ""}`}
+                          onClick={() => toggleDone(t.id)}
+                          aria-label="完了"
+                        />
+                        <span className={`sch-cal-icon ${t.done ? "done" : ""}`}>
+                          {info.icon}
+                        </span>
+                      </div>
                     );
                   })}
-                  {dayTasks.length > 3 && (
-                    <span className="sch-cal-more">+{dayTasks.length - 3}</span>
+                  {dayTasks.length > 2 && (
+                    <span className="sch-cal-more">+{dayTasks.length - 2}</span>
                   )}
                 </div>
               )}
@@ -585,21 +595,14 @@ function CalendarMonth({ year, month, tasksByDay, openDay, setOpenDay, toggleDon
                     const info = getTaskTypeById(t.type);
                     return (
                       <div className="sch-cal-popover-item" key={t.id}>
-                        <button
-                          className={`sch-checkbox ${t.done ? "checked" : ""}`}
-                          onClick={() => toggleDone(t.id)}
-                          aria-label="完了"
-                        />
-                        <div>
-                          <span className={`sch-type-badge t-${t.type}`}>
-                            {info.icon} {info.label}
-                          </span>
-                          <p
-                            className={`sch-cal-popover-text ${t.done ? "done" : ""}`}
-                          >
-                            {t.task}
-                          </p>
-                        </div>
+                        <span className={`sch-type-badge t-${t.type}`}>
+                          {info.icon} {info.label}
+                        </span>
+                        <p
+                          className={`sch-cal-popover-text ${t.done ? "done" : ""}`}
+                        >
+                          {t.task}
+                        </p>
                       </div>
                     );
                   })}
