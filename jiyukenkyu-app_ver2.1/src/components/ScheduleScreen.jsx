@@ -21,6 +21,7 @@ function formatEndDate(iso) {
 
 export default function ScheduleScreen({
   userId,
+  initialPlanView = "list",
   onBack,
   onNext,
 }) {
@@ -30,7 +31,7 @@ export default function ScheduleScreen({
   const [endDate, setEndDate] = useState("");
   const [workDays, setWorkDays] = useState("");
   const [tasks, setTasks] = useState([]);
-  const [planView, setPlanView] = useState("list"); // 'list' | 'calendar'
+  const [planView, setPlanView] = useState(initialPlanView); // 'list' | 'calendar'
   const [draftLoading, setDraftLoading] = useState(false);
   const [draftError, setDraftError] = useState("");
   const [draftCount, setDraftCount] = useState(0);

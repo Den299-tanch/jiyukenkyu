@@ -1,6 +1,6 @@
 import Ruby from './Ruby';
 
-export default function TitleScreen({ onDict, onChat, onContinue, onGuide, onLogout }) {
+export default function TitleScreen({ onDict, onChat, onContinue, onSchedule, onGuide, onLogout }) {
   return (
     <div className="title-screen">
       <div className="title-content">
@@ -27,6 +27,10 @@ export default function TitleScreen({ onDict, onChat, onContinue, onGuide, onLog
             <span className="btn-desc"><Ruby>{"AIと一緒[いっしょ]に考[かんが]えよう"}</Ruby></span>
           </button>
         </div>
+
+        <button className="guide-link-btn" onClick={onSchedule}>
+          🗓️ よていをみる
+        </button>
 
         <button className="guide-link-btn" onClick={onGuide}>
           📘 つかいかたガイド

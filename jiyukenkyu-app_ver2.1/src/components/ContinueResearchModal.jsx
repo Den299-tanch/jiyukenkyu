@@ -3,12 +3,12 @@ import { apiGet } from '../services/api';
 import { getCategoryById } from '../data/categories';
 import Ruby from './Ruby';
 
-// TitleScreenの「🔄 つづきから」から開くモーダル。
+// TitleScreenの「🔄 つづきから」や「🗓️ よていをみる」から開く、研究(仮説)えらびモーダル。
 // テーマ選択・仮説パートのために用意した既存エンドポイント(/api/themes・
 // /api/hypotheses)で一覧を作り、選ぶと GET /api/research/:id で1回で
-// hydrateする。着地画面(schedule/record/consideration/summary)の判定は
-// 呼び出し側(App.jsx)が pickResearchLandingScreen で行う。
-export default function ContinueResearchModal({ onClose, onSelect }) {
+// hydrateする。選んだあとどの画面に着地するかは呼び出し側(App.jsx)が
+// onSelect の中で決める(title propで見出しも呼び出し側から変えられる)。
+export default function ContinueResearchModal({ title = '🔄 つづきから えらぶ', onClose, onSelect }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -65,7 +65,7 @@ export default function ContinueResearchModal({ onClose, onSelect }) {
         <button className="guide-close-btn" onClick={onClose} aria-label="とじる">
           ✕
         </button>
-        <h3 className="continue-title">🔄 つづきから えらぶ</h3>
+        <h3 className="continue-title"><Ruby>{title}</Ruby></h3>
 
         {loading && <p className="theme-list-msg">読み込み中…</p>}
         {error && <p className="theme-list-msg">エラー: {error}</p>}
