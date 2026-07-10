@@ -50,7 +50,6 @@ export default function ScheduleScreen({
         const existing = data.schedule;
         if (existing) {
           setEndDate(existing.end_date ?? "");
-          setWorkDays(existing.work_days != null ? String(existing.work_days) : "");
           setTasks(existing.tasks ?? []);
           setTab("plan");
           setRestoredNotice(true);
@@ -156,7 +155,6 @@ export default function ScheduleScreen({
     const data = await apiPost('/api/save-schedule', {
       hypothesis_id: hypothesis?.id,
       end_date: endDate,
-      work_days: workDays ? Number(workDays) : null,
       tasks,
     });
     if (!data.success) throw new Error(data.error);

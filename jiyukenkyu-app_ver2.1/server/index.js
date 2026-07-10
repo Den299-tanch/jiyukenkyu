@@ -512,20 +512,18 @@ app.post('/api/save-schedule', requireAuth, async (req, res) => {
     const {
       hypothesis_id,
       end_date,
-      work_days,
       tasks,
     } = req.body;
     const result = await pool.query(
-      `INSERT INTO schedules (user_id, hypothesis_id, end_date, work_days, tasks, updated_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
+      `INSERT INTO schedules (user_id, hypothesis_id, end_date, tasks, updated_at)
+       VALUES ($1, $2, $3, $4, NOW())
        ON CONFLICT (hypothesis_id)
-       DO UPDATE SET end_date = EXCLUDED.end_date, work_days = EXCLUDED.work_days, tasks = EXCLUDED.tasks, updated_at = NOW()
+       DO UPDATE SET end_date = EXCLUDED.end_date, tasks = EXCLUDED.tasks, updated_at = NOW()
        RETURNING *`,
       [
         req.userId,
         hypothesis_id || null,
         end_date || null,
-        work_days || null,
         JSON.stringify(tasks ?? []),
       ],
     );
@@ -540,7 +538,7 @@ app.post('/api/save-schedule', requireAuth, async (req, res) => {
 app.get('/api/schedules', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT s.id, h.theme_id, s.hypothesis_id, s.end_date, s.work_days, s.tasks, s.created_at, s.updated_at
+      `SELECT s.id, h.theme_id, s.hypothesis_id, s.end_date, s.tasks, s.created_at, s.updated_at
        FROM schedules s
        LEFT JOIN hypotheses h ON s.hypothesis_id = h.id
        WHERE s.user_id = $1 ORDER BY s.created_at ASC`,
@@ -1031,7 +1029,7 @@ app.get('/api/research/:hypothesisId', requireAuth, async (req, res) => {
           [hid],
         ),
         pool.query(
-          `SELECT id, hypothesis_id, end_date, work_days, tasks, created_at, updated_at
+          `SELECT id, hypothesis_id, end_date, tasks, created_at, updated_at
            FROM schedules WHERE hypothesis_id = $1`,
           [hid],
         ),
