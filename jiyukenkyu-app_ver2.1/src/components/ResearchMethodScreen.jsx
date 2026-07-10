@@ -95,7 +95,7 @@ export default function ResearchMethodScreen({
   }
 
   async function handleAddToList() {
-    if (!whatToStudy.trim() || !summary.trim() || saving) return;
+    if (!whatToStudy.trim() || !toolsMaterials.trim() || !summary.trim() || saving) return;
 
     setSaving(true);
     try {
@@ -274,6 +274,7 @@ export default function ResearchMethodScreen({
             <div className="rm-field-card">
               <div className="rm-field-label">
                 <span className="rm-field-num">1</span>何を調べる・実験する?
+                <span className="rm-badge-required">*</span>
               </div>
               <textarea
                 className="rm-textarea"
@@ -314,6 +315,7 @@ export default function ResearchMethodScreen({
             <div className="rm-field-card">
               <div className="rm-field-label">
                 <span className="rm-field-num">2</span>どうやってやる?(道具・材料)
+                <span className="rm-badge-required">*</span>
               </div>
               <textarea
                 className="rm-textarea"
@@ -380,7 +382,10 @@ export default function ResearchMethodScreen({
             </div>
 
             <div className="rm-field-card rm-final-card">
-              <div className="rm-field-label">✏️ さいごに、ひとことで</div>
+              <div className="rm-field-label">
+                ✏️ さいごに、ひとことで
+                <span className="rm-badge-required">*</span>
+              </div>
               <p className="rm-sub">じゃあ今日、あなたは何をしますか?</p>
               <textarea
                 className="rm-textarea"
@@ -394,7 +399,7 @@ export default function ResearchMethodScreen({
             <button
               className="next-btn rm-submit-btn"
               onClick={handleAddToList}
-              disabled={saving || !whatToStudy.trim() || !summary.trim()}
+              disabled={saving || !whatToStudy.trim() || !toolsMaterials.trim() || !summary.trim()}
             >
               {saving ? "追加中…" : "＋ この研究方法をリストに追加"}
             </button>

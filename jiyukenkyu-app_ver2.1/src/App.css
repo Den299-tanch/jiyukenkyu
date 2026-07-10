@@ -1503,6 +1503,14 @@
   margin-left: 8px;
 }
 
+/* 必須項目のさりげない目印。バッジにはせず、控えめな色の記号だけにする */
+.rm-badge-required {
+  color: #d8735a;
+  font-size: 15px;
+  margin-left: 3px;
+  opacity: 0.75;
+}
+
 .rm-textarea {
   width: 100%;
   padding: 14px 16px;
