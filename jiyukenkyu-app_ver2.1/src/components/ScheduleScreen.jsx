@@ -393,23 +393,35 @@ export default function ScheduleScreen({
       {confirmingRetry !== null && (
         <div className="sch-modal-backdrop">
           <div className="sch-modal-card">
-            <div className="sch-modal-emoji">🌱</div>
+            <div className="sch-modal-emoji">{tasks.length > 0 ? "⚠️" : "🌱"}</div>
             <p className="sch-modal-text">
-              まずは自分で、日づけややることを考えてみよう!
-              <br />
-              どうしても思いつかないときだけ、AIにおねがいしてね。
+              {tasks.length > 0 ? (
+                <>
+                  今ある{tasks.length}件の予定は、AIのたたき台に
+                  <br />
+                  すべて置きかわるよ(消えてしまうので注意!)。
+                  <br />
+                  それでもいいかな?
+                </>
+              ) : (
+                <>
+                  まずは自分で、日づけややることを考えてみよう!
+                  <br />
+                  どうしても思いつかないときだけ、AIにおねがいしてね。
+                </>
+              )}
             </p>
             <button
               className="sch-modal-think-btn"
               onClick={() => setConfirmingRetry(null)}
             >
-              自分で考えてみる
+              {tasks.length > 0 ? "やめておく" : "自分で考えてみる"}
             </button>
             <button
               className="sch-modal-confirm-btn"
               onClick={handleConfirmDraft}
             >
-              それでもAIにおねがいする
+              {tasks.length > 0 ? "置きかえてもらう" : "それでもAIにおねがいする"}
             </button>
           </div>
         </div>
