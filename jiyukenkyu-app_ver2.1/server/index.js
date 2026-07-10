@@ -167,16 +167,16 @@ const RESEARCH_METHOD_HINT_SYSTEM = {
 返答は2文以内、やさしい言葉で。`,
 };
 
-// スケジュールパート用: 期間の言い回し(あとで日数の前提を差し替えやすいよう1箇所にまとめる)
-const SCHEDULE_PERIOD_NOTE = '夏休みの間(今日から「おわりの日」までの、だいたい30日くらいを想定)で、';
-
 // スケジュールパート用: ここは例外的にAIがたたき台を直接作ってよい(答えではなく足場のため)
 const SCHEDULE_DRAFT_SYSTEM = `あなたは小学生の自由研究を手伝う先生です。
-子どもの予想・研究方法をもとに、${SCHEDULE_PERIOD_NOTE}実際に取り組めるスケジュールのたたき台を作ってください。
+子どもの予想・研究方法・「おわりの日」・「何日でやりたいか」をもとに、
+実際に取り組めるスケジュールのたたき台を作ってください。
+「何日でやりたいか」で指定された日数ぶんのタスクを、今日から「おわりの日」までの間に
+無理なく収まるように配置してください(指定日数が期間より多い場合は、期間内に収まる範囲で調整してよい)。
 スケジュールは研究の"答え"ではなく足場なので、ここでは遠慮せず具体的な下書きを作ってかまいません。
 ただし出したタスクは子どもが後から自由に書き換えたり消したりできるので、細かすぎず、無理のない現実的な内容にしてください。
 休憩日(やすみ)も1つ以上入れてください。最後には「まとめ」のタスクを入れてください。
-タスクは10〜15個程度、"task"の文章は1文(40文字程度まで)の短さにおさめてください。
+"task"の文章は1文(40文字程度まで)の短さにおさめてください。
 
 必ず次のJSON形式のみを出力してください。前置きや説明、マークダウンのコードブロックは一切つけないでください。
 {
@@ -461,6 +461,7 @@ app.post('/api/schedule-draft', async (req, res) => {
       hypothesis,
       research_methods,
       end_date,
+      work_days,
       previous_tasks,
     } = req.body;
 
@@ -476,7 +477,7 @@ app.post('/api/schedule-draft', async (req, res) => {
       if (rm.summary) userText += `まとめの一言: ${rm.summary}\n`;
       userText += '\n';
     });
-    userText += `おわりの日: ${end_date || '未定'}\n\n上記の研究方法すべてをふまえて、1つのスケジュールのたたき台をJSONで作ってください。`;
+    userText += `おわりの日: ${end_date || '未定'}\n何日でやりたいか: ${work_days ? `${work_days}日` : '未定'}\n\n上記の研究方法すべてをふまえて、1つのスケジュールのたたき台をJSONで作ってください。`;
 
     if (previous_tasks && previous_tasks.length > 0) {
       userText += '\n\n(やり直しの依頼です。前回とは少し違う組み立てにしてください)';
@@ -511,18 +512,20 @@ app.post('/api/save-schedule', requireAuth, async (req, res) => {
     const {
       hypothesis_id,
       end_date,
+      work_days,
       tasks,
     } = req.body;
     const result = await pool.query(
-      `INSERT INTO schedules (user_id, hypothesis_id, end_date, tasks, updated_at)
-       VALUES ($1, $2, $3, $4, NOW())
+      `INSERT INTO schedules (user_id, hypothesis_id, end_date, work_days, tasks, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
        ON CONFLICT (hypothesis_id)
-       DO UPDATE SET end_date = EXCLUDED.end_date, tasks = EXCLUDED.tasks, updated_at = NOW()
+       DO UPDATE SET end_date = EXCLUDED.end_date, work_days = EXCLUDED.work_days, tasks = EXCLUDED.tasks, updated_at = NOW()
        RETURNING *`,
       [
         req.userId,
         hypothesis_id || null,
         end_date || null,
+        work_days || null,
         JSON.stringify(tasks ?? []),
       ],
     );
@@ -537,7 +540,7 @@ app.post('/api/save-schedule', requireAuth, async (req, res) => {
 app.get('/api/schedules', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT s.id, h.theme_id, s.hypothesis_id, s.end_date, s.tasks, s.created_at, s.updated_at
+      `SELECT s.id, h.theme_id, s.hypothesis_id, s.end_date, s.work_days, s.tasks, s.created_at, s.updated_at
        FROM schedules s
        LEFT JOIN hypotheses h ON s.hypothesis_id = h.id
        WHERE s.user_id = $1 ORDER BY s.created_at ASC`,
@@ -1028,7 +1031,7 @@ app.get('/api/research/:hypothesisId', requireAuth, async (req, res) => {
           [hid],
         ),
         pool.query(
-          `SELECT id, hypothesis_id, end_date, tasks, created_at, updated_at
+          `SELECT id, hypothesis_id, end_date, work_days, tasks, created_at, updated_at
            FROM schedules WHERE hypothesis_id = $1`,
           [hid],
         ),

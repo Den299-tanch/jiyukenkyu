@@ -228,10 +228,11 @@ function shortDate(iso) {
 }
 
 // 期間 { start, end } を「7/25〜7/28」のように整形
+// end はカレンダー入力の "YYYY-MM-DD" 形式で来る
 function formatPeriod(period) {
   if (!period) return "";
   const s = shortDate(period.start);
-  const e = period.end || shortDate(period.endIso);
+  const e = shortDate(period.end);
   if (s && e) return `${s}〜${e}`;
   return s || e || "";
 }

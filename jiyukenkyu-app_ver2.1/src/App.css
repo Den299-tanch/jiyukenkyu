@@ -1665,6 +1665,22 @@
   border-bottom-color: #38a169;
 }
 
+.sch-workdays-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sch-workdays-input {
+  width: 80px;
+  flex: none;
+}
+
+.sch-workdays-suffix {
+  font-size: 14px;
+  color: #5b6b85;
+}
+
 .sch-blank-table {
   background: #ffffff;
   border: 2.5px dashed #e4dfc9;
