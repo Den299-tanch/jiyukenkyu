@@ -1768,6 +1768,183 @@
   margin-bottom: 10px;
 }
 
+/* リスト/カレンダーの表示切り替え */
+.sch-view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sch-view-btn {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  background: #efebda;
+  color: #5b6b85;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sch-view-btn.active {
+  background: #fffdf8;
+  color: #1b3358;
+  border-color: #e4dfc9;
+}
+
+/* ===== カレンダービュー ===== */
+.sch-cal-wrap {
+  margin-bottom: 16px;
+}
+
+.sch-cal-month {
+  margin-bottom: 18px;
+}
+
+.sch-cal-month-label {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-size: 13.5px;
+  color: #1b3358;
+  margin-bottom: 6px;
+}
+
+.sch-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.sch-cal-wd {
+  text-align: center;
+  font-size: 10.5px;
+  color: #5b6b85;
+}
+.sch-cal-wd.sun { color: #d84f4f; }
+.sch-cal-wd.sat { color: #2b5d8a; }
+
+.sch-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.sch-cal-cell {
+  position: relative;
+  min-height: 56px;
+  border-radius: 8px;
+  border: 1.5px solid #efebda;
+  background: #ffffff;
+  padding: 4px 3px;
+}
+
+.sch-cal-cell.blank {
+  border-color: transparent;
+  background: transparent;
+}
+
+.sch-cal-cell.has-task {
+  cursor: pointer;
+  border-color: #d8d2b6;
+}
+
+.sch-cal-cell.has-task:hover {
+  border-color: #8a6fe0;
+}
+
+.sch-cal-daynum {
+  font-size: 10px;
+  color: #1b3358;
+}
+.sch-cal-cell.col-sun .sch-cal-daynum { color: #d84f4f; }
+.sch-cal-cell.col-sat .sch-cal-daynum { color: #2b5d8a; }
+
+.sch-cal-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  margin-top: 3px;
+}
+
+.sch-cal-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.sch-cal-icon.done {
+  opacity: 0.4;
+}
+
+.sch-cal-more {
+  font-size: 9px;
+  color: #5b6b85;
+  align-self: center;
+}
+
+.sch-cal-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: 200px;
+  background: #fffdf8;
+  border: 2px solid #e4dfc9;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(27, 51, 88, 0.18);
+  padding: 10px 12px;
+  cursor: default;
+}
+
+.sch-cal-cell.col-sun .sch-cal-popover {
+  left: 0;
+  transform: none;
+}
+.sch-cal-cell.col-sat .sch-cal-popover {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.sch-cal-popover-date {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-size: 11px;
+  color: #1b3358;
+  margin-bottom: 6px;
+}
+
+.sch-cal-popover-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.sch-cal-popover-item:last-child { margin-bottom: 0; }
+
+.sch-cal-popover-text {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #1b3358;
+  margin: 4px 0 0;
+}
+
+.sch-cal-popover-text.done {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.sch-cal-unplaced-note {
+  font-size: 12px;
+  color: #5b6b85;
+  background: #fff7e0;
+  border: 1.5px dashed #ffc93c;
+  border-radius: 10px;
+  padding: 8px 11px;
+  margin-top: 4px;
+}
+
 .sch-task-top {
   display: flex;
   align-items: center;

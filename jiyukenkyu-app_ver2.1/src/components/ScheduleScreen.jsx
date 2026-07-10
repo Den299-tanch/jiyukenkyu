@@ -29,6 +29,7 @@ export default function ScheduleScreen({
   const [endDate, setEndDate] = useState("");
   const [workDays, setWorkDays] = useState("");
   const [tasks, setTasks] = useState([]);
+  const [planView, setPlanView] = useState("list"); // 'list' | 'calendar'
   const [draftLoading, setDraftLoading] = useState(false);
   const [draftError, setDraftError] = useState("");
   const [draftCount, setDraftCount] = useState(0);
@@ -305,7 +306,32 @@ export default function ScheduleScreen({
               </span>
             </div>
 
-            {tasks.map((t) => {
+            {tasks.length > 0 && (
+              <div className="sch-view-toggle">
+                <button
+                  className={`sch-view-btn ${planView === "list" ? "active" : ""}`}
+                  onClick={() => setPlanView("list")}
+                >
+                  📋 リスト
+                </button>
+                <button
+                  className={`sch-view-btn ${planView === "calendar" ? "active" : ""}`}
+                  onClick={() => setPlanView("calendar")}
+                >
+                  🗓️ カレンダー
+                </button>
+              </div>
+            )}
+
+            {planView === "calendar" && tasks.length > 0 && (
+              <ScheduleCalendar
+                tasks={tasks}
+                endDate={endDate}
+                toggleDone={toggleDone}
+              />
+            )}
+
+            {planView === "list" && tasks.map((t) => {
               const typeInfo = getTaskTypeById(t.type);
               return (
                 <div key={t.id} className="sch-task-card">
@@ -426,6 +452,163 @@ export default function ScheduleScreen({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// タスクの "date" (「7/25(土)」のような自由記述)から月日を読みとる。
+// 形式が合わないもの(空欄・書きかけなど)は null を返し、カレンダーには出さない。
+function parseTaskDate(dateStr) {
+  const m = /^\s*(\d{1,2})\s*\/\s*(\d{1,2})/.exec(dateStr || "");
+  if (!m) return null;
+  return { month: Number(m[1]), day: Number(m[2]) };
+}
+
+// 全体をひと目で見わたす用のカレンダービュー。
+// 期間が月をまたいでも(7月→8月など)、必要な月ぶんだけ並べて出す。
+function ScheduleCalendar({ tasks, endDate, toggleDone }) {
+  const [openDay, setOpenDay] = useState(null); // "M-D" | null
+
+  const tasksByDay = new Map();
+  let unplaced = 0;
+  tasks.forEach((t) => {
+    const parsed = parseTaskDate(t.date);
+    if (!parsed) {
+      unplaced += 1;
+      return;
+    }
+    const key = `${parsed.month}-${parsed.day}`;
+    if (!tasksByDay.has(key)) tasksByDay.set(key, []);
+    tasksByDay.get(key).push(t);
+  });
+
+  const endDateObj = endDate ? new Date(`${endDate}T00:00:00`) : null;
+  const year = endDateObj && !isNaN(endDateObj) ? endDateObj.getFullYear() : new Date().getFullYear();
+
+  const monthsSet = new Set();
+  tasksByDay.forEach((_, key) => monthsSet.add(Number(key.split("-")[0])));
+  if (endDateObj && !isNaN(endDateObj)) monthsSet.add(endDateObj.getMonth() + 1);
+  if (monthsSet.size === 0) monthsSet.add(new Date().getMonth() + 1);
+  const months = [...monthsSet].sort((a, b) => a - b);
+
+  return (
+    <div className="sch-cal-wrap">
+      {months.map((month) => (
+        <CalendarMonth
+          key={month}
+          year={year}
+          month={month}
+          tasksByDay={tasksByDay}
+          openDay={openDay}
+          setOpenDay={setOpenDay}
+          toggleDone={toggleDone}
+        />
+      ))}
+      {unplaced > 0 && (
+        <p className="sch-cal-unplaced-note">
+          📋 日づけがまだ整っていない予定が{unplaced}件あるよ(リスト表示から直せるよ)
+        </p>
+      )}
+    </div>
+  );
+}
+
+const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+function CalendarMonth({ year, month, tasksByDay, openDay, setOpenDay, toggleDone }) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstWeekday = new Date(year, month - 1, 1).getDay();
+
+  const cells = [];
+  for (let i = 0; i < firstWeekday; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  return (
+    <div className="sch-cal-month">
+      <div className="sch-cal-month-label">{month}月</div>
+      <div className="sch-cal-weekdays">
+        {WEEKDAYS.map((w, i) => (
+          <span
+            key={w}
+            className={`sch-cal-wd ${i === 0 ? "sun" : ""} ${i === 6 ? "sat" : ""}`}
+          >
+            {w}
+          </span>
+        ))}
+      </div>
+      <div className="sch-cal-grid">
+        {cells.map((d, i) => {
+          const colIdx = i % 7;
+          if (d === null) {
+            return <div className="sch-cal-cell blank" key={`b${i}`} />;
+          }
+          const key = `${month}-${d}`;
+          const dayTasks = tasksByDay.get(key) ?? [];
+          const hasTasks = dayTasks.length > 0;
+          const isOpen = openDay === key;
+          return (
+            <div
+              key={key}
+              className={`sch-cal-cell ${hasTasks ? "has-task" : ""} ${colIdx === 0 ? "col-sun" : ""} ${colIdx === 6 ? "col-sat" : ""}`}
+              onMouseEnter={() => hasTasks && setOpenDay(key)}
+              onMouseLeave={() => setOpenDay((prev) => (prev === key ? null : prev))}
+              onClick={() => hasTasks && setOpenDay((prev) => (prev === key ? null : key))}
+            >
+              <span className="sch-cal-daynum">{d}</span>
+              {hasTasks && (
+                <div className="sch-cal-icons">
+                  {dayTasks.slice(0, 3).map((t, ti) => {
+                    const info = getTaskTypeById(t.type);
+                    return (
+                      <span
+                        key={ti}
+                        className={`sch-cal-icon ${t.done ? "done" : ""}`}
+                      >
+                        {info.icon}
+                      </span>
+                    );
+                  })}
+                  {dayTasks.length > 3 && (
+                    <span className="sch-cal-more">+{dayTasks.length - 3}</span>
+                  )}
+                </div>
+              )}
+              {isOpen && (
+                <div
+                  className="sch-cal-popover"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="sch-cal-popover-date">
+                    {month}月{d}日
+                  </div>
+                  {dayTasks.map((t) => {
+                    const info = getTaskTypeById(t.type);
+                    return (
+                      <div className="sch-cal-popover-item" key={t.id}>
+                        <button
+                          className={`sch-checkbox ${t.done ? "checked" : ""}`}
+                          onClick={() => toggleDone(t.id)}
+                          aria-label="完了"
+                        />
+                        <div>
+                          <span className={`sch-type-badge t-${t.type}`}>
+                            {info.icon} {info.label}
+                          </span>
+                          <p
+                            className={`sch-cal-popover-text ${t.done ? "done" : ""}`}
+                          >
+                            {t.task}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
