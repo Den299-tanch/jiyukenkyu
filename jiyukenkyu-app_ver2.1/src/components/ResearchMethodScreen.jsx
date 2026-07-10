@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { getCategoryById } from "../data/categories";
 import { METHOD_TYPES, getMethodTypeById } from "../data/methodTypes";
-import { apiGet, apiPost } from "../services/api";
+import { apiGet, apiPost, apiDelete } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
+import ConfirmModal from "./ConfirmModal";
 
 const HINT_LIMIT = 3;
 
@@ -39,6 +40,8 @@ export default function ResearchMethodScreen({
 
   const [savedList, setSavedList] = useState([]); // この仮説で追加した研究方法の一覧
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // 削除確認中の研究方法
+  const [deleting, setDeleting] = useState(false);
 
   const whatHintsLeft = HINT_LIMIT - whatHintCount;
   const toolsHintsLeft = HINT_LIMIT - toolsHintCount;
@@ -131,10 +134,34 @@ export default function ResearchMethodScreen({
     onNext({ researchMethods: savedList, hypothesis: selectedHypothesis });
   }
 
+  // 「詳細記述」ステップからの戻るは、その手前の「型えらび」に戻すだけにする
+  // (画面全体のonBackを呼ぶと、仮説作成まで戻ってしまっていた)
+  function handleBack() {
+    if (step === "details") {
+      setStep("type");
+      return;
+    }
+    onBack();
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    try {
+      const data = await apiDelete(`/api/research-methods/${deleteTarget.id}`);
+      if (!data.success) throw new Error(data.error);
+      setSavedList((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      alert("研究方法の削除に失敗しました: " + err.message);
+    }
+    setDeleting(false);
+  }
+
   return (
     <div className="research-method-screen">
       <div className="screen-header">
-        <button className="back-btn" onClick={onBack}>
+        <button className="back-btn" onClick={handleBack}>
           ← 戻る
         </button>
         <h2>🧭 研究方法を考えよう</h2>
@@ -205,6 +232,13 @@ export default function ResearchMethodScreen({
                   const info = getMethodTypeById(item.method_type);
                   return (
                     <div key={item.id} className="rm-saved-card">
+                      <button
+                        className="rm-saved-delete-btn"
+                        onClick={() => setDeleteTarget(item)}
+                        aria-label="この研究方法を消す"
+                      >
+                        🗑️
+                      </button>
                       <span className="rm-saved-type">
                         {info?.icon} {info?.label}
                       </span>
@@ -367,6 +401,15 @@ export default function ResearchMethodScreen({
           </>
         )}
       </div>
+
+      {deleteTarget && (
+        <ConfirmModal
+          message={"この研究方法を消すよ。\nもとにはもどせないけど、いいかな?"}
+          confirming={deleting}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 }

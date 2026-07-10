@@ -369,6 +369,24 @@ app.post('/api/save-research-method', requireAuth, async (req, res) => {
   }
 });
 
+// 研究方法の削除エンドポイント(本人のものだけ消せるよう user_id も照合する)
+app.delete('/api/research-methods/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'DELETE FROM research_methods WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, req.userId],
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'research method not found' });
+    }
+    res.json({ success: true, id: result.rows[0].id });
+  } catch (err) {
+    console.error('Delete research method error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ユーザーごとの研究方法取得エンドポイント
 app.get('/api/research-methods', requireAuth, async (req, res) => {
   try {
