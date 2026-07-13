@@ -15,6 +15,7 @@ import {
   countRecordsWithLabel,
   getMeasuredNumber,
 } from "../data/recordNumbers";
+import Ruby from "./Ruby";
 
 export default function RecordScreen({ userId, onBack, onNext }) {
   const { research } = useResearch();
@@ -141,7 +142,7 @@ export default function RecordScreen({ userId, onBack, onNext }) {
     <div className="record-screen">
       <div className="screen-header">
         <button className="back-btn" onClick={onBack}>
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
         <h2>🗂️ きろくを つけよう</h2>
       </div>
@@ -183,7 +184,7 @@ export default function RecordScreen({ userId, onBack, onNext }) {
 
         {graphs.length > 0 && (
           <button className="rec-graphlist-cta" onClick={() => setView("graphlist")}>
-            📊 保存したグラフ一覧を見る({graphs.length})
+            📊 <Ruby>{"保存[ほぞん]したグラフ一覧[いちらん]を見[み]る"}</Ruby>({graphs.length})
           </button>
         )}
 
@@ -195,10 +196,10 @@ export default function RecordScreen({ userId, onBack, onNext }) {
 
         <div className="rec-add-row">
           <button className="rec-add-btn" onClick={() => handleAdd("shirabe")}>
-            <span className="rec-add-emoji">🔍</span>＋ しらべたことを追加
+            <span className="rec-add-emoji">🔍</span>＋ しらべたことを<Ruby>{"追加[ついか]"}</Ruby>
           </button>
           <button className="rec-add-btn" onClick={() => handleAdd("kiroku")}>
-            <span className="rec-add-emoji">🧪</span>＋ きろくを追加
+            <span className="rec-add-emoji">🧪</span>＋ きろくを<Ruby>{"追加[ついか]"}</Ruby>
           </button>
         </div>
 

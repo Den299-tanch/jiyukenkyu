@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getViewpoints } from "../data/recordViewpoints";
 import { apiGet, apiPost } from "../services/api";
+import Ruby from "./Ruby";
 
 // 文字列を数値へ(空や数字でないものは null)
 function toNum(str) {
@@ -173,7 +174,7 @@ export default function RecordInputScreen({
     <div className="record-screen">
       <div className="screen-header">
         <button className="back-btn" onClick={onBack}>
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
         <h2>{isKiroku ? "🧪 きろくを かく" : "🔍 しらべたことを かく"}</h2>
       </div>
@@ -195,7 +196,7 @@ export default function RecordInputScreen({
         </div>
 
         <p className="rec-field-label">
-          {isKiroku ? "いつ観察した?" : "いつ調べた?"}
+          {isKiroku ? <Ruby>{"いつ観察[かんさつ]した?"}</Ruby> : <Ruby>{"いつ調[しら]べた?"}</Ruby>}
         </p>
         <input
           type="date"

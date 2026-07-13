@@ -1,9 +1,11 @@
+import Ruby from './Ruby';
+
 export default function SaveThemeArea({ themeInput, setThemeInput, onSave, saving, savedThemes }) {
   return (
     <div className="save-theme-area">
       {savedThemes.length > 0 && (
         <div className="saved-themes-list">
-          <p className="saved-themes-title">📋 保存したテーマ</p>
+          <p className="saved-themes-title">📋 <Ruby>{"保存[ほぞん]したテーマ"}</Ruby></p>
           {savedThemes.map((theme, i) => (
             <div key={i} className="saved-theme-item">
               <span className="saved-theme-num">{i + 1}.</span>
@@ -13,7 +15,7 @@ export default function SaveThemeArea({ themeInput, setThemeInput, onSave, savin
         </div>
       )}
 
-      <p className="save-theme-label">💡 テーマが思いついたら保存しよう！</p>
+      <p className="save-theme-label">💡 <Ruby>{"テーマが思[おも]いついたら保存[ほぞん]しよう！"}</Ruby></p>
       <div className="save-theme-row">
         <input
           type="text"
@@ -28,7 +30,7 @@ export default function SaveThemeArea({ themeInput, setThemeInput, onSave, savin
           onClick={onSave}
           disabled={saving || !themeInput.trim()}
         >
-          {saving ? '保存中…' : '📝 保存'}
+          {saving ? <Ruby>{'保存中[ほぞんちゅう]…'}</Ruby> : <>📝 <Ruby>{'保存[ほぞん]'}</Ruby></>}
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { getMethodTypeById } from "../data/methodTypes";
 import { TASK_TYPES, getTaskTypeById } from "../data/taskTypes";
 import { apiGet, apiPost } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
+import Ruby from "./Ruby";
 
 const DRAFT_LIMIT = 3;
 
@@ -20,6 +21,7 @@ function formatEndDate(iso) {
 
 export default function ScheduleScreen({
   userId,
+  initialPlanView = "list",
   onBack,
   onNext,
 }) {
@@ -29,7 +31,7 @@ export default function ScheduleScreen({
   const [endDate, setEndDate] = useState("");
   const [workDays, setWorkDays] = useState("");
   const [tasks, setTasks] = useState([]);
-  const [planView, setPlanView] = useState("list"); // 'list' | 'calendar'
+  const [planView, setPlanView] = useState(initialPlanView); // 'list' | 'calendar'
   const [draftLoading, setDraftLoading] = useState(false);
   const [draftError, setDraftError] = useState("");
   const [draftCount, setDraftCount] = useState(0);
@@ -192,9 +194,9 @@ export default function ScheduleScreen({
     <div className="schedule-screen">
       <div className="screen-header">
         <button className="back-btn" onClick={onBack}>
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
-        <h2>🗓️ スケジュールを立てよう</h2>
+        <h2>🗓️ <Ruby>{"スケジュールを立[た]てよう"}</Ruby></h2>
       </div>
 
       <div className="schedule-content">
@@ -277,7 +279,7 @@ export default function ScheduleScreen({
                 : `🤖 AIにたたき台をつくってもらう (残り${Math.max(draftsLeft, 0)}/${DRAFT_LIMIT}回)`}
             </button>
             <button className="sch-secondary-btn" onClick={handleWriteMyself}>
-              ✏️ 自分で書く(空の行を追加)
+              ✏️ <Ruby>{"自分[じぶん]で書[か]く(空[から]の行[ぎょう]を追加[ついか])"}</Ruby>
             </button>
           </>
         )}
@@ -381,7 +383,7 @@ export default function ScheduleScreen({
 
             {planView === "list" && (
               <button className="sch-add-row-btn" onClick={addRow}>
-                ＋ タスクを追加
+                ＋ タスクを<Ruby>{"追加[ついか]"}</Ruby>
               </button>
             )}
 
@@ -412,7 +414,7 @@ export default function ScheduleScreen({
               onClick={handleSave}
               disabled={saving || savingOnly}
             >
-              {saving ? "保存中…" : "ほぞんして つぎへ →"}
+              {saving ? <Ruby>{"保存中[ほぞんちゅう]…"}</Ruby> : "ほぞんして つぎへ →"}
             </button>
           </>
         )}

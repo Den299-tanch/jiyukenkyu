@@ -1,3 +1,5 @@
+import Ruby from './Ruby';
+
 export default function InputForm({ input, setInput, onSend, disabled }) {
   function handleKeyDown(e) {
     if (e.key === 'Enter' && !disabled) {
@@ -21,7 +23,7 @@ export default function InputForm({ input, setInput, onSend, disabled }) {
         onClick={onSend}
         disabled={disabled}
       >
-        送信
+        <Ruby>{'送信[そうしん]'}</Ruby>
       </button>
     </div>
   );

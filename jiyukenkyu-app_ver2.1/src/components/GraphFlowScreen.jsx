@@ -11,6 +11,7 @@ import {
   xAxisDisplayName,
 } from "../data/graphBuild";
 import { layer1Checks } from "../data/graphSafety";
+import Ruby from "./Ruby";
 
 const ASK_LIMIT = 3; // 層2(任意で聞く)の回数上限(コスト対策)
 
@@ -307,9 +308,9 @@ export default function GraphFlowScreen({ records, theme, hypothesis, onExit, on
             else setStep(usesAxisPick ? "axes" : "choose");
           }}
         >
-          ← 戻る
+          ← <Ruby>{"戻[もど]る"}</Ruby>
         </button>
-        <h2>📊 グラフを作ろう</h2>
+        <h2>📊 <Ruby>{"グラフを作[つく]ろう"}</Ruby></h2>
       </div>
 
       <div className="record-content">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Ruby, { stripRuby } from './Ruby';
 
 // つかいかたガイドの中身。
 // 今後アプリの機能(グラフ機能の採否など)が変わっても古くならないよう、
@@ -7,55 +8,55 @@ import { useState } from 'react';
 const GUIDE_SLIDES = [
   {
     emoji: '🔬',
-    title: '自由研究をはじめよう',
+    title: '自由研究[じゆうけんきゅう]をはじめよう',
     body: 'このアプリは、自由研究をじゅんばんに進めるお手伝いをします。\n答えをそのまま出すのではなく、自分で考えるためのヒントを出します。\n\n最初から全部を完成させなくても大丈夫。\n気になることを見つけて、予想して、調べて、記録して、さいごにまとめていこう。',
     imageUrl: null,
   },
   {
     emoji: '💡',
-    title: '① テーマを決める',
+    title: '① テーマを決[き]める',
     body: '何について調べたいかを決めます。',
     imageUrl: null,
   },
   {
     emoji: '🔮',
-    title: '② 予想を立てる',
+    title: '② 予想[よそう]を立[た]てる',
     body: '「こうなるかもしれない」と考えてみます。\n正解しなくても大丈夫。',
     imageUrl: null,
   },
   {
     emoji: '🔍',
-    title: '③ 調べ方を考える',
+    title: '③ 調[しら]べ方[かた]を考[かんが]える',
     body: 'どうすれば予想をたしかめられるかを考えます。',
     imageUrl: null,
   },
   {
     emoji: '🗓️',
-    title: '④ 予定を立てる',
+    title: '④ 予定[よてい]を立[た]てる',
     body: 'いつ、何をするかを決めます。',
     imageUrl: null,
   },
   {
     emoji: '📝',
-    title: '⑤ 記録をつける',
+    title: '⑤ 記録[きろく]をつける',
     body: '見たこと、数えたこと、気づいたことを書きます。\nうまくいかなかったことも大切な記録だよ。',
     imageUrl: null,
   },
   {
     emoji: '🔎',
-    title: '⑥ 記録を見くらべる',
+    title: '⑥ 記録[きろく]を見[み]くらべる',
     body: '記録を見返して、変わったところや気づいたことをさがします。',
     imageUrl: null,
   },
   {
     emoji: '🤔',
-    title: '⑦ 考えたことを書く',
+    title: '⑦ 考[かんが]えたことを書[か]く',
     body: '結果を見て、どうしてそうなったのかを考えます。',
     imageUrl: null,
   },
   {
     emoji: '🎉',
-    title: '⑧ まとめを作る',
+    title: '⑧ まとめを作[つく]る',
     body: '研究したことを、さいごにわかりやすくまとめます。',
     imageUrl: null,
   },
@@ -74,13 +75,13 @@ export default function GuideOverlay({ onClose }) {
 
         <div className="guide-visual">
           {slide.imageUrl ? (
-            <img src={slide.imageUrl} alt={slide.title} className="guide-image" />
+            <img src={slide.imageUrl} alt={stripRuby(slide.title)} className="guide-image" />
           ) : (
             <div className="guide-emoji">{slide.emoji}</div>
           )}
         </div>
 
-        <h3 className="guide-title">{slide.title}</h3>
+        <h3 className="guide-title"><Ruby>{slide.title}</Ruby></h3>
         <p className="guide-body">{slide.body}</p>
 
         <div className="guide-dots">

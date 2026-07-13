@@ -19,6 +19,7 @@ import ConsiderationScreen from './components/ConsiderationScreen';
 import SummaryScreen from './components/SummaryScreen';
 import GuideOverlay from './components/GuideOverlay';
 import RocketProgress from './components/RocketProgress';
+import Ruby from './components/Ruby';
 import { getFlowStepIndex, FLOW_STEPS, pickResearchLandingScreen } from './flowSteps';
 
 
@@ -36,6 +37,10 @@ export default function App() {
   const [screen, setScreen] = useState('title');
   const [showGuide, setShowGuide] = useState(false);
   const [showContinueModal, setShowContinueModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  // 「🗓️ よていをみる」経由でschedule画面に入るときだけ 'calendar' にする一回きりのフラグ。
+  // 他の入り口(研究方法の次へ・つづきから・リロード復元)は必ず 'list' に戻す。
+  const [scheduleInitialView, setScheduleInitialView] = useState('list');
 
   // userId はアプリ内では常に number(または未入力なら null)として統一して扱う。
   // ログイントークンと寿命を合わせるため localStorage に保存する(タブを閉じても
@@ -101,6 +106,7 @@ export default function App() {
           hypothesis: data.hypothesis,
           researchMethods: data.researchMethods,
         });
+        setScheduleInitialView('list');
         const savedScreen = sessionStorage.getItem('screen');
         setScreen(RESTORABLE_SCREENS.includes(savedScreen) ? savedScreen : 'schedule');
       } catch {
@@ -234,6 +240,40 @@ export default function App() {
     setUserId(null);
   }
 
+  // 研究(仮説)データを1件取り込んで、よていのカレンダービューへ直接進む。
+  async function openScheduleCalendarFor(hypothesisId) {
+    const data = await apiGet(`/api/research/${hypothesisId}`);
+    if (!data.success) throw new Error(data.error);
+    setResearch({
+      theme: data.theme,
+      hypothesis: data.hypothesis,
+      researchMethods: data.researchMethods,
+    });
+    setScheduleInitialView('calendar');
+    setScreen('schedule');
+  }
+
+  // TitleScreenの「🗓️ よていをみる」から呼ばれる。仮説が1件ならそのまま
+  // よていへ、2件以上なら(仮説軸が複数あるので)モーダルで選ばせる。
+  async function handleScheduleShortcut() {
+    try {
+      const data = await apiGet('/api/hypotheses');
+      if (!data.success) throw new Error(data.error);
+      const list = data.hypotheses ?? [];
+      if (list.length === 0) {
+        alert('まだよていを立てられる研究がないよ。テーマと仮説を決めてから、もう一度きてね！');
+        return;
+      }
+      if (list.length === 1) {
+        await openScheduleCalendarFor(list[0].id);
+        return;
+      }
+      setShowScheduleModal(true);
+    } catch (err) {
+      alert('よていの読み込みに失敗しました: ' + err.message);
+    }
+  }
+
   async function handleSaveTheme() {
     const theme = themeInput.trim();
     if (!theme) return;
@@ -284,10 +324,28 @@ export default function App() {
               hypothesis: data.hypothesis,
               researchMethods: data.researchMethods,
             });
+            setScheduleInitialView('list');
             // どこまで進んでいるかをDBの中身(schedule/consideration/report)から
             // 判定し、続きの画面に直接飛ぶ(選んでも何も起きない、を防ぐ)。
             setScreen(pickResearchLandingScreen(data));
             setShowContinueModal(false);
+          }}
+        />
+      )}
+
+      {showScheduleModal && (
+        <ContinueResearchModal
+          title="🗓️ どのよていを見[み]る？"
+          onClose={() => setShowScheduleModal(false)}
+          onSelect={(data) => {
+            setResearch({
+              theme: data.theme,
+              hypothesis: data.hypothesis,
+              researchMethods: data.researchMethods,
+            });
+            setScheduleInitialView('calendar');
+            setScreen('schedule');
+            setShowScheduleModal(false);
           }}
         />
       )}
@@ -297,6 +355,7 @@ export default function App() {
           onDict={() => setScreen('dict-category')}
           onChat={() => setScreen('chat-category')}
           onContinue={() => setShowContinueModal(true)}
+          onSchedule={handleScheduleShortcut}
           onGuide={() => setShowGuide(true)}
           onLogout={handleLogout}
         />
@@ -324,8 +383,8 @@ export default function App() {
       {screen === 'chat' && (
         <>
           <div className="screen-header">
-            <button className="back-btn" onClick={() => setScreen('chat-category')}>← 戻る</button>
-            <h2>🔬 {category?.label} のテーマを考えよう</h2>
+            <button className="back-btn" onClick={() => setScreen('chat-category')}>← <Ruby>{"戻[もど]る"}</Ruby></button>
+            <h2>🔬 {category?.label} の<Ruby>{"テーマを考[かんが]えよう"}</Ruby></h2>
           </div>
           <ChatBox
             messages={messages}
@@ -388,6 +447,7 @@ export default function App() {
           onBack={() => setScreen('hypothesis')}
           onNext={(context) => {
             setResearch((prev) => ({ theme: prev?.theme, ...context }));
+            setScheduleInitialView('list');
             setScreen('schedule');
           }}
         />
@@ -396,6 +456,7 @@ export default function App() {
       {screen === 'schedule' && (
         <ScheduleScreen
           userId={userId}
+          initialPlanView={scheduleInitialView}
           onBack={() => setScreen('research-method')}
           onNext={() => {
             // スケジュール保存後は STEP5(記録パート)へ
