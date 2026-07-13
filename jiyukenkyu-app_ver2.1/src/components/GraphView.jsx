@@ -54,6 +54,29 @@ function axisSeriesCompat(entries, xAxis, yLabel) {
   return { data, axisLabel: xName, yAxisLabel: yName };
 }
 
+// 軸えらびの組み合わせでは点が1つも作れなかったとき(ペアが無い等)の説明。
+// 空のグラフを黙って見せると子どもは何が起きたか分からないため、理由と直し方を伝える。
+function EmptyAxisNotice({ xAxis, yLabel, compact }) {
+  if (compact) {
+    return <p className="graph-empty">点が作れなかったグラフだよ</p>;
+  }
+  if (xAxis?.kind === "label") {
+    return (
+      <p className="graph-empty">
+        「{xAxis.label}」と「{yLabel}」を同じときにはかった記録が見つからなかったよ。
+        <br />
+        このじくの組み合わせは、1つの記録に2つの数字が入っているときに使えるよ。
+        じくをえらびなおしてみてね。
+      </p>
+    );
+  }
+  return (
+    <p className="graph-empty">
+      この組み合わせだと、グラフにできる数字が無かったよ。じくをえらびなおしてみてね。
+    </p>
+  );
+}
+
 // 選んだ数字(entries)を、えらんだ種類(type)で必ず描く。
 // 理想形でないデータでも代用ルールで機械的に描画する。
 // xAxis + yLabel: 軸えらび(再設計後)。子どもが選んだヨコ軸とタテ軸のラベル。
@@ -74,6 +97,9 @@ export default function GraphView({ type, entries, xAxis, yLabel, xAxisLabel, co
         ? axisSeriesCompat(entries, xAxis, yLabel)
         : seriesForAxis(entries, xAxisLabel);
     const data = isHist ? buildHistogramData(entries) : series.data;
+    if (!isHist && hasAxisPick && data.length === 0) {
+      return <EmptyAxisNotice xAxis={xAxis} yLabel={yLabel} compact={compact} />;
+    }
     const xLabel = isHist ? (entries[0]?.label ?? "数字") : series.axisLabel;
     const yLabel_ = isHist ? "件数" : series.yAxisLabel;
     return (
@@ -104,6 +130,9 @@ export default function GraphView({ type, entries, xAxis, yLabel, xAxisLabel, co
     const { data, axisLabel, yAxisLabel } = hasAxisPick
       ? axisSeriesCompat(entries, xAxis, yLabel)
       : seriesForAxis(entries, xAxisLabel);
+    if (hasAxisPick && data.length === 0) {
+      return <EmptyAxisNotice xAxis={xAxis} yLabel={yLabel} compact={compact} />;
+    }
     return (
       <ResponsiveContainer width="100%" height={compact ? 130 : 260}>
         <LineChart data={data} margin={{ top: 10, right: 12, left: compact ? 0 : 12, bottom: compact ? 6 : 24 }}>
@@ -159,6 +188,9 @@ export default function GraphView({ type, entries, xAxis, yLabel, xAxisLabel, co
     const { points, xName, yName } = hasAxisPick
       ? buildAxisScatter(entries, xAxis, yLabel)
       : buildScatterData(entries);
+    if (hasAxisPick && points.length === 0) {
+      return <EmptyAxisNotice xAxis={xAxis} yLabel={yLabel} compact={compact} />;
+    }
     return (
       <ResponsiveContainer width="100%" height={compact ? 130 : 260}>
         <ScatterChart margin={{ top: 10, right: 16, left: compact ? 0 : 12, bottom: compact ? 6 : 16 }}>

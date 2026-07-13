@@ -162,7 +162,14 @@ export function recommendXAxis(entries, yLabel) {
   const others = [...new Set(entries.map((e) => e.label))].filter(
     (l) => l !== yLabel,
   );
-  if (others.length === 1) return { kind: "label", label: others[0] };
+  // 「〜の値」を推すのは、実際にペアが2つ以上作れるときだけ。
+  // ラベルが2種類あっても同じ記録に入っていなければペアは作れず、空のグラフになってしまう。
+  if (
+    others.length === 1 &&
+    pairByRecord(entries, others[0], yLabel).length >= 2
+  ) {
+    return { kind: "label", label: others[0] };
+  }
   const yEntries = entries.filter((e) => e.label === yLabel);
   const dates = yEntries.map((e) => shortDate(e.date)).filter((d) => d !== "");
   const uniqueDates = new Set(dates);
@@ -174,12 +181,17 @@ export function recommendXAxis(entries, yLabel) {
 
 // グラフ選択画面で「これが良さそう」を軽くおすすめするためのヒューリスティック。
 // 強制ではなく目安なので、シンプルな基準にしている:
-// ・ラベルが2種類 → 2つの数字の関係を見るのに向いた散布図
+// ・ラベルが2種類で、実際にペアが2つ以上作れる → 関係を見るのに向いた散布図
 // ・ラベルが1種類で、日づけが3日以上ばらけている → 時間の変化を見る折れ線
 // ・それ以外 → シンプルな比較の棒グラフ
 export function recommendGraphType(entries) {
   const labels = [...new Set(entries.map((e) => e.label))];
-  if (labels.length === 2) return "scatter";
+  if (
+    labels.length === 2 &&
+    pairByRecord(entries, labels[0], labels[1]).length >= 2
+  ) {
+    return "scatter";
+  }
   if (labels.length === 1) {
     const dates = new Set(
       entries.map((e) => shortDate(e.date)).filter((d) => d !== ""),
