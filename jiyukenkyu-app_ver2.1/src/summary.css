@@ -483,6 +483,181 @@
 }
 .admin-row-btn:hover { background: #f05555; }
 
+/* まとめ一覧/ユーザー管理の切り替えタブ */
+.admin-tabs {
+  max-width: 760px;
+  margin: 0 auto 16px;
+  display: flex;
+  gap: 8px;
+}
+.admin-tab {
+  flex: 1;
+  background: #fffdf7;
+  border: 2px solid #e4dfc9;
+  border-radius: 13px;
+  padding: 10px;
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  color: #5b6b85;
+  cursor: pointer;
+}
+.admin-tab.active {
+  background: #2ec4b6;
+  border-color: #2ec4b6;
+  color: #fff;
+  box-shadow: 0 4px 0 #1f9a8f;
+}
+
+/* 進捗ダッシュボード */
+.admin-list-wide { max-width: 900px; }
+.admin-progress-table { table-layout: fixed; }
+.admin-progress-table .admin-num { width: 76px; }
+.admin-progress-th { text-align: center !important; }
+.admin-progress-cell {
+  text-align: center;
+  font-weight: 700;
+  color: #1b3358;
+}
+.admin-progress-cell.zero { color: #cfd6e0; font-weight: 400; }
+.admin-stale-row { background: #fff6ec; }
+.admin-stale-mark { font-size: 13px; }
+
+/* AIヒント使用状況 */
+.admin-kind-chip {
+  display: inline-block;
+  background: #eef3ff;
+  border: 1.5px solid #b9c9ef;
+  color: #3b5db3;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.admin-context-label {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+.admin-usage-count { font-weight: 700; white-space: nowrap; }
+.admin-usage-count.maxed { color: #d84f4f; }
+.admin-bonus-note {
+  font-size: 11px;
+  color: #1f9a8f;
+  font-weight: 700;
+  margin-left: 4px;
+}
+.admin-grant-btn {
+  background: #2ec4b6;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 #1f9a8f;
+}
+.admin-grant-btn:hover { background: #29b0a3; }
+.admin-grant-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+/* ユーザー管理(PINリセット) */
+.admin-reset-notice {
+  background: #e8f7ec;
+  border: 2px solid #58c27d;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 12px;
+  color: #1e7a41;
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 51, 88, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+}
+.admin-modal-card {
+  width: 340px;
+  max-width: 100%;
+  background: #fffdf7;
+  border: 2px solid #e4dfc9;
+  border-radius: 22px;
+  padding: 26px 22px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(27, 51, 88, 0.25);
+}
+.admin-modal-emoji { font-size: 34px; margin-bottom: 6px; }
+.admin-modal-title {
+  font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+.admin-modal-text {
+  font-size: 12px;
+  color: #5b6b85;
+  line-height: 1.8;
+  margin: 0 0 10px;
+}
+.admin-modal-input {
+  width: 120px;
+  border: 2.5px solid #e4dfc9;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 20px;
+  text-align: center;
+  padding: 10px;
+  color: #1b3358;
+  font-family: inherit;
+}
+.admin-modal-input:focus { outline: none; border-color: #ff6b6b; }
+.admin-modal-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.admin-modal-cancel-btn {
+  flex: 1;
+  background: #fff;
+  border: 2px solid #e4dfc9;
+  border-radius: 13px;
+  padding: 11px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  color: #5b6b85;
+  cursor: pointer;
+}
+.admin-modal-danger-btn {
+  flex: 1;
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 13px;
+  padding: 11px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 4px 0 #d84f4f;
+  cursor: pointer;
+}
+.admin-modal-danger-btn:disabled,
+.admin-modal-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* ③ PDF化 */
 .admin-pdf { max-width: 720px; margin: 0 auto; }
 .admin-pdf-bar {

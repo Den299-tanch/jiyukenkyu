@@ -123,6 +123,73 @@ app.post('/api/auth', async (req, res) => {
   }
 });
 
+// ===== AIヒント/たたき台の使用回数管理 =====
+// フロントの表示用カウントは信用せず、ここで消費・上限判定する。
+// 「どの研究のどの機能か」を (user_id, kind, context_id) の1行で数える。
+const AI_USE_LIMIT = 4;
+const AI_USE_KINDS = new Set([
+  'hypothesis_hint',    // 仮説パートのヒント(context_id = theme_id)
+  'rm_what_to_study',   // 研究方法「何を調べる」のヒント(context_id = hypothesis_id)
+  'rm_tools_materials', // 研究方法「道具・材料」のヒント(context_id = hypothesis_id)
+  'schedule_draft',     // スケジュールのたたき台(context_id = hypothesis_id)
+]);
+
+// 使用枠を1つ消費する。上限に達していたら消費せず null を返す。
+// 上限は「共通の上限 + その子への追加付与(bonus)」。
+// INSERT ... ON CONFLICT の1文で行うため、同時リクエストでも数え漏れしない。
+async function consumeAiUse(userId, kind, contextId) {
+  const result = await pool.query(
+    `INSERT INTO ai_usage (user_id, kind, context_id, used)
+     VALUES ($1, $2, $3, 1)
+     ON CONFLICT (user_id, kind, context_id)
+     DO UPDATE SET used = ai_usage.used + 1, updated_at = now()
+     WHERE ai_usage.used < $4 + ai_usage.bonus
+     RETURNING used, bonus`,
+    [userId, kind, contextId, AI_USE_LIMIT],
+  );
+  if (result.rowCount === 0) return null;
+  const { used, bonus } = result.rows[0];
+  return { used, limit: AI_USE_LIMIT + bonus };
+}
+
+// 現在の使用状況(表示用)。まだ1回も使っていなければ used=0 のデフォルトを返す
+async function getAiUse(userId, kind, contextId) {
+  const result = await pool.query(
+    'SELECT used, bonus FROM ai_usage WHERE user_id = $1 AND kind = $2 AND context_id = $3',
+    [userId, kind, contextId],
+  );
+  const row = result.rows[0];
+  return { used: row?.used ?? 0, limit: AI_USE_LIMIT + (row?.bonus ?? 0) };
+}
+
+// AI呼び出しに失敗したときに枠を返す(子どものせいではないので減らさない)
+async function refundAiUse(userId, kind, contextId) {
+  try {
+    await pool.query(
+      'UPDATE ai_usage SET used = GREATEST(used - 1, 0) WHERE user_id = $1 AND kind = $2 AND context_id = $3',
+      [userId, kind, contextId],
+    );
+  } catch (err) {
+    console.error('Refund AI use error:', err);
+  }
+}
+
+// 画面を開いたときに「残り何回か」を復元するための取得エンドポイント
+app.get('/api/ai-usage/:kind/:contextId', requireAuth, async (req, res) => {
+  try {
+    const { kind } = req.params;
+    const ctxId = parseInt(req.params.contextId, 10);
+    if (!AI_USE_KINDS.has(kind) || !Number.isFinite(ctxId)) {
+      return res.status(400).json({ success: false, error: 'invalid kind or contextId' });
+    }
+    const use = await getAiUse(req.userId, kind, ctxId);
+    res.json({ success: true, ...use });
+  } catch (err) {
+    console.error('Get AI usage error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // カテゴリごとのシステムプロンプト
 const PROMPTS = {
   'theme-biology':   '生き物や植物に関する自由研究のテーマを一緒に考えます。',
@@ -280,10 +347,28 @@ app.post('/api/save-hypothesis', requireAuth, async (req, res) => {
   }
 });
 
-// 仮説パートのAIヒント(単発、会話履歴なし)
-app.post('/api/hypothesis-hint', async (req, res) => {
+// 仮説パートのAIヒント(単発、会話履歴なし)。
+// 使用回数はテーマ単位でDBに記録し、画面を戻っても復活しないようにする。
+app.post('/api/hypothesis-hint', requireAuth, async (req, res) => {
+  let consumed = false;
+  const { category, research_note, previous_hints, theme_id } = req.body;
+  const ctxId = parseInt(theme_id, 10);
   try {
-    const { category, research_note, previous_hints } = req.body;
+    if (!Number.isFinite(ctxId)) {
+      return res.status(400).json({ success: false, error: 'theme_id が必要です' });
+    }
+    const use = await consumeAiUse(req.userId, 'hypothesis_hint', ctxId);
+    if (use === null) {
+      const cur = await getAiUse(req.userId, 'hypothesis_hint', ctxId);
+      return res.status(429).json({
+        success: false,
+        limit_reached: true,
+        ...cur,
+        error: 'ヒントはもう使いきったよ',
+      });
+    }
+    consumed = true;
+
     const modePrompt = PROMPTS[category] ?? '';
     const systemPrompt = modePrompt
       ? `${modePrompt}\n\n${HYPOTHESIS_HINT_SYSTEM}`
@@ -315,9 +400,15 @@ app.post('/api/hypothesis-hint', async (req, res) => {
     });
 
     const data = await response.json();
-    res.json(data);
+    // AI側のエラーで中身が返らなかったときは、使った枠を返してあげる
+    if (!data.content) {
+      await refundAiUse(req.userId, 'hypothesis_hint', ctxId);
+      return res.json(data);
+    }
+    res.json({ ...data, ai_usage: use });
   } catch (err) {
     console.error('Hypothesis hint error:', err);
+    if (consumed) await refundAiUse(req.userId, 'hypothesis_hint', ctxId);
     res.status(500).json({ error: err.message });
   }
 });
@@ -407,10 +498,29 @@ app.get('/api/research-methods', requireAuth, async (req, res) => {
   }
 });
 
-// 研究方法パートのAIヒント(単発、field で「何を調べる」/「道具・材料」を切り替え)
-app.post('/api/research-method-hint', async (req, res) => {
+// 研究方法パートのAIヒント(単発、field で「何を調べる」/「道具・材料」を切り替え)。
+// 使用回数は仮説×フィールド単位でDBに記録し、画面を戻っても復活しないようにする。
+app.post('/api/research-method-hint', requireAuth, async (req, res) => {
+  let consumed = false;
+  const { category, field, theme_title, hypothesis, current_text, previous_hints, hypothesis_id } = req.body;
+  const kind = field === 'tools_materials' ? 'rm_tools_materials' : 'rm_what_to_study';
+  const ctxId = parseInt(hypothesis_id, 10);
   try {
-    const { category, field, theme_title, hypothesis, current_text, previous_hints } = req.body;
+    if (!Number.isFinite(ctxId)) {
+      return res.status(400).json({ success: false, error: 'hypothesis_id が必要です' });
+    }
+    const use = await consumeAiUse(req.userId, kind, ctxId);
+    if (use === null) {
+      const cur = await getAiUse(req.userId, kind, ctxId);
+      return res.status(429).json({
+        success: false,
+        limit_reached: true,
+        ...cur,
+        error: 'ヒントはもう使いきったよ',
+      });
+    }
+    consumed = true;
+
     const modePrompt = PROMPTS[category] ?? '';
     const hintSystem =
       RESEARCH_METHOD_HINT_SYSTEM[field] ?? RESEARCH_METHOD_HINT_SYSTEM.what_to_study;
@@ -448,24 +558,48 @@ app.post('/api/research-method-hint', async (req, res) => {
     });
 
     const data = await response.json();
-    res.json(data);
+    // AI側のエラーで中身が返らなかったときは、使った枠を返してあげる
+    if (!data.content) {
+      await refundAiUse(req.userId, kind, ctxId);
+      return res.json(data);
+    }
+    res.json({ ...data, ai_usage: use });
   } catch (err) {
     console.error('Research method hint error:', err);
+    if (consumed) await refundAiUse(req.userId, kind, ctxId);
     res.status(500).json({ error: err.message });
   }
 });
 
-// スケジュールのAIたたき台生成(単発、DBには保存しない。フロントがそのまま編集して保存する)
-app.post('/api/schedule-draft', async (req, res) => {
+// スケジュールのAIたたき台生成(単発、DBには保存しない。フロントがそのまま編集して保存する)。
+// 使用回数は仮説単位でDBに記録し、画面を戻っても復活しないようにする。
+app.post('/api/schedule-draft', requireAuth, async (req, res) => {
+  let consumed = false;
+  const {
+    theme_title,
+    hypothesis,
+    hypothesis_id,
+    research_methods,
+    end_date,
+    work_days,
+    previous_tasks,
+  } = req.body;
+  const ctxId = parseInt(hypothesis_id, 10);
   try {
-    const {
-      theme_title,
-      hypothesis,
-      research_methods,
-      end_date,
-      work_days,
-      previous_tasks,
-    } = req.body;
+    if (!Number.isFinite(ctxId)) {
+      return res.status(400).json({ success: false, error: 'hypothesis_id が必要です' });
+    }
+    const use = await consumeAiUse(req.userId, 'schedule_draft', ctxId);
+    if (use === null) {
+      const cur = await getAiUse(req.userId, 'schedule_draft', ctxId);
+      return res.status(429).json({
+        success: false,
+        limit_reached: true,
+        ...cur,
+        error: 'AIのたたき台はもう使いきったよ',
+      });
+    }
+    consumed = true;
 
     let userText = `テーマ: ${theme_title}\nこの子の予想: 「${hypothesis}」\n\n`;
     (research_methods ?? []).forEach((rm, i) => {
@@ -501,9 +635,15 @@ app.post('/api/schedule-draft', async (req, res) => {
     });
 
     const data = await response.json();
-    res.json(data);
+    // AI側のエラーで中身が返らなかったときは、使った枠を返してあげる
+    if (!data.content) {
+      await refundAiUse(req.userId, 'schedule_draft', ctxId);
+      return res.json(data);
+    }
+    res.json({ ...data, ai_usage: use });
   } catch (err) {
     console.error('Schedule draft error:', err);
+    if (consumed) await refundAiUse(req.userId, 'schedule_draft', ctxId);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1088,20 +1228,26 @@ app.get('/api/research/:hypothesisId', requireAuth, async (req, res) => {
 // (デフォルト値で不用意に入れてしまう事故を防ぐフェイルクローズ)。
 const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE;
 
+// 管理者パスコードの照合。通らないときはここでレスポンスを返し false を返す。
+// 環境変数が未設定のときは、どんなパスコードでも通さない(フェイルクローズ)。
+function adminAuthorized(req, res) {
+  if (!ADMIN_PASSCODE) {
+    res.status(503).json({ success: false, error: '管理者モードはまだ設定されていません' });
+    return false;
+  }
+  const { passcode } = req.body;
+  if (!passcode || String(passcode) !== String(ADMIN_PASSCODE)) {
+    res.status(401).json({ success: false, error: 'ちがうパスコードです' });
+    return false;
+  }
+  return true;
+}
+
 // 管理者用: パスコードを照合し、全員分のまとめを一覧で返す。
 // GET だとURLやログにパスコードが残るので、必ず POST の body で受け取る。
 app.post('/api/admin/reports', async (req, res) => {
   try {
-    const { passcode } = req.body;
-    // 環境変数が未設定のときは、どんなパスコードでも通さない
-    if (!ADMIN_PASSCODE) {
-      return res
-        .status(503)
-        .json({ success: false, error: '管理者モードはまだ設定されていません' });
-    }
-    if (!passcode || String(passcode) !== String(ADMIN_PASSCODE)) {
-      return res.status(401).json({ success: false, error: 'ちがうパスコードです' });
-    }
+    if (!adminAuthorized(req, res)) return;
     const result = await pool.query(
       `SELECT r.id, r.user_id, h.theme_id, r.hypothesis_id, r.report_data, r.created_at, r.updated_at
        FROM reports r
@@ -1115,21 +1261,122 @@ app.post('/api/admin/reports', async (req, res) => {
   }
 });
 
+// 管理者用: 登録済みユーザー(番号)の一覧。PINリセット前に
+// 「その番号が本当に登録されているか・データを持っているか」を確認するためのもの。
+app.post('/api/admin/users', async (req, res) => {
+  try {
+    if (!adminAuthorized(req, res)) return;
+    const result = await pool.query(
+      `SELECT u.id, u.created_at,
+              (SELECT COUNT(*)::int FROM themes t WHERE t.user_id = u.id) AS theme_count
+       FROM users u
+       ORDER BY u.id ASC`,
+    );
+    res.json({ success: true, users: result.rows });
+  } catch (err) {
+    console.error('Admin users error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 管理者用: 全員分の進捗ダッシュボード。
+// 各ステップのデータ件数と最終活動日時を番号ごとに集計して返す。
+// 「登録済みだがデータなし」も「PINリセット後でusersに行がないがデータあり」も
+// 両方拾えるよう、users と themes の番号を合わせた集合を対象にする。
+app.post('/api/admin/progress', async (req, res) => {
+  try {
+    if (!adminAuthorized(req, res)) return;
+    const result = await pool.query(
+      `WITH ids AS (
+         SELECT id FROM users
+         UNION
+         SELECT DISTINCT user_id FROM themes WHERE user_id IS NOT NULL
+       )
+       SELECT i.id,
+         (SELECT COUNT(*)::int FROM themes t WHERE t.user_id = i.id)           AS themes,
+         (SELECT COUNT(*)::int FROM hypotheses h WHERE h.user_id = i.id)       AS hypotheses,
+         (SELECT COUNT(*)::int FROM research_methods rm WHERE rm.user_id = i.id) AS methods,
+         (SELECT COUNT(*)::int FROM schedules s WHERE s.user_id = i.id)        AS schedules,
+         (SELECT COUNT(*)::int FROM records r WHERE r.user_id = i.id)          AS records,
+         (SELECT COUNT(*)::int FROM graphs g WHERE g.user_id = i.id)           AS graphs,
+         (SELECT COUNT(*)::int FROM considerations c WHERE c.user_id = i.id)   AS considerations,
+         (SELECT COUNT(*)::int FROM reports rp WHERE rp.user_id = i.id)        AS reports,
+         GREATEST(
+           (SELECT MAX(created_at) FROM themes t WHERE t.user_id = i.id),
+           (SELECT MAX(created_at) FROM hypotheses h WHERE h.user_id = i.id),
+           (SELECT MAX(created_at) FROM research_methods rm WHERE rm.user_id = i.id),
+           (SELECT MAX(updated_at) FROM schedules s WHERE s.user_id = i.id),
+           (SELECT MAX(created_at) FROM records r WHERE r.user_id = i.id),
+           (SELECT MAX(created_at) FROM graphs g WHERE g.user_id = i.id),
+           (SELECT MAX(updated_at) FROM considerations c WHERE c.user_id = i.id),
+           (SELECT MAX(updated_at) FROM reports rp WHERE rp.user_id = i.id)
+         ) AS last_activity
+       FROM ids i
+       ORDER BY i.id ASC`,
+    );
+    res.json({ success: true, progress: result.rows });
+  } catch (err) {
+    console.error('Admin progress error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 管理者用: AIヒント/たたき台の使用状況一覧。
+// どの研究かが分かるよう、context_id からテーマ名/仮説文を引いて添える。
+app.post('/api/admin/ai-usage', async (req, res) => {
+  try {
+    if (!adminAuthorized(req, res)) return;
+    const result = await pool.query(
+      `SELECT a.user_id, a.kind, a.context_id, a.used, a.bonus, a.updated_at,
+         CASE WHEN a.kind = 'hypothesis_hint'
+              THEN (SELECT theme FROM themes t WHERE t.id = a.context_id)
+              ELSE (SELECT hypothesis FROM hypotheses h WHERE h.id = a.context_id)
+         END AS context_label
+       FROM ai_usage a
+       ORDER BY a.user_id ASC, a.kind ASC, a.context_id ASC`,
+    );
+    res.json({ success: true, usage: result.rows, limit: AI_USE_LIMIT });
+  } catch (err) {
+    console.error('Admin AI usage error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 管理者用: AIヒントの回数を追加付与する(bonus を +1)。
+// used は「実際に使った回数」の記録なので触らず、上限側を積み増す。
+app.post('/api/admin/grant-ai-use', async (req, res) => {
+  try {
+    if (!adminAuthorized(req, res)) return;
+    const uid = toUserId(req.body.user_id);
+    const { kind } = req.body;
+    const ctxId = parseInt(req.body.context_id, 10);
+    if (!uid || !AI_USE_KINDS.has(kind) || !Number.isFinite(ctxId)) {
+      return res.status(400).json({ success: false, error: 'invalid user_id / kind / context_id' });
+    }
+    const result = await pool.query(
+      `UPDATE ai_usage SET bonus = bonus + 1, updated_at = now()
+       WHERE user_id = $1 AND kind = $2 AND context_id = $3
+       RETURNING used, bonus`,
+      [uid, kind, ctxId],
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'この使用記録が見つかりません' });
+    }
+    const { used, bonus } = result.rows[0];
+    res.json({ success: true, used, bonus, limit: AI_USE_LIMIT });
+  } catch (err) {
+    console.error('Admin grant AI use error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 管理者用: 指定した番号のPIN登録情報をリセットする(PIN忘れの救済)。
 // usersの行ごと削除するだけなので、次回その番号を打つと「未登録」扱いになり
 // 新しいPINで登録し直せる(研究データはuser_idに紐づいたままなので消えない)。
 app.post('/api/admin/reset-user', async (req, res) => {
   try {
-    const { passcode, user_id } = req.body;
-    if (!ADMIN_PASSCODE) {
-      return res
-        .status(503)
-        .json({ success: false, error: '管理者モードはまだ設定されていません' });
-    }
-    if (!passcode || String(passcode) !== String(ADMIN_PASSCODE)) {
-      return res.status(401).json({ success: false, error: 'ちがうパスコードです' });
-    }
-    const uid = toUserId(user_id);
+    if (!adminAuthorized(req, res)) return;
+    const uid = toUserId(req.body.user_id);
     if (!uid) {
       return res.status(400).json({ success: false, error: 'invalid user_id' });
     }

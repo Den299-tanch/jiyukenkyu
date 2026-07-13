@@ -6,7 +6,8 @@ import { useResearch } from "../contexts/ResearchContext";
 import ConfirmModal from "./ConfirmModal";
 import Ruby from "./Ruby";
 
-const HINT_LIMIT = 3;
+// 基本の上限。先生が追加付与した子はサーバーがもっと大きい値を返してくる
+const HINT_LIMIT = 4;
 
 export default function ResearchMethodScreen({
   userId,
@@ -33,10 +34,12 @@ export default function ResearchMethodScreen({
 
   const [whatHintHistory, setWhatHintHistory] = useState([]);
   const [whatHintCount, setWhatHintCount] = useState(0);
+  const [whatHintLimit, setWhatHintLimit] = useState(HINT_LIMIT);
   const [whatHintLoading, setWhatHintLoading] = useState(false);
 
   const [toolsHintHistory, setToolsHintHistory] = useState([]);
   const [toolsHintCount, setToolsHintCount] = useState(0);
+  const [toolsHintLimit, setToolsHintLimit] = useState(HINT_LIMIT);
   const [toolsHintLoading, setToolsHintLoading] = useState(false);
 
   const [savedList, setSavedList] = useState([]); // この仮説で追加した研究方法の一覧
@@ -44,10 +47,11 @@ export default function ResearchMethodScreen({
   const [deleteTarget, setDeleteTarget] = useState(null); // 削除確認中の研究方法
   const [deleting, setDeleting] = useState(false);
 
-  const whatHintsLeft = HINT_LIMIT - whatHintCount;
-  const toolsHintsLeft = HINT_LIMIT - toolsHintCount;
+  const whatHintsLeft = whatHintLimit - whatHintCount;
+  const toolsHintsLeft = toolsHintLimit - toolsHintCount;
 
-  // 戻るボタンなどで再度この画面に来たとき、すでに保存済みの研究方法を読み込んで復元する
+  // 戻るボタンなどで再度この画面に来たとき、すでに保存済みの研究方法を読み込んで復元する。
+  // ヒントの使用回数もDBから復元する(画面を戻っても回数が復活しないように)。
   useEffect(() => {
     if (!userId || !selectedHypothesis?.id) return;
     async function fetchExisting() {
@@ -58,27 +62,52 @@ export default function ResearchMethodScreen({
       } catch {
         // 読み込みに失敗しても、新しく追加すること自体はできるので黙って無視
       }
+      try {
+        const [what, tools] = await Promise.all([
+          apiGet(`/api/ai-usage/rm_what_to_study/${selectedHypothesis.id}`),
+          apiGet(`/api/ai-usage/rm_tools_materials/${selectedHypothesis.id}`),
+        ]);
+        if (what.success) {
+          setWhatHintCount(what.used);
+          setWhatHintLimit(what.limit ?? HINT_LIMIT);
+        }
+        if (tools.success) {
+          setToolsHintCount(tools.used);
+          setToolsHintLimit(tools.limit ?? HINT_LIMIT);
+        }
+      } catch {
+        // 取得に失敗してもサーバー側で上限は守られるので黙って無視
+      }
     }
     fetchExisting();
   }, [userId, selectedHypothesis?.id]);
 
-  async function fetchHint(field, currentText, history, setHistory, setCount, setLoading) {
+  async function fetchHint(field, currentText, history, setHistory, setCount, setLimit, setLoading) {
     setLoading(true);
     try {
       const data = await apiPost('/api/research-method-hint', {
         category: cat?.mode,
         field,
+        hypothesis_id: selectedHypothesis?.id, // 使用回数は仮説×フィールド単位でサーバーが数える
         theme_title: theme?.theme,
         hypothesis: selectedHypothesis?.hypothesis,
         current_text: currentText,
         previous_hints: history,
       });
+      // サーバー側で上限に達していた場合は、表示のカウントを実際の値に合わせる
+      if (data.limit_reached) {
+        setCount(data.used);
+        setLimit(data.limit ?? HINT_LIMIT);
+        setLoading(false);
+        return;
+      }
       if (!data.content)
         throw new Error(data.error?.message ?? JSON.stringify(data));
 
       const newHint = data.content[0].text;
       setHistory((prev) => [...prev, newHint]);
-      setCount((prev) => prev + 1);
+      setCount((prev) => data.ai_usage?.used ?? prev + 1);
+      if (data.ai_usage?.limit) setLimit(data.ai_usage.limit);
     } catch (err) {
       setHistory((prev) => [...prev, "エラー: " + err.message]);
     }
@@ -113,7 +142,8 @@ export default function ResearchMethodScreen({
 
       setSavedList((prev) => [...prev, data.data]);
 
-      // 次の1件を続けて追加できるように入力欄・ヒント関連をリセット
+      // 次の1件を続けて追加できるように入力欄とヒント表示をリセット
+      // (ヒントの残り回数は仮説単位でDBが数えているので、ここではリセットしない)
       setMethodType(null);
       setWhatToStudy("");
       setToolsMaterials("");
@@ -121,9 +151,7 @@ export default function ResearchMethodScreen({
       setDuration("");
       setSummary("");
       setWhatHintHistory([]);
-      setWhatHintCount(0);
       setToolsHintHistory([]);
-      setToolsHintCount(0);
       setStep("type");
     } catch (err) {
       alert("保存に失敗しました: " + err.message);
@@ -295,6 +323,7 @@ export default function ResearchMethodScreen({
                       whatHintHistory,
                       setWhatHintHistory,
                       setWhatHintCount,
+                      setWhatHintLimit,
                       setWhatHintLoading,
                     )
                   }
@@ -302,7 +331,7 @@ export default function ResearchMethodScreen({
                   {whatHintLoading ? "ヒントを考え中…" : "💡 AIにヒントをもらう"}
                   <span className="hint-count">
                     {" "}
-                    残り {Math.max(whatHintsLeft, 0)}/{HINT_LIMIT} 回
+                    残り {Math.max(whatHintsLeft, 0)}/{whatHintLimit} 回
                   </span>
                 </button>
               </div>
@@ -336,6 +365,7 @@ export default function ResearchMethodScreen({
                       toolsHintHistory,
                       setToolsHintHistory,
                       setToolsHintCount,
+                      setToolsHintLimit,
                       setToolsHintLoading,
                     )
                   }
@@ -343,7 +373,7 @@ export default function ResearchMethodScreen({
                   {toolsHintLoading ? "ヒントを考え中…" : "💡 AIにヒントをもらう"}
                   <span className="hint-count">
                     {" "}
-                    残り {Math.max(toolsHintsLeft, 0)}/{HINT_LIMIT} 回
+                    残り {Math.max(toolsHintsLeft, 0)}/{toolsHintLimit} 回
                   </span>
                 </button>
               </div>

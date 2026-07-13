@@ -28,7 +28,12 @@ export default function UserIdScreen({ onSubmit }) {
       localStorage.setItem('token', data.token);
       onSubmit(data.user_id);
     } catch (err) {
-      setError(err.message);
+      // PINまちがいのときは「先生に言う」導線を添える(子どもが袋小路にならないように)
+      setError(
+        err.message === 'PINがちがいます'
+          ? 'あんしょう番号がちがうよ。わすれてしまったときは、先生に言ってね。'
+          : err.message,
+      );
     }
     setLoading(false);
   }
@@ -71,6 +76,8 @@ export default function UserIdScreen({ onSubmit }) {
           はじめての番号なら、そのままとうろくされるよ。
           <br />
           2回目からは、さいしょに決めたあんしょう番号を入れてね。
+          <br />
+          あんしょう番号をわすれたときは、先生に言ってね。
         </p>
       </div>
     </div>

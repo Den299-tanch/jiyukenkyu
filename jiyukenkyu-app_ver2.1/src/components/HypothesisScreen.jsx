@@ -4,7 +4,8 @@ import { apiGet, apiPost } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
 import Ruby from "./Ruby";
 
-const HINT_LIMIT = 3;
+// 基本の上限。先生が追加付与した子はサーバーがもっと大きい値を返してくる
+const HINT_LIMIT = 4;
 
 export default function HypothesisScreen({ userId, onBack, onNext }) {
   const { research } = useResearch();
@@ -12,16 +13,18 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
   const [researchNote, setResearchNote] = useState("");
   const [hypothesis, setHypothesis] = useState("");
   const [hintCount, setHintCount] = useState(0);
+  const [hintLimit, setHintLimit] = useState(HINT_LIMIT);
   const [hintHistory, setHintHistory] = useState([]); // これまで出したヒントを溜めておく配列
   const [savedList, setSavedList] = useState([]); // このテーマで追加した仮説の一覧
   const [hintLoading, setHintLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const cat = getCategoryById(theme?.category);
-  const hintsLeft = HINT_LIMIT - hintCount;
+  const hintsLeft = hintLimit - hintCount;
 
   // 戻るボタンなどで再度この画面に来たとき、すでに保存済みの仮説を読み込んで
-  // 「次のステップへ進む」が押せない状態にならないようにする
+  // 「次のステップへ進む」が押せない状態にならないようにする。
+  // ヒントの使用回数もDBから復元する(画面を戻っても回数が復活しないように)。
   useEffect(() => {
     if (!userId || !theme?.id) return;
     async function fetchExisting() {
@@ -31,6 +34,15 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
         setSavedList(data.hypotheses.filter((h) => h.theme_id === theme.id));
       } catch {
         // 読み込みに失敗しても、新しく仮説を追加すること自体はできるので黙って無視
+      }
+      try {
+        const usage = await apiGet(`/api/ai-usage/hypothesis_hint/${theme.id}`);
+        if (usage.success) {
+          setHintCount(usage.used);
+          setHintLimit(usage.limit ?? HINT_LIMIT);
+        }
+      } catch {
+        // 取得に失敗してもサーバー側で上限は守られるので黙って無視
       }
     }
     fetchExisting();
@@ -42,15 +54,24 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
     try {
       const data = await apiPost('/api/hypothesis-hint', {
         category: cat?.mode,
+        theme_id: theme?.id, // 使用回数はテーマ単位でサーバーが数える
         research_note: researchNote,
         previous_hints: hintHistory, // これまで出したヒントを一緒に送る
       });
+      // サーバー側で上限に達していた場合は、表示のカウントを実際の値に合わせる
+      if (data.limit_reached) {
+        setHintCount(data.used);
+        setHintLimit(data.limit ?? HINT_LIMIT);
+        setHintLoading(false);
+        return;
+      }
       if (!data.content)
         throw new Error(data.error?.message ?? JSON.stringify(data));
 
       const newHint = data.content[0].text;
       setHintHistory((prev) => [...prev, newHint]); // 履歴配列に今回のヒントを足す(表示もここから)
-      setHintCount((prev) => prev + 1);
+      setHintCount((prev) => data.ai_usage?.used ?? prev + 1);
+      if (data.ai_usage?.limit) setHintLimit(data.ai_usage.limit);
     } catch (err) {
       console.error("Hypothesis hint error:", err);
     }
@@ -73,11 +94,11 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
       // リストに追加
       setSavedList((prev) => [...prev, data.data]);
 
-      // 次の1件を書けるように入力欄・ヒント関連をリセット
+      // 次の1件を書けるように入力欄とヒント表示をリセット
+      // (ヒントの残り回数はテーマ単位でDBが数えているので、ここではリセットしない)
       setResearchNote("");
       setHypothesis("");
       setHintHistory([]);
-      setHintCount(0);
     } catch (err) {
       alert("保存に失敗しました: " + err.message);
     }
@@ -132,7 +153,7 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
             : "💡 ヒントをもらう(調べる方向を教えるよ)"}
           <span className="hint-count">
             {" "}
-            残り {Math.max(hintsLeft, 0)}/{HINT_LIMIT} 回
+            残り {Math.max(hintsLeft, 0)}/{hintLimit} 回
           </span>
         </button>
 

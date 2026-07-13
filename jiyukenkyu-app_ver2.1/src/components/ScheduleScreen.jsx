@@ -5,7 +5,8 @@ import { apiGet, apiPost } from "../services/api";
 import { useResearch } from "../contexts/ResearchContext";
 import Ruby from "./Ruby";
 
-const DRAFT_LIMIT = 3;
+// 基本の上限。先生が追加付与した子はサーバーがもっと大きい値を返してくる
+const DRAFT_LIMIT = 4;
 
 function makeTaskId() {
   return `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -35,15 +36,17 @@ export default function ScheduleScreen({
   const [draftLoading, setDraftLoading] = useState(false);
   const [draftError, setDraftError] = useState("");
   const [draftCount, setDraftCount] = useState(0);
+  const [draftLimit, setDraftLimit] = useState(DRAFT_LIMIT);
   const [confirmingRetry, setConfirmingRetry] = useState(null); // null | false(初回) | true(やり直し)
   const [saving, setSaving] = useState(false);
   const [savingOnly, setSavingOnly] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [restoredNotice, setRestoredNotice] = useState(false);
 
-  const draftsLeft = DRAFT_LIMIT - draftCount;
+  const draftsLeft = draftLimit - draftCount;
 
-  // 戻るボタンなどで再度この画面に来たとき、すでに保存済みのスケジュールを読み込んで復元する
+  // 戻るボタンなどで再度この画面に来たとき、すでに保存済みのスケジュールを読み込んで復元する。
+  // たたき台の使用回数もDBから復元する(画面を戻っても回数が復活しないように)。
   useEffect(() => {
     if (!userId || !hypothesis?.id) return;
     async function fetchExisting() {
@@ -59,6 +62,15 @@ export default function ScheduleScreen({
         }
       } catch {
         // 読み込みに失敗しても、これから新しく作ること自体はできるので黙って無視
+      }
+      try {
+        const usage = await apiGet(`/api/ai-usage/schedule_draft/${hypothesis.id}`);
+        if (usage.success) {
+          setDraftCount(usage.used);
+          setDraftLimit(usage.limit ?? DRAFT_LIMIT);
+        }
+      } catch {
+        // 取得に失敗してもサーバー側で上限は守られるので黙って無視
       }
     }
     fetchExisting();
@@ -88,6 +100,7 @@ export default function ScheduleScreen({
       const data = await apiPost('/api/schedule-draft', {
         theme_title: theme?.theme,
         hypothesis: hypothesis?.hypothesis,
+        hypothesis_id: hypothesis?.id, // 使用回数は仮説単位でサーバーが数える
         end_date: endDate,
         work_days: workDays,
         research_methods: (researchMethods ?? []).map((rm) => ({
@@ -100,6 +113,14 @@ export default function ScheduleScreen({
         })),
         previous_tasks: isRetry ? tasks : undefined,
       });
+      // サーバー側で上限に達していた場合は、表示のカウントを実際の値に合わせる
+      if (data.limit_reached) {
+        setDraftCount(data.used);
+        setDraftLimit(data.limit ?? DRAFT_LIMIT);
+        setDraftError("AIのたたき台は、もう使いきったよ。ここからは自分で書きかえてみよう!");
+        setDraftLoading(false);
+        return;
+      }
       if (!data.content)
         throw new Error(data.error?.message ?? JSON.stringify(data));
 
@@ -114,7 +135,8 @@ export default function ScheduleScreen({
       }));
       setTasks(withIds);
       setTab("plan");
-      setDraftCount((prev) => prev + 1);
+      setDraftCount((prev) => data.ai_usage?.used ?? prev + 1);
+      if (data.ai_usage?.limit) setDraftLimit(data.ai_usage.limit);
     } catch (err) {
       setDraftError(
         "たたき台づくりに失敗したよ: " + err.message + "（もう一度試してみてね）",
@@ -276,7 +298,7 @@ export default function ScheduleScreen({
             >
               {draftLoading
                 ? "たたき台を考え中…"
-                : `🤖 AIにたたき台をつくってもらう (残り${Math.max(draftsLeft, 0)}/${DRAFT_LIMIT}回)`}
+                : `🤖 AIにたたき台をつくってもらう (残り${Math.max(draftsLeft, 0)}/${draftLimit}回)`}
             </button>
             <button className="sch-secondary-btn" onClick={handleWriteMyself}>
               ✏️ <Ruby>{"自分[じぶん]で書[か]く(空[から]の行[ぎょう]を追加[ついか])"}</Ruby>
@@ -396,7 +418,7 @@ export default function ScheduleScreen({
             >
               {draftLoading
                 ? "考え中…"
-                : `🔁 AIにもう一度たたき台をつくってもらう (残り${Math.max(draftsLeft, 0)}/${DRAFT_LIMIT}回)`}
+                : `🔁 AIにもう一度たたき台をつくってもらう (残り${Math.max(draftsLeft, 0)}/${draftLimit}回)`}
             </button>
 
             {saveMessage && <p className="sch-save-message">{saveMessage}</p>}
