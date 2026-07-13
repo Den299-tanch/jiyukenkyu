@@ -685,7 +685,13 @@ function buildGraphUserText({
     return text;
   }
 
-  text += '\n使っている数字:\n';
+  // 関係グラフでなくても、軸えらび済みなら軸の取り方を伝える
+  // (例: ヨコ軸=きろくした順番。日づけの順とは限らないことをAIに知らせる)
+  if (x_axis_label || y_axis_label) {
+    text += `ヨコ軸=${x_axis_label ?? '?'} / タテ軸=${y_axis_label ?? '?'}\n`;
+  }
+
+  text += '\n使っている数字(グラフにならべる順):\n';
   (numbers ?? []).forEach((n) => {
     const unit = n.unit ? ` ${n.unit}` : '';
     const date = n.date ? ` (${n.date})` : '';

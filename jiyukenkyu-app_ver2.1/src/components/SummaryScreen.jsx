@@ -267,6 +267,8 @@ export default function SummaryScreen({ userId, onBack }) {
                           <GraphView
                             type={gd.graphType}
                             entries={gd.entries || []}
+                            xAxis={gd.xAxis ?? undefined}
+                            yLabel={gd.yLabel ?? undefined}
                             xAxisLabel={gd.xAxisLabel ?? undefined}
                             compact
                           />

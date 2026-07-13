@@ -113,6 +113,8 @@ export default function ReportView({ report, forPdf = false }) {
                     <GraphView
                       type={g.graphType}
                       entries={g.entries || []}
+                      xAxis={g.xAxis ?? undefined}
+                      yLabel={g.yLabel ?? undefined}
                       xAxisLabel={g.xAxisLabel ?? undefined}
                     />
                   </div>

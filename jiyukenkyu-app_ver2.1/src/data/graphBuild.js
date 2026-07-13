@@ -87,6 +87,91 @@ export function buildPairedSeriesData(entries, xLabel, yLabel) {
     }));
 }
 
+// ===== 軸えらび(再設計後の棒・折れ線・散布図はこちらを使う) =====
+// xAxis(ヨコ軸の選び方)は子どもが明示的に選ぶ。形は3種類:
+//   { kind: 'order' }              … きろくした順番(同じラベルの中で何番目か)
+//   { kind: 'date' }               … 日づけ(observed_at)
+//   { kind: 'label', label: '気温' } … 別のラベルの値(同じ記録どうしをペアにする)
+// タテ軸は yLabel(選んだラベルの値)。
+
+// ヨコ軸の見出し(グラフの軸タイトルやAIへの説明に使う)
+export function xAxisDisplayName(xAxis) {
+  if (!xAxis) return "";
+  if (xAxis.kind === "order") return "きろくした順番";
+  if (xAxis.kind === "date") return "日づけ";
+  return xAxis.label ?? "";
+}
+
+// タテ軸の見出し(ラベル+単位)
+function yAxisDisplayName(entries, yLabel) {
+  const unit = entries.find((e) => e.label === yLabel && e.unit)?.unit;
+  return unit ? `${yLabel}(${unit})` : yLabel;
+}
+
+// 棒・折れ線用: 選んだ軸で {data, xName, yName} を作る。
+// entries は記録した順(observed_at昇順の記録から取り出した順)で並んでいる前提。
+export function buildAxisSeries(entries, xAxis, yLabel) {
+  const yEntries = entries.filter((e) => e.label === yLabel);
+  const yName = yAxisDisplayName(entries, yLabel);
+  if (xAxis.kind === "label") {
+    const data = pairByRecord(entries, xAxis.label, yLabel)
+      .sort((a, b) => a.x - b.x)
+      .map((p) => ({ name: String(p.x), value: p.y, unit: "", label: yLabel }));
+    return { data, xName: xAxis.label, yName };
+  }
+  if (xAxis.kind === "date") {
+    return { data: buildSeriesData(yEntries), xName: "日づけ", yName };
+  }
+  // order: 同じラベルの中で何番目にはかったか
+  return {
+    data: yEntries.map((e, i) => ({
+      name: `${i + 1}`,
+      value: e.value,
+      unit: e.unit,
+      label: e.label,
+    })),
+    xName: "きろくした順番(何回目)",
+    yName,
+  };
+}
+
+// 散布図用: 選んだ軸で {points, xName, yName} を作る。
+// 日づけ軸は散布図では選べない(数直線にできないため候補から外している)。
+export function buildAxisScatter(entries, xAxis, yLabel) {
+  const yName = yAxisDisplayName(entries, yLabel);
+  if (xAxis.kind === "label") {
+    return {
+      points: pairByRecord(entries, xAxis.label, yLabel),
+      xName: xAxis.label,
+      yName,
+    };
+  }
+  const yEntries = entries.filter((e) => e.label === yLabel);
+  return {
+    points: yEntries.map((e, i) => ({ x: i + 1, y: e.value })),
+    xName: "きろくした順番(何回目)",
+    yName,
+  };
+}
+
+// 軸えらび画面の「⭐おすすめ」用ヒューリスティック(強制はしない):
+// ・タテ軸以外のラベルがちょうど1つ → その値(2つの関係を見る)
+// ・日づけが3日以上あってダブりが無い → 日づけ
+// ・それ以外(同じ日に何度も・日づけ忘れなど) → きろくした順番
+export function recommendXAxis(entries, yLabel) {
+  const others = [...new Set(entries.map((e) => e.label))].filter(
+    (l) => l !== yLabel,
+  );
+  if (others.length === 1) return { kind: "label", label: others[0] };
+  const yEntries = entries.filter((e) => e.label === yLabel);
+  const dates = yEntries.map((e) => shortDate(e.date)).filter((d) => d !== "");
+  const uniqueDates = new Set(dates);
+  if (uniqueDates.size >= 3 && dates.length === yEntries.length && uniqueDates.size === dates.length) {
+    return { kind: "date" };
+  }
+  return { kind: "order" };
+}
+
 // グラフ選択画面で「これが良さそう」を軽くおすすめするためのヒューリスティック。
 // 強制ではなく目安なので、シンプルな基準にしている:
 // ・ラベルが2種類 → 2つの数字の関係を見るのに向いた散布図

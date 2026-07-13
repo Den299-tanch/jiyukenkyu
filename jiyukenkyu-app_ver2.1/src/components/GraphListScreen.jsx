@@ -104,6 +104,8 @@ function GraphGridCard({ graph, onOpen, onDelete }) {
           <GraphView
             type={gd.graphType}
             entries={gd.entries || []}
+            xAxis={gd.xAxis ?? undefined}
+            yLabel={gd.yLabel ?? undefined}
             xAxisLabel={gd.xAxisLabel ?? undefined}
             compact
           />
@@ -130,6 +132,8 @@ function GraphDetailOverlay({ graph, onClose, onDelete }) {
         <GraphView
           type={gd.graphType}
           entries={gd.entries || []}
+          xAxis={gd.xAxis ?? undefined}
+          yLabel={gd.yLabel ?? undefined}
           xAxisLabel={gd.xAxisLabel ?? undefined}
         />
         <button className="next-btn rec-save-btn" onClick={onClose}>

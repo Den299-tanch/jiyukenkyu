@@ -23,6 +23,8 @@ import {
   buildShareData,
   buildHistogramData,
   buildScatterData,
+  buildAxisSeries,
+  buildAxisScatter,
 } from "../data/graphBuild";
 
 // 棒・折れ線のヨコ軸データを決める。
@@ -46,21 +48,34 @@ function seriesForAxis(entries, xAxisLabel) {
   return { data: buildSeriesData(entries), axisLabel: "日づけ", yAxisLabel };
 }
 
+// 軸えらび済みデータ用: buildAxisSeries の結果を seriesForAxis と同じ形に揃える
+function axisSeriesCompat(entries, xAxis, yLabel) {
+  const { data, xName, yName } = buildAxisSeries(entries, xAxis, yLabel);
+  return { data, axisLabel: xName, yAxisLabel: yName };
+}
+
 // 選んだ数字(entries)を、えらんだ種類(type)で必ず描く。
 // 理想形でないデータでも代用ルールで機械的に描画する。
-// xAxisLabel: 棒・折れ線でヨコ軸に使うラベル(なければ日づけ軸)
+// xAxis + yLabel: 軸えらび(再設計後)。子どもが選んだヨコ軸とタテ軸のラベル。
+// xAxisLabel: 旧形式の保存グラフ用(棒・折れ線でヨコ軸に使うラベル。なければ日づけ軸)
 // compact: グラフ一覧のサムネイル用に、軸タイトルなどを省いて小さく描く
-export default function GraphView({ type, entries, xAxisLabel, compact = false }) {
+export default function GraphView({ type, entries, xAxis, yLabel, xAxisLabel, compact = false }) {
   if (!entries || entries.length === 0) {
     return <p className="graph-empty">数字がえらばれていないよ。</p>;
   }
+  // 軸えらび済みのデータかどうか(旧形式の保存グラフは xAxis を持たない)
+  const hasAxisPick = !!(xAxis && yLabel);
 
   if (type === "bar" || type === "histogram") {
     const isHist = type === "histogram";
-    const series = isHist ? null : seriesForAxis(entries, xAxisLabel);
+    const series = isHist
+      ? null
+      : hasAxisPick
+        ? axisSeriesCompat(entries, xAxis, yLabel)
+        : seriesForAxis(entries, xAxisLabel);
     const data = isHist ? buildHistogramData(entries) : series.data;
     const xLabel = isHist ? (entries[0]?.label ?? "数字") : series.axisLabel;
-    const yLabel = isHist ? "件数" : series.yAxisLabel;
+    const yLabel_ = isHist ? "件数" : series.yAxisLabel;
     return (
       <ResponsiveContainer width="100%" height={compact ? 130 : 260}>
         <BarChart data={data} margin={{ top: 10, right: 10, left: compact ? 0 : 12, bottom: compact ? 6 : 24 }}>
@@ -72,7 +87,7 @@ export default function GraphView({ type, entries, xAxisLabel, compact = false }
           />
           <YAxis
             tick={{ fontSize: 11 }}
-            label={!compact && yLabel ? { value: yLabel, angle: -90, position: "insideLeft", fontSize: 11 } : undefined}
+            label={!compact && yLabel_ ? { value: yLabel_, angle: -90, position: "insideLeft", fontSize: 11 } : undefined}
           />
           <Tooltip />
           <Bar dataKey="value" radius={[6, 6, 0, 0]}>
@@ -86,7 +101,9 @@ export default function GraphView({ type, entries, xAxisLabel, compact = false }
   }
 
   if (type === "line") {
-    const { data, axisLabel, yAxisLabel } = seriesForAxis(entries, xAxisLabel);
+    const { data, axisLabel, yAxisLabel } = hasAxisPick
+      ? axisSeriesCompat(entries, xAxis, yLabel)
+      : seriesForAxis(entries, xAxisLabel);
     return (
       <ResponsiveContainer width="100%" height={compact ? 130 : 260}>
         <LineChart data={data} margin={{ top: 10, right: 12, left: compact ? 0 : 12, bottom: compact ? 6 : 24 }}>
@@ -139,7 +156,9 @@ export default function GraphView({ type, entries, xAxisLabel, compact = false }
   }
 
   if (type === "scatter") {
-    const { points, xName, yName } = buildScatterData(entries);
+    const { points, xName, yName } = hasAxisPick
+      ? buildAxisScatter(entries, xAxis, yLabel)
+      : buildScatterData(entries);
     return (
       <ResponsiveContainer width="100%" height={compact ? 130 : 260}>
         <ScatterChart margin={{ top: 10, right: 16, left: compact ? 0 : 12, bottom: compact ? 6 : 16 }}>
