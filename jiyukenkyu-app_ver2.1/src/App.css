@@ -3402,6 +3402,24 @@ rt {
 }
 .cons-q-num-1 { background: #8a6fe0; }
 .cons-q-num-2 { background: #2ec4b6; }
+
+/* まとめの「いちばん つたえたいこと」入力だけ、少しだけ大事だと分かる見た目にする */
+.cons-q-card-key {
+  position: relative;
+  border-color: #ffb3a7;
+  background: #fff8f6;
+}
+.cons-q-key-tag {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: #ff6b6b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 8px;
+}
 .cons-q-label {
   font-family: 'Hachi Maru Pop', 'Zen Maru Gothic', sans-serif;
   font-weight: 400;

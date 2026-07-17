@@ -305,7 +305,8 @@ export default function SummaryScreen({ userId, onBack }) {
               />
             </div>
 
-            <div className="cons-q-card">
+            <div className="cons-q-card cons-q-card-key">
+              <span className="cons-q-key-tag">🌟 ここが いちばん大事</span>
               <div className="cons-q-head">
                 <span className="cons-q-num cons-q-num-2">Q2</span>
                 <span className="cons-q-label">

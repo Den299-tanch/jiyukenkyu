@@ -204,40 +204,6 @@
   border-radius: 8px;
 }
 
-/* いちばん つたえたいこと(このレポートの主役。一段目立たせる) */
-.report-hero-section {
-  margin: 22px 0 20px;
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-.report-hero-card {
-  position: relative;
-  background: linear-gradient(135deg, #fff3ef 0%, #fff8e8 100%);
-  border: 2.5px solid #ff6b6b;
-  border-radius: 18px;
-  padding: 22px 20px 20px;
-  box-shadow: 0 8px 22px rgba(255, 107, 107, 0.18);
-}
-.report-hero-tag {
-  position: absolute;
-  top: -13px;
-  left: 16px;
-  background: #ff6b6b;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 4px 14px;
-  border-radius: 999px;
-  box-shadow: 0 3px 0 #d84f4f;
-}
-.report-hero-text {
-  margin: 8px 0 0;
-  font-size: 17px;
-  line-height: 1.9;
-  font-weight: 700;
-  color: #b3372f;
-}
-
 /* ほかにも考えたテーマ・仮説(タイトルだけ) */
 .report-other-list {
   list-style: none;
