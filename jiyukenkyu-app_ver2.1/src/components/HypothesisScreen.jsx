@@ -55,6 +55,7 @@ export default function HypothesisScreen({ userId, onBack, onNext }) {
       const data = await apiPost('/api/hypothesis-hint', {
         category: cat?.mode,
         theme_id: theme?.id, // 使用回数はテーマ単位でサーバーが数える
+        theme_title: theme?.theme, // その子のテーマに沿ったヒントにするためAIへ渡す
         research_note: researchNote,
         previous_hints: hintHistory, // これまで出したヒントを一緒に送る
       });

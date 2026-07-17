@@ -130,9 +130,9 @@ export default function SummaryScreen({ userId, onBack }) {
     [userId, theme, hypothesis, schedule, records, graphs, reflection, summaryDid, summaryTell, otherResearch],
   );
 
-  // ヒント: これまで書いた「なぜ?」を日づけ順に
+  // ヒント: これまでのきろく(概要または「なぜ?」があるもの)を日づけ順に
   const whyHints = records
-    .filter((r) => r.why_note)
+    .filter((r) => r.why_note || r.body)
     .slice()
     .sort((a, b) => new Date(a.observed_at) - new Date(b.observed_at));
 
@@ -239,7 +239,14 @@ export default function SummaryScreen({ userId, onBack }) {
                     <span className="summary-hint-badge b-kiroku">
                       {r.record_type === "kiroku" ? "🧪" : "🔍"} {shortDate(r.observed_at)}
                     </span>
-                    <span className="summary-hint-text">{r.why_note}</span>
+                    <span className="summary-hint-text">
+                      {r.body && <span className="summary-hint-body">{r.body}</span>}
+                      {r.why_note && (
+                        <span className="summary-hint-why">
+                          <b>なぜ?</b> {r.why_note}
+                        </span>
+                      )}
+                    </span>
                   </div>
                 ))}
                 {reflection.q1 && (

@@ -59,8 +59,9 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
     return () => clearTimeout(timer);
   }, [saveMessage]);
 
+  // 「なぜ?」だけでなく、記録の概要(body)がある記録もふりかえりの材料として出す
   const whyList = records
-    .filter((r) => r.why_note)
+    .filter((r) => r.why_note || r.body)
     .slice()
     .sort((a, b) => new Date(a.observed_at) - new Date(b.observed_at));
 
@@ -170,7 +171,7 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
               </>
             )}
 
-            <p className="cons-sublabel">📌 書いた「なぜ?」だけ集めました</p>
+            <p className="cons-sublabel">📌 これまでのきろくと「なぜ?」</p>
 
             {loadingList ? (
               <p className="rec-empty">読み込み中…</p>
@@ -186,10 +187,15 @@ export default function ConsiderationScreen({ userId, onBack, onNext }) {
                     >
                       {r.record_type === "kiroku" ? "🧪" : "🔍"} {formatDate(r.observed_at)}
                     </span>
-                    <span className="cons-why-text">
-                      <b>{r.record_type === "kiroku" ? "なんでだと思う?" : "予想と同じ?ちがった?"}</b>{" "}
-                      {r.why_note}
-                    </span>
+                    <div className="cons-why-content">
+                      {r.body && <p className="cons-why-body">{r.body}</p>}
+                      {r.why_note && (
+                        <p className="cons-why-text">
+                          <b>{r.record_type === "kiroku" ? "なんでだと思う?" : "予想と同じ?ちがった?"}</b>{" "}
+                          {r.why_note}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

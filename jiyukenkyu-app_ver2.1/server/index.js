@@ -351,7 +351,7 @@ app.post('/api/save-hypothesis', requireAuth, async (req, res) => {
 // 使用回数はテーマ単位でDBに記録し、画面を戻っても復活しないようにする。
 app.post('/api/hypothesis-hint', requireAuth, async (req, res) => {
   let consumed = false;
-  const { category, research_note, previous_hints, theme_id } = req.body;
+  const { category, research_note, previous_hints, theme_id, theme_title } = req.body;
   const ctxId = parseInt(theme_id, 10);
   try {
     if (!Number.isFinite(ctxId)) {
@@ -374,7 +374,11 @@ app.post('/api/hypothesis-hint', requireAuth, async (req, res) => {
       ? `${modePrompt}\n\n${HYPOTHESIS_HINT_SYSTEM}`
       : HYPOTHESIS_HINT_SYSTEM;
 
-    let userText = research_note
+    // テーマを伝えることで、その子の研究テーマに沿った方向づけにする(答えそのものは渡さない)
+    let userText = '';
+    if (theme_title) userText += `テーマ: ${theme_title}\n\n`;
+
+    userText += research_note
       ? `ここまで調べたこと: ${research_note}\n\nこれをふまえて、次に何を調べたらいいかヒントをください。`
       : 'まだ何も調べていません。何から調べ始めたらいいかヒントをください。';
 

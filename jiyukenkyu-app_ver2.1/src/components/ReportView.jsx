@@ -129,11 +129,15 @@ export default function ReportView({ report, forPdf = false }) {
         </Section>
       )}
 
-      {/* わかったこと・つたえたいこと(じぶんのことば Q2) */}
+      {/* わかったこと・つたえたいこと(じぶんのことば Q2)= このレポートで一番大事なところ。
+          ほかのセクションより一段目立つ「ヒーロー」カードで見せる。 */}
       {summaryTell && (
-        <Section icon="🌟" title="いちばん つたえたいこと" tone="coral">
-          <OwnWords text={summaryTell} />
-        </Section>
+        <section className="report-section report-hero-section">
+          <div className="report-hero-card">
+            <div className="report-hero-tag">🌟 <Ruby>{"この研究[けんきゅう]でいちばん つたえたいこと"}</Ruby></div>
+            <p className="report-hero-text">{summaryTell}</p>
+          </div>
+        </section>
       )}
 
       {/* ふりかえり(STEP6の考察) */}
