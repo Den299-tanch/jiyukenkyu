@@ -1,8 +1,8 @@
 // カテゴリ選択画面
-// mode は見出しの文言を切り替えるためだけに使う（辞書=dict / テーマ決定=chat）。
-// 選択肢そのものは src/data/categories.js の CATEGORIES に一本化しており、
-// 辞書とテーマ決定でまったく同じ一覧が出る。
-import { CATEGORIES } from '../data/categories';
+// 選択肢は src/data/categories.js に一本化してあり、辞書とテーマ決定で同じ一覧が出る。
+// ただし「その他」だけは辞書に載せるキーワード集が無いため、辞書では非表示にする
+// （DICT_CATEGORIES = CATEGORIES から themeOnly を除いたもの）。
+import { CATEGORIES, DICT_CATEGORIES } from '../data/categories';
 import Ruby from './Ruby';
 
 export default function CategorySelect({ mode, onSelect, onBack }) {
@@ -10,7 +10,7 @@ export default function CategorySelect({ mode, onSelect, onBack }) {
     ? '📖 どのカテゴリを調[しら]べますか？'
     : '💡 どのカテゴリに興味[きょうみ]がありますか？';
 
-  const categories = CATEGORIES;
+  const categories = mode === 'dict' ? DICT_CATEGORIES : CATEGORIES;
 
   return (
     <div className="category-screen">

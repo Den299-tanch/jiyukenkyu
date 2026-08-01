@@ -6,6 +6,7 @@
 //
 // - id   : DB の themes.category に保存される値。DictScreen の DICT_DATA のキーとも一致させる
 // - mode : AI のシステムプロンプトを引くキー（server/index.js の PROMPTS）。id と 1:1 で対応する
+// - themeOnly : テーマ決定にだけ出し、辞書には出さない（辞書に載せるキーワード集が無いもの）
 export const CATEGORIES = [
   { id: 'biology', label: '生き物',        icon: '🐛', mode: 'theme-biology' },
   { id: 'science', label: '理科',          icon: '🧪', mode: 'theme-science' },
@@ -18,7 +19,13 @@ export const CATEGORIES = [
   { id: 'art',     label: '芸術・音楽',    icon: '🎨', mode: 'theme-art'     },
   { id: 'sports',  label: 'スポーツ・健康', icon: '🏃', mode: 'theme-sports'  },
   { id: 'math',    label: '算数',          icon: '🔢', mode: 'theme-math'    },
+  // どのカテゴリにも当てはまらない子の受け皿。辞書に載せるキーワード集が無いので
+  // themeOnly を立て、辞書のカテゴリ選択には出さない。
+  { id: 'other',   label: 'その他',        icon: '✨', mode: 'theme-other', themeOnly: true },
 ];
+
+// 辞書のカテゴリ選択に出すもの（キーワード集があるカテゴリだけ）
+export const DICT_CATEGORIES = CATEGORIES.filter(c => !c.themeOnly);
 
 // 旧カテゴリ id → 現カテゴリ id の読み替え表。
 // 化学(chemistry)・物理(physics)は辞書側に合わせて理科(science)へ統合したが、
