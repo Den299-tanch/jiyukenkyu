@@ -3,7 +3,7 @@ import Ruby from './Ruby';
 
 // ===== 辞書データ =====
 // メンバーから集めるキーワード＋説明文を、ここに入れていく
-// カテゴリ id（biology, science, ...）は src/data/dictCategories.js の id と一致させる
+// カテゴリ id（biology, science, ...）は src/data/categories.js の CATEGORIES の id と一致させる
 const DICT_DATA = {
   biology: [
     { keyword: '光合成', desc: '植物が太陽の光を使って、自分のごはんを作るしくみだよ。葉っぱの中で行われているんだ。' },

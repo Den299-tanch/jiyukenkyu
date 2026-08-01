@@ -1,9 +1,8 @@
-// カテゴリの定義
-// mode="dict"  → 辞書機能用（DICT_CATEGORIES）
-// mode="chat"  → テーマ決定用（CATEGORIES）
-// 辞書とテーマ決定でカテゴリ一覧は別々に管理している
+// カテゴリ選択画面
+// mode は見出しの文言を切り替えるためだけに使う（辞書=dict / テーマ決定=chat）。
+// 選択肢そのものは src/data/categories.js の CATEGORIES に一本化しており、
+// 辞書とテーマ決定でまったく同じ一覧が出る。
 import { CATEGORIES } from '../data/categories';
-import { DICT_CATEGORIES } from '../data/dictCategories';
 import Ruby from './Ruby';
 
 export default function CategorySelect({ mode, onSelect, onBack }) {
@@ -11,7 +10,7 @@ export default function CategorySelect({ mode, onSelect, onBack }) {
     ? '📖 どのカテゴリを調[しら]べますか？'
     : '💡 どのカテゴリに興味[きょうみ]がありますか？';
 
-  const categories = mode === 'dict' ? DICT_CATEGORIES : CATEGORIES;
+  const categories = CATEGORIES;
 
   return (
     <div className="category-screen">
