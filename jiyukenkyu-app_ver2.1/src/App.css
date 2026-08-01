@@ -3190,19 +3190,6 @@ rt {
   border: 2px solid #ff6b6b;
   color: #a13a3a;
 }
-/* 層1.5(AI自動) */
-.graph-warn-15 {
-  background: #f1edfc;
-  border: 2px solid #8a6fe0;
-  color: #4b3a91;
-}
-
-.graph-checking {
-  font-size: 12.5px;
-  color: #5b6b85;
-  padding: 8px 2px 12px;
-}
-
 /* 層2(任意で聞く) */
 .graph-ask-btn {
   width: 100%;

@@ -789,26 +789,18 @@ app.delete('/api/records/:id', requireAuth, async (req, res) => {
   }
 });
 
-// ===== STEP5 グラフの安全網(層1.5=自動 / 層2=任意) =====
+// ===== STEP5 グラフの安全網(層1=機械チェック / 層2=任意) =====
+// 層1は src/data/graphSafety.js の機械チェック(AIを使わない)。ここは層2だけを担当する。
+//
+// かつては「層1.5」として、グラフを開いた瞬間に自動でAIに確認させるしくみがあったが、廃止した。
+// ・問題なしを「OK」という返事の文字列一致で判定していたため、モデルが「OKです」のように
+//   少しでも違う言い方をすると、その返事がそのまま警告として子どもに表示されてしまっていた
+// ・見る観点(単位バラバラ・種類混在)が層1の機械チェックとほぼ重複しており、同じ注意が2つ並んでいた
+// ・このアプリで唯一、子どもがボタンを押していないのに勝手に話しかけるAIだった
+// 安全網は「層1=常に機械が見る」「層2=子どもが聞きたいときだけAIに聞く」の2段構えにする。
+
 // 軽量モデル。もし account でこの id が使えなければ 'claude-sonnet-4-6' に変えてOK。
 const GRAPH_SAFETY_MODEL = 'claude-haiku-4-5-20251001';
-
-// 層1.5(自動): 「もっともらしいのに実は変」を1つだけそっと知らせる。
-// 問題がないときは「OK」だけ返させ、実質なにも出さない(表示もコストも軽い)。
-const GRAPH_CHECK_SYSTEM = `あなたは小学生の自由研究を手伝う先生です。
-子どもが作ったグラフの「数字の組み合わせ」を見て、"もっともらしいけれど実はおかしいかもしれない点"が
-ないかを確認する役です。とくに次に注意してください:
-- ケタ違い(たとえば片方が分・片方が秒など、桁が大きく違う数字がまざっている)
-- 出どころや種類がちがう数字を、1つのグラフに混ぜている
-- 単位がバラバラなのに、1つの量として比べている
-
-ただし「これは関係グラフです(ヨコ軸/タテ軸が指定されている)」と伝えられたときは、
-2つのちがう種類の数字・ちがう単位・ちがう桁を比べるのがそのグラフの目的なので、
-単位や種類がちがうこと自体は絶対に指摘しないでください。その場合でも、
-ケタ違いで片方の変化がグラフ上でほぼ見えなくなっていそうなときなどは指摘してかまいません。
-
-問題がなさそうなときは、説明や前置きを一切書かず「OK」とだけ返してください。
-気になる点があるときだけ、答えや正解は言わず、気づきをうながす一言(1〜2文・やさしい言葉)を返してください。`;
 
 // 層2(任意): 押した子だけに「問いかけ」を1つ返す。答えは出さない
 const GRAPH_ASK_SYSTEM = `あなたは小学生の自由研究を手伝う先生です。
@@ -818,7 +810,7 @@ const GRAPH_ASK_SYSTEM = `あなたは小学生の自由研究を手伝う先生
 「〜はどうなっているかな?」「〜だとしたら、なぜだろう?」のように問いのかたちで返してください。
 返答は1〜2文、やさしい言葉で。`;
 
-// グラフの中身を説明する文章を組み立てる(層1.5・層2で共通)
+// グラフの中身を説明する文章を組み立てる(層2で使う)
 function buildGraphUserText({
   theme_title, hypothesis, graph_type_label, title, numbers,
   is_relationship, x_axis_label, y_axis_label, pairs,
@@ -854,37 +846,6 @@ function buildGraphUserText({
   });
   return text;
 }
-
-// 層1.5: グラフを開いたとき自動で1回、注意点がないか確認する
-app.post('/api/graph-check', async (req, res) => {
-  try {
-    const userText = buildGraphUserText(req.body);
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type':      'application/json',
-        'x-api-key':         API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model:      GRAPH_SAFETY_MODEL,
-        max_tokens: 256,
-        system:     GRAPH_CHECK_SYSTEM,
-        messages:   [{ role: 'user', content: userText }],
-      }),
-    });
-    const data = await response.json();
-    // AIの返事を解釈。空 or 「OK」だけなら注意なし。それ以外は注意メッセージ扱い。
-    const text = (data.content?.[0]?.text ?? '').trim();
-    const isOk = text === '' || /^ok[\s!.。、]*$/i.test(text);
-    const warn = !isOk;
-    const message = warn ? text : '';
-    res.json({ success: true, warn, message });
-  } catch (err) {
-    console.error('Graph check error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // 層2: 「このグラフについて聞いてみる」を押した子だけ、問いかけを1つ返す
 app.post('/api/graph-ask', async (req, res) => {

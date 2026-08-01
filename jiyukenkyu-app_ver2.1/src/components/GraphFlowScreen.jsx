@@ -58,7 +58,7 @@ function sameXAxis(a, b) {
   return a.kind === b.kind && (a.kind !== "label" || a.label === b.label);
 }
 
-// 依存配列や層1.5の署名に使う短いキー
+// 依存配列や「組み合わせが変わったか」の署名に使う短いキー
 function xAxisKey(xAxis) {
   if (!xAxis) return "none";
   return xAxis.kind === "label" ? `label:${xAxis.label}` : xAxis.kind;
@@ -77,8 +77,7 @@ export default function GraphFlowScreen({ records, theme, hypothesis, onExit, on
   const [yLabel, setYLabel] = useState(null); // タテ軸にするラベル
   const [xAxis, setXAxis] = useState(null); // {kind:'order'|'date'|'label', label?}
 
-  // 安全網の状態
-  const [check15, setCheck15] = useState({ loading: false, warn: false, message: "" });
+  // 安全網の状態(層1=機械チェックは描画時に計算するので状態を持たない)
   const [questions, setQuestions] = useState([]);
   const [asking, setAsking] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -115,7 +114,7 @@ export default function GraphFlowScreen({ records, theme, hypothesis, onExit, on
   const layer1 = layer1Checks(usedEntries, graphType, { isRelationship });
   const recommendedType = recommendGraphType(selectedEntries);
 
-  // AIに渡すグラフの中身(層1.5・層2で共通)
+  // AIに渡すグラフの中身(層2で使う)
   function graphPayload() {
     if (usesAxisPick && xAxis && yLabel) {
       // 記録した順ではなく、グラフが実際に描く並び(ヨコ軸=x昇順)に揃えてAIに渡す。
@@ -164,34 +163,15 @@ export default function GraphFlowScreen({ records, theme, hypothesis, onExit, on
     };
   }
 
-  // 層1.5: グラフを表示したとき、自動で1回だけ確認する(同じ組み合わせなら再実行しない)
+  // グラフの組み合わせ(種類・軸・使う数字)が変わったら、層2でもらった問いかけを消す。
+  // 前のグラフについての問いかけが、別のグラフの下に残って見えてしまうのを防ぐため。
   useEffect(() => {
     if (step !== "show") return;
     const sig =
       graphType + "|" + xAxisKey(xAxis) + "|" + (yLabel ?? "") + "|" + selectedKeys.join(",");
     if (sig === lastCheckSig.current) return;
     lastCheckSig.current = sig;
-    setQuestions([]); // 組み合わせが変わったら層2の履歴もリセット
-
-    let ignore = false;
-    setCheck15({ loading: true, warn: false, message: "" });
-    (async () => {
-      try {
-        const data = await apiPost('/api/graph-check', graphPayload());
-        if (ignore) return;
-        setCheck15({
-          loading: false,
-          warn: !!data.warn,
-          message: data.message ?? "",
-        });
-      } catch {
-        if (!ignore) setCheck15({ loading: false, warn: false, message: "" });
-      }
-    })();
-    return () => {
-      ignore = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setQuestions([]);
   }, [step, graphType, xAxis, yLabel, selectedKeys]);
 
   async function handleSaveGraph() {
@@ -500,25 +480,15 @@ export default function GraphFlowScreen({ records, theme, hypothesis, onExit, on
               />
             </div>
 
-            {/* 3層の安全網(レイヤー名は子ども画面には出さない) */}
-            {/* 層1: 機械チェック */}
+            {/* 2層の安全網(レイヤー名は子ども画面には出さない) */}
+            {/* 層1: 機械チェック(AIを使わない。常に出す) */}
             {layer1.map((w, i) => (
               <div key={i} className="graph-warn graph-warn-1">
                 ⚠️ {w}
               </div>
             ))}
 
-            {/* 層1.5: AIが自動でチェック */}
-            {check15.loading && (
-              <div className="graph-checking">
-                🔎 グラフをかくにんしているよ…
-              </div>
-            )}
-            {!check15.loading && check15.warn && check15.message && (
-              <div className="graph-warn graph-warn-15">🤖 {check15.message}</div>
-            )}
-
-            {/* 層2: 任意でAIに聞く */}
+            {/* 層2: 子どもが押したときだけAIに聞く */}
             <button
               className="graph-ask-btn"
               onClick={handleAsk}
