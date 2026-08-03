@@ -12,6 +12,17 @@ function makeTaskId() {
   return `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+// 端末の「今日」を "YYYY-MM-DD" で。toISOString() はUTCになって
+// 日本の夜だと1日ずれるので、ローカルの年月日から自分で組み立てる。
+function todayISO() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 // カレンダー入力の "YYYY-MM-DD" → 「8月31日」表示に整形
 function formatEndDate(iso) {
   if (!iso) return "";
@@ -103,6 +114,7 @@ export default function ScheduleScreen({
         hypothesis_id: hypothesis?.id, // 使用回数は仮説単位でサーバーが数える
         end_date: endDate,
         work_days: workDays,
+        today: todayISO(), // AIが過去の日付を出さないように基準日を渡す
         research_methods: (researchMethods ?? []).map((rm) => ({
           method_type_label: getMethodTypeById(rm.method_type)?.label,
           what_to_study: rm.what_to_study,
@@ -133,7 +145,7 @@ export default function ScheduleScreen({
         type: t.type ?? "other",
         done: !!t.done,
       }));
-      setTasks(withIds);
+      setTasks(shiftTasksIntoFuture(withIds));
       setTab("plan");
       setDraftCount((prev) => data.ai_usage?.used ?? prev + 1);
       if (data.ai_usage?.limit) setDraftLimit(data.ai_usage.limit);
@@ -252,6 +264,7 @@ export default function ScheduleScreen({
               <input
                 type="date"
                 className="sch-date-input"
+                min={todayISO()}
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
@@ -490,6 +503,36 @@ function parseTaskDate(dateStr) {
   return { month: Number(m[1]), day: Number(m[2]) };
 }
 
+// AIがまれに今日より前の日付を返すことがあるので、その安全網。
+// いちばん早いタスクが今日になるように、予定ぜんぶを同じ日数だけ後ろにずらす
+// (間隔はそのまま保たれる)。ずらす必要がなければ元の配列をそのまま返す。
+function shiftTasksIntoFuture(taskList) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const dates = taskList.map((t) => {
+    const parsed = parseTaskDate(t.date);
+    if (!parsed) return null;
+    return new Date(today.getFullYear(), parsed.month - 1, parsed.day);
+  });
+
+  const valid = dates.filter(Boolean);
+  if (valid.length === 0) return taskList;
+  const earliest = new Date(Math.min(...valid.map((d) => d.getTime())));
+  if (earliest >= today) return taskList;
+
+  const offsetDays = Math.round((today - earliest) / 86400000);
+  return taskList.map((t, i) => {
+    const d = dates[i];
+    if (!d) return t;
+    const shifted = new Date(d.getFullYear(), d.getMonth(), d.getDate() + offsetDays);
+    return {
+      ...t,
+      date: `${shifted.getMonth() + 1}/${shifted.getDate()}(${WEEKDAYS[shifted.getDay()]})`,
+    };
+  });
+}
+
 // 全体をひと目で見わたす用のカレンダービュー。
 // 期間が月をまたいでも(7月→8月など)、必要な月ぶんだけ並べて出す。
 function ScheduleCalendar({ tasks, endDate, toggleDone }) {
@@ -538,8 +581,6 @@ function ScheduleCalendar({ tasks, endDate, toggleDone }) {
     </div>
   );
 }
-
-const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
 function CalendarMonth({ year, month, tasksByDay, openDay, setOpenDay, toggleDone }) {
   const daysInMonth = new Date(year, month, 0).getDate();

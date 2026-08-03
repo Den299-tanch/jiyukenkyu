@@ -254,6 +254,8 @@ const SCHEDULE_DRAFT_SYSTEM = `あなたは小学生の自由研究を手伝う�
 実際に取り組めるスケジュールのたたき台を作ってください。
 「何日でやりたいか」で指定された日数ぶんのタスクを、今日から「おわりの日」までの間に
 無理なく収まるように配置してください(指定日数が期間より多い場合は、期間内に収まる範囲で調整してよい)。
+日付は必ずユーザーから渡される「今日の日付」以降にしてください。今日より前の日付は絶対に出さないでください。
+曜日も「今日の日付」から数えて正しいものを書いてください。
 研究方法が複数わたされている場合は、特定の1つだけに偏らせず、それぞれの研究方法に
 対応するタスクが最低1つは入るようにしてください。
 スケジュールは研究の"答え"ではなく足場なので、ここでは遠慮せず具体的な下書きを作ってかまいません。
@@ -264,9 +266,10 @@ const SCHEDULE_DRAFT_SYSTEM = `あなたは小学生の自由研究を手伝う�
 必ず次のJSON形式のみを出力してください。前置きや説明、マークダウンのコードブロックは一切つけないでください。
 {
   "tasks": [
-    { "date": "7/25(土)", "task": "やることの説明", "type": "junbi", "done": false }
+    { "date": "M/D(曜)", "task": "やることの説明", "type": "junbi", "done": false }
   ]
 }
+date は「月/日(曜日)」の形式で、実際の日付に置きかえてください(M/D や 曜 をそのまま書かないこと)。
 type は次のいずれかにしてください: jikken(実験) / kuraberu(くらべる) / shiraberu(しらべる) / kansatsu(観察) / junbi(準備) / kiroku(記録) / yasumi(やすみ) / matome(まとめ) / other(その他)`;
 
 const DEV_SYSTEM = `あなたは自由研究という枠にとらわれない開発者と肩を並べる創造神です。ユーザーはこのアプリの開発者です。
@@ -591,6 +594,23 @@ app.post('/api/research-method-hint', requireAuth, async (req, res) => {
 
 // スケジュールのAIたたき台生成(単発、DBには保存しない。フロントがそのまま編集して保存する)。
 // 使用回数は仮説単位でDBに記録し、画面を戻っても復活しないようにする。
+const JP_WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+// AIに渡す「今日」。子どもの端末の日付(YYYY-MM-DD)を優先し、
+// 無ければサーバー時刻を日本時間に直して使う(サーバーはUTCで動くことがあるため)。
+function resolveToday(clientToday) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clientToday || '')) {
+    const d = new Date(`${clientToday}T00:00:00Z`);
+    if (!isNaN(d)) return d;
+  }
+  // +9時間ずらしてから getUTC* で読むと、日本時間の年月日・曜日になる
+  return new Date(Date.now() + 9 * 60 * 60 * 1000);
+}
+
+function formatTodayForPrompt(d) {
+  return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日(${JP_WEEKDAYS[d.getUTCDay()]})`;
+}
+
 app.post('/api/schedule-draft', requireAuth, async (req, res) => {
   let consumed = false;
   const {
@@ -601,6 +621,7 @@ app.post('/api/schedule-draft', requireAuth, async (req, res) => {
     end_date,
     work_days,
     previous_tasks,
+    today,
   } = req.body;
   const ctxId = parseInt(hypothesis_id, 10);
   try {
@@ -619,7 +640,9 @@ app.post('/api/schedule-draft', requireAuth, async (req, res) => {
     }
     consumed = true;
 
-    let userText = `テーマ: ${theme_title}\nこの子の予想: 「${hypothesis}」\n\n`;
+    const todayLabel = formatTodayForPrompt(resolveToday(today));
+
+    let userText = `今日の日付: ${todayLabel}\nテーマ: ${theme_title}\nこの子の予想: 「${hypothesis}」\n\n`;
     (research_methods ?? []).forEach((rm, i) => {
       userText += `【研究方法${i + 1}】`;
       if (rm.method_type_label) userText += ` ${rm.method_type_label}\n`;
@@ -631,7 +654,7 @@ app.post('/api/schedule-draft', requireAuth, async (req, res) => {
       if (rm.summary) userText += `まとめの一言: ${rm.summary}\n`;
       userText += '\n';
     });
-    userText += `おわりの日: ${end_date || '未定'}\n何日でやりたいか: ${work_days ? `${work_days}日` : '未定'}\n\n上記の研究方法すべてをふまえて、1つのスケジュールのたたき台をJSONで作ってください。`;
+    userText += `おわりの日: ${end_date || '未定'}\n何日でやりたいか: ${work_days ? `${work_days}日` : '未定'}\n\n上記の研究方法すべてをふまえて、1つのスケジュールのたたき台をJSONで作ってください。\nすべてのタスクの日付は ${todayLabel} 以降にしてください。`;
 
     if (previous_tasks && previous_tasks.length > 0) {
       userText += '\n\n(やり直しの依頼です。前回とは少し違う組み立てにしてください)';
